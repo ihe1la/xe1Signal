@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Signal',
-    template: '%s | Signal',
+    default: 'Signal Archive',
+    template: '%s | Signal Archive',
   },
   description:
     process.env.NEXT_PUBLIC_APP_DESCRIPTION ||

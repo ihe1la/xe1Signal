@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Signal Archive',
-    short_name: 'Signal',
+    short_name: 'Signal Archive',
     description: 'A private space for signals, songs, links, and fragments worth keeping.',
     start_url: '/',
     scope: '/',

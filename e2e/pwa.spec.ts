@@ -11,7 +11,7 @@ test('exposes an installable, privacy-safe PWA shell', async ({ page, request })
   const manifest = await manifestResponse.json();
   expect(manifest).toMatchObject({
     name: 'Signal Archive',
-    short_name: 'Signal',
+    short_name: 'Signal Archive',
     start_url: '/',
     display: 'standalone',
     theme_color: '#07080c',
