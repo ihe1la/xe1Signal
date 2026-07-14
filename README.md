@@ -32,6 +32,7 @@ All demo accounts use the password `Archive!2026`.
 - Signal create/read/update/delete with note, link, image, screenshot, code, song, voice, document, and file forms.
 - Visibility and ghost expiration controls, secure link metadata retrieval, validated uploads, and protected downloads.
 - Signal attachments support JPG, PNG, GIF, WebP, MP3, WAV, OGG, M4A, FLAC, PDF, TXT, Markdown, DOC, and DOCX files up to 10 MB, with image previews, audio playback, byte-level progress, and owner-managed removal.
+- The `hela` account can optionally import a single public YouTube video's audio as a local MP3 after confirming media rights. The server requires `yt-dlp` and FFmpeg; playlists, live videos, private/cookie-based access, videos over 10 minutes, and output over 10 MB are rejected. Override the executable and limits with `YT_DLP_PATH`, `YOUTUBE_IMPORT_MAX_DURATION`, and `YOUTUBE_IMPORT_MAX_SIZE`.
 - Frequencies, follows, saves, reactions, comments/replies, profiles, inbox messages, notifications, and moderation foundations.
 - Grouped/debounced search, archive filters, research trails with draggable nodes, zoom, sharing state, and local autosave.
 - Responsive desktop context panel, tablet layout, mobile search overlay, and bottom navigation.
