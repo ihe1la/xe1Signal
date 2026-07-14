@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/components/providers';
+import { PwaRegister } from '@/components/pwa-register';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -22,6 +23,18 @@ export const metadata: Metadata = {
   description:
     process.env.NEXT_PUBLIC_APP_DESCRIPTION ||
     'Save meaningful things from the internet. Organize them into collections called Frequencies.',
+  applicationName: 'Signal Archive',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Signal Archive',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   openGraph: {
     title: process.env.NEXT_PUBLIC_APP_NAME || 'Signal Archive',
@@ -54,6 +67,7 @@ export default function RootLayout({
         )}
       >
         <Providers>{children}</Providers>
+        <PwaRegister />
       </body>
     </html>
   );
