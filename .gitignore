@@ -1,0 +1,75 @@
+# Project dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Turbo
+.turbo/
+
+# Prisma runtime database (migrations are source and must be committed)
+prisma/*.db
+prisma/*.db-journal
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Playwright
+playwright-report/
+test-results/
+
+# Runtime uploads (store and back these up outside the release directory in production)
+public/uploads/
+
+# Local agent/runtime metadata and logs
+.agents/
+.codex/
+.hermes/
+*.log
+.codex-dev.*
+
+# Unrelated nested scratch application
+my-hacking-app/
+
+# OS temporary files
+tmp/
+temp/

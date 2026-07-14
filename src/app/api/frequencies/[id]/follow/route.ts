@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+export async function POST(_:Request,{params}:{params:Promise<{id:string}>}){const session=await auth();if(!session?.user?.id)return NextResponse.json({error:"Unauthorized"},{status:401});const {id}=await params;const key={frequencyId_userId:{frequencyId:id,userId:session.user.id}};const existing=await db.frequencyFollow.findUnique({where:key});const following=await db.$transaction(async tx=>{if(existing){await tx.frequencyFollow.delete({where:{id:existing.id}});await tx.frequency.updateMany({where:{id,followerCount:{gt:0}},data:{followerCount:{decrement:1}}});return false}await tx.frequencyFollow.create({data:{frequencyId:id,userId:session.user.id}});await tx.frequency.update({where:{id},data:{followerCount:{increment:1}}});return true});return NextResponse.json({following})}

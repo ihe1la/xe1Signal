@@ -1,0 +1,3 @@
+"use client";
+import { AlertTriangle, RotateCcw } from "lucide-react";
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){return <main className="grid min-h-screen place-items-center bg-[#08090d] px-5 text-center"><section><AlertTriangle className="mx-auto h-7 w-7 text-violet-300"/><h1 className="mt-5 font-mono text-xl">The signal faded</h1><p className="mt-3 font-mono text-xs text-zinc-600">The archive hit an unexpected edge. Your saved work is still safe.</p><button onClick={reset} className="mt-7 rounded-lg border border-white/[.08] px-4 py-3 font-mono text-[10px] text-zinc-400"><RotateCcw className="mr-2 inline h-3.5 w-3.5"/>Try again</button></section></main>}

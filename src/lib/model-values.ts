@@ -1,0 +1,10 @@
+export const SignalType = { IMAGE:"IMAGE", LINK:"LINK", NOTE:"NOTE", SONG:"SONG", CODE:"CODE", SCREENSHOT:"SCREENSHOT", AUDIO:"AUDIO", DOCUMENT:"DOCUMENT", FILE:"FILE" } as const;
+export type SignalType = (typeof SignalType)[keyof typeof SignalType];
+export const SignalVisibility = { PUBLIC:"PUBLIC", PRIVATE:"PRIVATE", UNLISTED:"UNLISTED", SELECTED_USERS:"SELECTED_USERS", COLLABORATORS_ONLY:"COLLABORATORS_ONLY" } as const;
+export type SignalVisibility = (typeof SignalVisibility)[keyof typeof SignalVisibility];
+export const FrequencyVisibility = { PUBLIC:"PUBLIC", PRIVATE:"PRIVATE" } as const;
+export type FrequencyVisibility = (typeof FrequencyVisibility)[keyof typeof FrequencyVisibility];
+export const CollaboratorRole = { VIEWER:"VIEWER", EDITOR:"EDITOR", ADMIN:"ADMIN" } as const;
+export const GhostModeDuration = { ONE_HOUR:"ONE_HOUR", ONE_DAY:"ONE_DAY", ONE_WEEK:"ONE_WEEK", CUSTOM_DATE:"CUSTOM_DATE", OPEN_ONCE:"OPEN_ONCE" } as const;
+export type GhostModeDuration = (typeof GhostModeDuration)[keyof typeof GhostModeDuration];
+export const ReactionType = { STAR:"STAR", HEART:"HEART", BOOKMARK:"BOOKMARK", INSPIRE:"INSPIRE", LAUGH:"LAUGH" } as const;

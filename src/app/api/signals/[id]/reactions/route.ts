@@ -1,0 +1,7 @@
+import { ReactionType } from "@/lib/model-values";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+const schema=z.object({type:z.nativeEnum(ReactionType).default("STAR")});
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){const session=await auth();if(!session?.user?.id)return NextResponse.json({error:"Unauthorized"},{status:401});const {id}=await params;const {type}=schema.parse(await request.json().catch(()=>({})));const signal=await db.signal.findUnique({where:{id},select:{ownerId:true,title:true}});if(!signal)return NextResponse.json({error:"Signal not found"},{status:404});const key={userId_signalId_type:{userId:session.user.id,signalId:id,type}};const existing=await db.reaction.findUnique({where:key});const active=await db.$transaction(async tx=>{if(existing){await tx.reaction.delete({where:{id:existing.id}});await tx.signal.updateMany({where:{id,reactionCount:{gt:0}},data:{reactionCount:{decrement:1}}});return false}await tx.reaction.create({data:{userId:session.user.id,signalId:id,type}});await tx.signal.update({where:{id},data:{reactionCount:{increment:1}}});if(signal.ownerId!==session.user.id){const actor=session.user.username||session.user.name||"Someone";await tx.notification.create({data:{userId:signal.ownerId,type:"REACTION",title:`${actor} reacted to your signal`,message:signal.title||"Untitled signal",data:JSON.stringify({href:`/signals/${id}`})}})}return true});return NextResponse.json({active,type})}

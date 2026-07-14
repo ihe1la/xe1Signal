@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+export default function NotFound(){return <main className="grid min-h-screen place-items-center bg-[#08090d] px-5 text-center"><section><p className="font-mono text-[10px] uppercase tracking-[.22em] text-violet-400">Signal lost</p><h1 className="mt-5 font-mono text-7xl text-zinc-200">404</h1><p className="mx-auto mt-5 max-w-sm font-mono text-xs leading-6 text-zinc-600">This fragment moved, expired, or was never part of the archive.</p><Link href="/discover" className="mt-8 inline-flex items-center gap-2 rounded-lg border border-white/[.08] px-4 py-3 font-mono text-[10px] text-zinc-400"><ArrowLeft className="h-3.5 w-3.5"/>Return to discover</Link></section></main>}

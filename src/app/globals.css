@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 24% 3%;
+    --foreground: 0 0% 90%;
+    --card: 240 5% 10%;
+    --card-foreground: 0 0% 90%;
+    --popover: 240 5% 10%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 62% 56%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 263 70% 50%;
+    --radius: 0.5rem;
+
+    /* Signal Archive custom vars */
+    --signal-image: 263 70% 50%;
+    --signal-link: 217 91% 60%;
+    --signal-note: 38 92% 50%;
+    --signal-song: 330 81% 60%;
+    --signal-code: 160 84% 39%;
+    --signal-screenshot: 25 95% 53%;
+    --signal-audio: 189 94% 43%;
+    --signal-document: 0 84% 60%;
+
+    /* Grain overlay */
+    --grain-opacity: 0.03;
+  }
+
+  .dark {
+    --background: 240 5% 7%;
+    --foreground: 0 0% 90%;
+    --card: 240 5% 10%;
+    --card-foreground: 0 0% 90%;
+    --popover: 240 5% 10%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 263 70% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 62% 56%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 263 70% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-width: 320px;
+    background-image: radial-gradient(circle at 58% 18%, rgba(91, 78, 150, 0.045), transparent 32%);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+html { background: #08090d; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.font-mono { font-variant-ligatures: none; }
+
+@layer components {
+  .grain-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .signal-card {
+    @apply rounded-lg border border-border bg-card transition-all duration-200;
+  }
+
+  .signal-card:hover {
+    @apply shadow-medium;
+  }
+
+  .signal-type-badge {
+    @apply inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider;
+  }
+
+  .signal-strength-bar {
+    @apply flex items-center gap-0.5;
+  }
+
+  .signal-strength-bar .bar {
+    @apply h-1 w-1.5 rounded-full bg-muted;
+  }
+
+  .signal-strength-bar .bar.active {
+    @apply bg-primary;
+  }
+
+  .masonry-grid {
+    @apply columns-1 gap-4 sm:columns-2 lg:columns-3;
+  }
+
+  .masonry-grid > * {
+    @apply mb-4 break-inside-avoid;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(240 5% 20%) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(240 5% 20%);
+    border-radius: 3px;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent;
+  }
+
+  .glow-subtle {
+    box-shadow: 0 0 20px -4px hsl(263 70% 50% / 0.1), 0 0 8px -2px hsl(263 70% 50% / 0.08);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in-up {
+    animation: fadeInUp 300ms ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Selection color */
+::selection {
+  background-color: hsl(263 70% 50% / 0.3);
+  color: hsl(0 0% 95%);
+}
