@@ -92,8 +92,11 @@ export default function SettingsPage() {
     "profile" | "notifications" | "appearance" | "security" | "danger"
   >("profile");
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isImageSaving, setIsImageSaving] = React.useState(false);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const [coverPreview, setCoverPreview] = React.useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
+  const [coverFile, setCoverFile] = React.useState<File | null>(null);
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -139,13 +142,21 @@ export default function SettingsPage() {
   React.useEffect(() => {
     if (!session?.user?.id) return;
     fetch("/api/user/profile").then((response) => response.ok ? response.json() : null).then((data) => {
-      if (data?.user) profileForm.reset({ name: data.user.name || "", username: data.user.username || "", bio: data.user.bio || "", website: "", twitter: "", github: "", location: "" });
+      if (data?.user) {
+        profileForm.reset({ name: data.user.name || "", username: data.user.username || "", bio: data.user.bio || "", website: "", twitter: "", github: "", location: "" });
+        setAvatarPreview(data.user.avatarUrl || null);
+        setCoverPreview(data.user.bannerUrl || null);
+      }
     }).catch(() => undefined);
   }, [session?.user?.id, profileForm]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        toast.error("Use a JPG, PNG, or WebP image");
+        return;
+      }
       if (file.size > 2 * 1024 * 1024) {
         toast.error("Avatar must be under 2MB");
         return;
@@ -153,12 +164,17 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = () => setAvatarPreview(reader.result as string);
       reader.readAsDataURL(file);
+      setAvatarFile(file);
     }
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        toast.error("Use a JPG, PNG, or WebP image");
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Cover image must be under 5MB");
         return;
@@ -166,6 +182,34 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = () => setCoverPreview(reader.result as string);
       reader.readAsDataURL(file);
+      setCoverFile(file);
+    }
+  };
+
+  const saveProfileImages = async () => {
+    if (!avatarFile && !coverFile) return;
+    setIsImageSaving(true);
+    try {
+      let savedAvatar: string | undefined;
+      for (const [kind, file] of [["avatar", avatarFile], ["banner", coverFile]] as const) {
+        if (!file) continue;
+        const body = new FormData();
+        body.set("kind", kind);
+        body.set("file", file);
+        const response = await fetch("/api/user/profile-image", { method: "POST", body });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || `Failed to save ${kind}`);
+        if (kind === "avatar") savedAvatar = result.url;
+      }
+      if (savedAvatar) await update({ avatarUrl: savedAvatar });
+      setAvatarFile(null);
+      setCoverFile(null);
+      router.refresh();
+      toast.success("Profile images updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Profile images could not be saved");
+    } finally {
+      setIsImageSaving(false);
     }
   };
 
@@ -393,6 +437,15 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+                <Button
+                  type="button"
+                  onClick={saveProfileImages}
+                  disabled={isImageSaving || (!avatarFile && !coverFile)}
+                  className="w-full sm:w-auto"
+                >
+                  {isImageSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isImageSaving ? "Uploading..." : "Save avatar & cover"}
+                </Button>
               </CardContent>
             </Card>
 

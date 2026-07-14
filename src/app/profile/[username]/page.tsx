@@ -5,7 +5,7 @@ import { ProfileView } from "@/components/profile-view";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const [{ username }, session] = await Promise.all([params, auth()]);
-  const user = await db.user.findUnique({ where: { username }, select: { id: true, username: true, name: true, bio: true, avatarUrl: true } });
+  const user = await db.user.findUnique({ where: { username }, select: { id: true, username: true, name: true, bio: true, avatarUrl: true, bannerUrl: true } });
   if (!user) notFound();
-  return <ProfileView currentUsername={session?.user?.username} user={{ id: user.id, username: user.username, name: user.name || user.username, bio: user.bio || "", avatarUrl: user.avatarUrl || `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${user.username}&backgroundColor=111116`, strength: user.username === "hela" ? 76 : 58 }} />;
+  return <ProfileView currentUsername={session?.user?.username} user={{ id: user.id, username: user.username, name: user.name || user.username, bio: user.bio || "", avatarUrl: user.avatarUrl || `https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${user.username}&backgroundColor=111116`, bannerUrl: user.bannerUrl, strength: user.username === "hela" ? 76 : 58 }} />;
 }

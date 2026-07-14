@@ -28,6 +28,7 @@ export type DemoUser = {
   name: string;
   bio: string;
   avatarUrl: string;
+  bannerUrl?: string | null;
   strength: number;
 };
 
