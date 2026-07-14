@@ -139,6 +139,14 @@ model Signal {
   sourceDomain      String?
   previewImageUrl   String?
   previewData       String?
+  mediaProvider     String?
+  mediaEntityType   String?
+  externalId        String?
+  providerUri       String?
+  creatorName       String?
+  thumbnailUrl      String?
+  durationMs        Int?
+  metadataJson      String?
   tags              String            @default("")
   frequencyId       String?
   visibility        String            @default("PUBLIC")
@@ -183,6 +191,8 @@ model Signal {
   @@index([signalStrength])
   @@index([tags])
   @@index([sourceDomain])
+  @@index([mediaProvider])
+  @@index([externalId])
   @@index([ghostModeExpiresAt])
   @@index([isArchived])
   @@index([isDeleted])

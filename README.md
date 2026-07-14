@@ -32,6 +32,7 @@ All demo accounts use the password `Archive!2026`.
 - Signal create/read/update/delete with note, link, image, screenshot, code, song, voice, document, and file forms.
 - Visibility and ghost expiration controls, secure link metadata retrieval, validated uploads, and protected downloads.
 - Signal attachments support JPG, PNG, GIF, WebP, MP3, WAV, OGG, M4A, FLAC, PDF, TXT, Markdown, DOC, and DOCX files up to 10 MB, with image previews, audio playback, byte-level progress, and owner-managed removal.
+- YouTube and Spotify Signals store canonical provider IDs and cached oEmbed metadata only. Feed cards contain no provider frames; one persistent global player lazily initializes the official YouTube or Spotify iframe API after Play. Provider media is never downloaded, proxied, converted, or hosted by Signal Archive.
 - Frequencies, follows, saves, reactions, comments/replies, profiles, inbox messages, notifications, and moderation foundations.
 - Grouped/debounced search, archive filters, research trails with draggable nodes, zoom, sharing state, and local autosave.
 - Responsive desktop context panel, tablet layout, mobile search overlay, and bottom navigation.

@@ -5,12 +5,13 @@ import { ThemeProvider } from 'next-themes';
 import { SessionProvider } from 'next-auth/react';
 import { Toaster } from 'react-hot-toast';
 import { AudioPlayerProvider } from '@/components/audio-player-provider';
+import { PlayerProvider } from '@/components/player/player-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-        <AudioPlayerProvider>{children}</AudioPlayerProvider>
+        <AudioPlayerProvider><PlayerProvider>{children}</PlayerProvider></AudioPlayerProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

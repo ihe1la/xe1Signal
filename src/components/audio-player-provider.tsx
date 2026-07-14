@@ -43,8 +43,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
   React.useEffect(() => { if (audio.current) audio.current.volume = volume; }, [volume]);
   React.useEffect(() => { if (audio.current) audio.current.muted = muted; }, [muted]);
+  React.useEffect(() => { const pauseForMedia = () => audio.current?.pause(); window.addEventListener("signal:media-play", pauseForMedia); return () => window.removeEventListener("signal:media-play", pauseForMedia); }, []);
 
   async function playTrack(track: AudioTrack) {
+    window.dispatchEvent(new Event("signal:audio-play"));
     const player = audio.current;
     if (!player) return;
     if (current?.src === track.src) {

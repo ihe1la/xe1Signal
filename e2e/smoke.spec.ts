@@ -61,7 +61,8 @@ test("owner can sign in and create, view, and edit a signal", async ({ page }) =
   await expect(page).toHaveURL(new RegExp(`/signals/${signal.id}$`));
   await expect(page.getByText("Playwright acceptance signal", { exact: true }).first()).toBeVisible();
   await page.getByRole("link", { name: "Edit signal" }).click();
-  await expect(page.getByRole("heading", { name: "Refine this fragment" })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/signals/${signal.id}/edit$`), { timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Refine this fragment" })).toBeVisible({ timeout: 15_000 });
   expect(issues).toEqual([]);
 });
 
@@ -117,12 +118,12 @@ test("owner can upload and use image, PDF, and music attachments", async ({ page
 
   for (const upload of uploads) {
     await page.goto("/signals/new");
-    await page.getByRole("button", { name: upload.type }).click();
+    await page.getByRole("button", { name: upload.type === "SONG" ? "MUSIC / VIDEO" : upload.type, exact: true }).click();
     await page.getByPlaceholder("Name this signal").fill(upload.title);
     await page.locator('input[type="file"]').setInputFiles({ name: upload.name, mimeType: upload.mimeType, buffer: upload.buffer });
     const createResponse = page.waitForResponse((response) => response.url().endsWith("/api/signals") && response.request().method() === "POST" && response.status() === 201);
     const uploadResponse = page.waitForResponse((response) => response.url().endsWith("/api/uploads") && response.request().method() === "POST" && response.status() === 201);
-    await page.getByRole("button", { name: "Publish" }).click();
+    await page.getByRole("button", { name: upload.type === "SONG" ? "Add Signal" : "Publish" }).click();
     const { signal } = await (await createResponse).json();
     await uploadResponse;
     await expect(page).toHaveURL(new RegExp(`/signals/${signal.id}$`));
@@ -167,12 +168,19 @@ test("published signals appear on Discover and messages reach the other account"
   await expect(page.getByText(title, { exact: true }).first()).toBeVisible();
 
   await page.goto("/signals/new");
-  await page.getByRole("button", { name: "SONG" }).click();
+  await page.getByRole("button", { name: "MUSIC / VIDEO", exact: true }).click();
   await page.getByPlaceholder("Name this signal").fill("Linked music acceptance");
-  await page.getByPlaceholder(/open\.spotify\.com/).fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-  await page.getByRole("button", { name: "Publish" }).click();
-  await page.getByRole("button", { name: "Play here" }).click();
-  await expect(page.getByTitle("Embedded music player")).toHaveAttribute("src", /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/);
+  await page.route("**/api/media/preview", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ provider: "youtube", entityType: "video", externalId: "dQw4w9WgXcQ", canonicalUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", title: "Provider title", creator: "Provider channel", thumbnailUrl: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg", durationMs: null }) }));
+  await page.getByPlaceholder(/youtu\.be/).fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await expect(page.getByText("Provider channel", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Add Signal" }).click();
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await page.getByRole("button", { name: "Play Linked music acceptance" }).click();
+  await expect(page.getByLabel("Global media player")).toBeVisible();
+  await expect(page.locator('script[src="https://www.youtube.com/iframe_api"]')).toHaveCount(1);
+  await page.getByRole("link", { name: "Back to archive" }).click();
+  await expect(page).toHaveURL(/\/discover$/);
+  await expect(page.getByLabel("Global media player")).toBeVisible();
 
   const body = `Private message ${Date.now()}`;
   await page.goto("/inbox/test");

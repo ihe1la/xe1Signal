@@ -3,17 +3,40 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Bell, LogOut, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
   const router = useRouter();
+  const { status } = useSession();
   const [query, setQuery] = React.useState("");
   const [mobileSearch, setMobileSearch] = React.useState(false);
   const [unread,setUnread]=React.useState(0);
 
-  React.useEffect(()=>{let active=true;const load=()=>fetch("/api/notifications").then(response=>response.ok?response.json():null).then(data=>{if(active)setUnread((data?.notifications||[]).filter((item:{isRead:boolean})=>!item.isRead).length)}).catch(()=>undefined);load();const timer=window.setInterval(load,30000);return()=>{active=false;window.clearInterval(timer)}},[]);
+  React.useEffect(() => {
+    if (status !== "authenticated") {
+      setUnread(0);
+      return;
+    }
+
+    let active = true;
+    const load = () => fetch("/api/notifications")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (active) {
+          setUnread((data?.notifications || []).filter((item: { isRead: boolean }) => !item.isRead).length);
+        }
+      })
+      .catch(() => undefined);
+
+    load();
+    const timer = window.setInterval(load, 30000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [status]);
 
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

@@ -50,6 +50,13 @@ export type DemoSignal = {
   description?: string;
   content?: string;
   sourceUrl?: string;
+  mediaProvider?: "youtube" | "spotify" | null;
+  mediaEntityType?: string | null;
+  externalId?: string | null;
+  providerUri?: string | null;
+  creatorName?: string | null;
+  thumbnailUrl?: string | null;
+  durationMs?: number | null;
   sourceDomain?: string;
   previewImageUrl?: string;
   artist?: string;
