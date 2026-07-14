@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: process.env.NEXT_PUBLIC_APP_NAME || 'Signal Archive',
-    template: `%s | ${process.env.NEXT_PUBLIC_APP_NAME || 'Signal Archive'}`,
+    default: 'Signal',
+    template: '%s | Signal',
   },
   description:
     process.env.NEXT_PUBLIC_APP_DESCRIPTION ||
@@ -33,6 +33,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
+    icon: [{ url: '/icon.png', type: 'image/png' }],
     apple: '/apple-touch-icon.png',
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
