@@ -241,7 +241,7 @@ test("seeded song can be edited, uploaded, revisited, and played", async ({ page
 test("accounts are isolated, mood persists, and logout ends the session", async ({ page }) => {
   const issues = collectRuntimeIssues(page);
   await page.goto("/login");
-  await page.getByLabel("Email").fill("test@signal.local");
+  await page.getByLabel("Email or username").fill("test");
   await page.locator("#password").fill("Archive!2026");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/discover/);

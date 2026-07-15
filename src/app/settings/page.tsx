@@ -65,9 +65,9 @@ const notificationSchema = z.object({
 
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(8),
-    newPassword: z.string().min(8),
-    confirmPassword: z.string().min(8),
+    currentPassword: z.string().min(1, "Enter your current password"),
+    newPassword: z.string().min(1, "Enter a new password"),
+    confirmPassword: z.string().min(1, "Confirm your new password"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",

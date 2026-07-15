@@ -7,10 +7,10 @@ import { hashPasswordResetToken } from "@/lib/password-reset";
 const resetPasswordSchema = z
   .object({
     token: z.string().min(1, "Token is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
+    password: z.string().min(1, "Enter a password"),
+    confirmPassword: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => !data.confirmPassword || data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-const schema = z.object({ currentPassword: z.string().min(8), newPassword: z.string().min(8).max(128) });
+const schema = z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(1) });
 
 export async function POST(request: Request) {
   const session = await auth();

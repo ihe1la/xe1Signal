@@ -2,31 +2,35 @@ import { z } from 'zod';
 
 // User schemas
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  identifier: z.string().trim().min(1, 'Enter your email or username'),
+  password: z.string().min(1, 'Enter your password'),
   remember: z.boolean().optional(),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(50),
+const passwordSchema = z.string().min(1, 'Enter a password');
+
+export const registrationRequestSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(50),
   username: z
     .string()
+    .trim()
+    .toLowerCase()
     .min(3, 'Username must be at least 3 characters')
     .max(30)
     .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, hyphens, and underscores'),
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
+  email: z.string().trim().toLowerCase().email('Invalid email address').optional().or(z.literal('')).transform((value) => value || undefined),
+  password: passwordSchema,
 });
+
+export const registerSchema = registrationRequestSchema
+  .extend({
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const resetPasswordSchema = z.object({
@@ -34,12 +38,7 @@ export const resetPasswordSchema = z.object({
 });
 
 export const newPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+  password: passwordSchema,
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",

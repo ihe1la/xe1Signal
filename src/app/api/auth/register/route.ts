@@ -2,28 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { registerSchema } from "@/lib/validations";
+import { registrationRequestSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
     // Validate input
-    const validatedData = registerSchema.parse(body);
+    const validatedData = registrationRequestSchema.parse(body);
     const { name, username, email, password } = validatedData;
 
     // Check if user already exists
     const existingUser = await db.user.findFirst({
       where: {
-        OR: [
-          { email: email.toLowerCase() },
-          { username: username.toLowerCase() },
-        ],
+        OR: [...(email ? [{ email }] : []), { username }],
       },
     });
 
     if (existingUser) {
-      if (existingUser.email === email.toLowerCase()) {
+      if (email && existingUser.email === email) {
         return NextResponse.json(
           { error: "An account with this email already exists" },
           { status: 400 },
@@ -64,8 +61,8 @@ export async function POST(request: NextRequest) {
       const createdUser = await transaction.user.create({
         data: {
           name,
-          username: username.toLowerCase(),
-          email: email.toLowerCase(),
+          username,
+          email,
           passwordHash: hashedPassword,
           role: "USER",
           emailVerified: null,

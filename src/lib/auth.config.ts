@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { loginSchema } from "@/lib/validations";
 
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(db),
@@ -19,38 +20,34 @@ export const authConfig: NextAuthConfig = {
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        identifier: { label: "Email or username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
-        }
+        const parsedCredentials = loginSchema.safeParse({
+          identifier: credentials?.identifier,
+          password: credentials?.password,
+        });
+        if (!parsedCredentials.success) return null;
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
+        const { identifier, password } = parsedCredentials.data;
+        const normalizedIdentifier = identifier.toLowerCase();
+
+        const user = await db.user.findFirst({
+          where: {
+            OR: [
+              { email: normalizedIdentifier },
+              { username: normalizedIdentifier },
+            ],
+          },
         });
 
-        if (!user || !user.passwordHash) {
-          throw new Error("Invalid credentials");
-        }
+        if (!user || !user.passwordHash || !user.isActive || user.isBanned)
+          return null;
 
-        if (!user.isActive) {
-          throw new Error("Account is deactivated");
-        }
+        const isValid = await bcrypt.compare(password, user.passwordHash);
 
-        if (user.isBanned) {
-          throw new Error("Account has been banned");
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash,
-        );
-
-        if (!isValid) {
-          throw new Error("Invalid credentials");
-        }
+        if (!isValid) return null;
 
         await db.user.update({
           where: { id: user.id },

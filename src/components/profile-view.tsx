@@ -1,7 +1,18 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { Check, Mail, Settings, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  Camera,
+  Check,
+  ImageIcon,
+  Loader2,
+  Mail,
+  Settings,
+  UserPlus,
+} from "lucide-react";
+import toast from "react-hot-toast";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SignalCard } from "@/components/signals/signal-card";
 import { StrengthBars } from "@/components/layout/right-sidebar";
@@ -14,22 +25,137 @@ export function ProfileView({
   currentUsername?: string;
 }) {
   const own = user.username === currentUsername;
+  const router = useRouter();
+  const { update } = useSession();
   const [following, setFollowing] = React.useState(false);
   const [tab, setTab] = React.useState("Signals");
+  const [avatarUrl, setAvatarUrl] = React.useState(user.avatarUrl);
+  const [bannerUrl, setBannerUrl] = React.useState(user.bannerUrl);
+  const [uploading, setUploading] = React.useState<"avatar" | "banner" | null>(
+    null,
+  );
   const signals = demoSignals.filter((s) => s.owner.username === user.username);
+
+  React.useEffect(() => {
+    setAvatarUrl(user.avatarUrl);
+    setBannerUrl(user.bannerUrl);
+  }, [user.avatarUrl, user.bannerUrl]);
+
+  async function uploadProfileImage(kind: "avatar" | "banner", file: File) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Use a JPG, PNG, or WebP image");
+      return;
+    }
+    const max = kind === "avatar" ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > max) {
+      toast.error(
+        `${kind === "avatar" ? "Profile picture" : "Background"} must be under ${max / 1024 / 1024}MB`,
+      );
+      return;
+    }
+
+    setUploading(kind);
+    try {
+      const body = new FormData();
+      body.set("kind", kind);
+      body.set("file", file);
+      const response = await fetch("/api/user/profile-image", {
+        method: "POST",
+        body,
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok)
+        throw new Error(result?.error || "The image could not be saved");
+
+      if (kind === "avatar") {
+        setAvatarUrl(result.url);
+        await update({ avatarUrl: result.url });
+      } else {
+        setBannerUrl(result.url);
+      }
+      router.refresh();
+      toast.success(
+        kind === "avatar"
+          ? "Profile picture updated"
+          : "Profile background updated",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "The image could not be saved",
+      );
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function handleImageChange(
+    kind: "avatar" | "banner",
+    input: HTMLInputElement,
+  ) {
+    const file = input.files?.[0];
+    if (file) await uploadProfileImage(kind, file);
+    input.value = "";
+  }
+
   return (
     <AppLayout>
       <section className="mb-7 overflow-hidden rounded-xl border border-white/[.07] bg-white/[.015]">
         <div
-          className="h-36 bg-cover bg-center bg-[radial-gradient(circle_at_72%_15%,rgba(128,105,221,.16),transparent_30%),linear-gradient(135deg,#101118,#090a0e)]"
-          style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}
-        />
+          className="relative h-36 bg-cover bg-center bg-[radial-gradient(circle_at_72%_15%,rgba(128,105,221,.16),transparent_30%),linear-gradient(135deg,#101118,#090a0e)]"
+          style={
+            bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined
+          }
+        >
+          {own && (
+            <label
+              className={`absolute right-4 top-4 flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 font-mono text-[9px] text-zinc-200 backdrop-blur ${uploading ? "pointer-events-none opacity-60" : ""}`}
+            >
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                aria-label="Change profile background"
+                className="sr-only"
+                onChange={(event) =>
+                  void handleImageChange("banner", event.currentTarget)
+                }
+              />
+              {uploading === "banner" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ImageIcon className="h-3.5 w-3.5" />
+              )}
+              Change background
+            </label>
+          )}
+        </div>
         <div className="px-6 pb-6">
-          <img
-            src={user.avatarUrl}
-            alt=""
-            className="-mt-12 h-24 w-24 rounded-full border-4 border-[#0b0c10] bg-zinc-900 object-cover grayscale"
-          />
+          <div className="relative -mt-12 w-fit">
+            <img
+              src={avatarUrl}
+              alt={`${user.username}'s profile picture`}
+              className="h-24 w-24 rounded-full border-4 border-[#0b0c10] bg-zinc-900 object-cover"
+            />
+            {own && (
+              <label
+                className={`absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-white/15 bg-zinc-900 text-zinc-200 shadow-lg ${uploading ? "pointer-events-none opacity-60" : ""}`}
+              >
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  aria-label="Change profile picture"
+                  className="sr-only"
+                  onChange={(event) =>
+                    void handleImageChange("avatar", event.currentTarget)
+                  }
+                />
+                {uploading === "avatar" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" />
+                )}
+              </label>
+            )}
+          </div>
           <div className="mt-4 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <h1 className="font-mono text-2xl text-zinc-100">

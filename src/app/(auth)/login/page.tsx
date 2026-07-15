@@ -26,7 +26,7 @@ export default function LoginPage() {
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: '',
       remember: false,
     },
@@ -36,22 +36,22 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const result = await signIn('credentials', {
-        email: data.email,
+        identifier: data.identifier,
         password: data.password,
         remember: data.remember,
         redirect: false,
       });
 
       if (result?.error) {
-        toast.error(result.error);
+        toast.error('Invalid email or password');
         return;
       }
 
       toast.success('Welcome back!');
       router.push('/discover');
       router.refresh();
-    } catch (error) {
-      toast.error('Something went wrong');
+    } catch {
+      toast.error('Unable to sign in. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -73,21 +73,21 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email or username</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
+                  id="identifier"
+                  type="text"
+                  placeholder="you@example.com or username"
                   className="pl-10"
-                  {...register('email')}
+                  {...register('identifier')}
                   disabled={isLoading}
-                  aria-invalid={!!errors.email}
+                  aria-invalid={!!errors.identifier}
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-destructive" role="alert">{errors.email.message}</p>
+              {errors.identifier && (
+                <p className="text-sm text-destructive" role="alert">{errors.identifier.message}</p>
               )}
             </div>
 

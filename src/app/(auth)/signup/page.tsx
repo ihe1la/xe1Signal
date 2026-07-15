@@ -22,7 +22,6 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -35,8 +34,6 @@ export default function SignupPage() {
     },
   });
 
-  watch('password');
-
   const onSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
     try {
@@ -46,15 +43,15 @@ export default function SignupPage() {
         body: JSON.stringify({
           name: data.name,
           username: data.username,
-          email: data.email,
+          ...(data.email ? { email: data.email } : {}),
           password: data.password,
         }),
       });
 
-      const result = await res.json();
+      const result = await res.json().catch(() => null);
 
       if (!res.ok) {
-        toast.error(result.error || 'Registration failed');
+        toast.error(result?.error || 'Registration failed. Please try again.');
         return;
       }
 
@@ -62,7 +59,7 @@ export default function SignupPage() {
       
       // Auto sign in after registration
       const signInResult = await signIn('credentials', {
-        email: data.email,
+        identifier: data.email || data.username,
         password: data.password,
         redirect: false,
       });
@@ -74,8 +71,8 @@ export default function SignupPage() {
         router.push('/discover');
         router.refresh();
       }
-    } catch (error) {
-      toast.error('Something went wrong');
+    } catch {
+      toast.error('Unable to create your account. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +130,7 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email (optional)</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
