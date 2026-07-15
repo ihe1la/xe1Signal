@@ -56,6 +56,15 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      await transaction.researchTrail.create({
+        data: {
+          ownerId: createdUser.id,
+          title: "My first trail",
+          description: "A blank path for connecting signals, notes, and ideas.",
+          visibility: "PRIVATE",
+        },
+      });
+
       return createdUser;
     });
 

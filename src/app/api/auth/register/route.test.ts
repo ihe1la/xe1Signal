@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => {
   const transaction = {
     user: { create: vi.fn() },
     userSettings: { create: vi.fn() },
+    researchTrail: { create: vi.fn() },
   };
 
   return {
@@ -71,6 +72,13 @@ describe("POST /api/auth/register", () => {
     });
     expect(mocks.transaction).not.toHaveProperty("frequency");
     expect(mocks.transaction.userSettings.create).toHaveBeenCalledOnce();
+    expect(mocks.transaction.researchTrail.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        ownerId: "user-1",
+        title: "My first trail",
+        visibility: "PRIVATE",
+      }),
+    });
     await expect(response.json()).resolves.toMatchObject({
       user: { id: "user-1", username: "archive_user" },
     });

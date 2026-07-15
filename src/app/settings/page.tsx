@@ -386,17 +386,16 @@ export default function SettingsPage() {
                       <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
                     </div>
                   )}
-                  <label className="absolute bottom-4 right-4 cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverChange}
-                      className="hidden"
-                    />
-                    <Button variant="secondary" size="sm" className="gap-1">
+                  <input
+                    id="profile-cover-input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleCoverChange}
+                    className="sr-only"
+                  />
+                  <label htmlFor="profile-cover-input" className="absolute bottom-4 right-4 inline-flex h-9 cursor-pointer items-center rounded-md bg-secondary px-3 text-sm font-medium text-secondary-foreground hover:bg-secondary/80">
                       <ImageIcon className="h-4 w-4" />
-                      Change Cover
-                    </Button>
+                      <span className="ml-1">Change Cover</span>
                   </label>
                 </div>
 
@@ -414,20 +413,15 @@ export default function SettingsPage() {
                         </AvatarFallback>
                       )}
                     </Avatar>
-                    <label className="absolute bottom-0 right-0 cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarChange}
-                        className="hidden"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8 rounded-full"
-                      >
+                    <input
+                      id="profile-avatar-input"
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      onChange={handleAvatarChange}
+                      className="sr-only"
+                    />
+                    <label htmlFor="profile-avatar-input" aria-label="Change avatar" className="absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
                         <ImageIcon className="h-4 w-4" />
-                      </Button>
                     </label>
                   </div>
                   <div>

@@ -18,6 +18,7 @@ model User {
   avatarUrl         String?
   bannerUrl         String?
   currentMood       String              @default("low light / private")
+  currentMoodSymbol String              @default("🌙")
   passwordHash      String?
   role              String              @default("USER")
   isActive          Boolean             @default(true)
