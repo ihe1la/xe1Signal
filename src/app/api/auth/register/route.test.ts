@@ -4,7 +4,6 @@ import { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => {
   const transaction = {
     user: { create: vi.fn() },
-    frequency: { createMany: vi.fn() },
     userSettings: { create: vi.fn() },
   };
 
@@ -48,7 +47,7 @@ describe("POST /api/auth/register", () => {
     });
   });
 
-  it("creates an account without email, confirmation, or a password length requirement", async () => {
+  it("creates an empty account without email, confirmation, or a password length requirement", async () => {
     const request = new NextRequest("http://localhost/api/auth/register", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -70,6 +69,8 @@ describe("POST /api/auth/register", () => {
         passwordHash: "password-hash",
       }),
     });
+    expect(mocks.transaction).not.toHaveProperty("frequency");
+    expect(mocks.transaction.userSettings.create).toHaveBeenCalledOnce();
     await expect(response.json()).resolves.toMatchObject({
       user: { id: "user-1", username: "archive_user" },
     });

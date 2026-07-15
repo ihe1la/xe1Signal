@@ -35,19 +35,6 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create the account and defaults atomically so a partial registration
-    // cannot leave the user without their settings or archive structure.
-    const defaultFrequencies = [
-      {
-        name: "Late-night thoughts",
-        description: "Thoughts that arrive at 3AM",
-      },
-      { name: "Web weirdness", description: "Strange corners of the internet" },
-      { name: "Beautiful interfaces", description: "UI that makes you pause" },
-      { name: "Songs that hurt", description: "Tracks with emotional weight" },
-      { name: "Read later", description: "Articles and links to revisit" },
-    ];
-
     const user = await db.$transaction(async (transaction) => {
       const createdUser = await transaction.user.create({
         data: {
@@ -58,15 +45,6 @@ export async function POST(request: NextRequest) {
           role: "USER",
           emailVerified: null,
         },
-      });
-
-      await transaction.frequency.createMany({
-        data: defaultFrequencies.map((frequency) => ({
-          ...frequency,
-          ownerId: createdUser.id,
-          visibility: "PRIVATE",
-          tags: "",
-        })),
       });
 
       await transaction.userSettings.create({
