@@ -32,15 +32,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userCount = await db.user.count();
-    const maxUsers = Math.max(1, Number(process.env.MAX_USERS) || 2);
-    if (userCount >= maxUsers) {
-      return NextResponse.json(
-        { error: `This private archive is limited to ${maxUsers} accounts` },
-        { status: 403 },
-      );
-    }
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 

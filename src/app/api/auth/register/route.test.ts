@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => {
   return {
     transaction,
     db: {
-      user: { findFirst: vi.fn(), count: vi.fn() },
+      user: { findFirst: vi.fn() },
       $transaction: vi.fn((callback: (value: typeof transaction) => unknown) =>
         callback(transaction),
       ),
@@ -39,7 +39,6 @@ describe("POST /api/auth/register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.db.user.findFirst.mockResolvedValue(null);
-    mocks.db.user.count.mockResolvedValue(0);
     mocks.hash.mockResolvedValue("password-hash");
     mocks.transaction.user.create.mockResolvedValue({
       id: "user-1",
@@ -74,5 +73,22 @@ describe("POST /api/auth/register", () => {
     await expect(response.json()).resolves.toMatchObject({
       user: { id: "user-1", username: "archive_user" },
     });
+  });
+
+  it("does not limit registration by the number of existing accounts", async () => {
+    const request = new NextRequest("http://localhost/api/auth/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Another User",
+        username: "another_user",
+        password: "x",
+      }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(201);
+    expect(mocks.db.user).not.toHaveProperty("count");
   });
 });
