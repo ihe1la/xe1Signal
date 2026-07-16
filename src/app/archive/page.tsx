@@ -22,7 +22,7 @@ export default function ArchivePage() {
   React.useEffect(() => {
     if (!session?.user?.id) return;
     let active = true;
-    fetch(`/api/signals?limit=50&authorId=${encodeURIComponent(session.user.id)}`)
+    fetch(`/api/signals?limit=50&includeDrafts=true&authorId=${encodeURIComponent(session.user.id)}`)
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!active || !Array.isArray(data?.signals)) return;

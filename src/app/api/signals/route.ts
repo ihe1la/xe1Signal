@@ -197,11 +197,15 @@ export async function GET(req: NextRequest) {
     );
     const frequencyId = searchParams.get("frequencyId") || undefined;
     const authorId = searchParams.get("authorId") || undefined;
+    const publicOnly = searchParams.get("scope") === "public";
+    const includeDrafts =
+      searchParams.get("includeDrafts") === "true" && authorId === userId;
     const skip = (page - 1) * limit;
 
     const filters: Prisma.SignalWhereInput[] = [
       { isDeleted: false, isArchived: false },
-      userId
+      includeDrafts ? {} : { isDraft: false },
+      userId && !publicOnly
         ? { OR: [{ visibility: SignalVisibility.PUBLIC }, { ownerId: userId }] }
         : { visibility: SignalVisibility.PUBLIC },
     ];

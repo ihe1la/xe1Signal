@@ -4,7 +4,7 @@ import * as React from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SignalCard } from "@/components/signals/signal-card";
-import { demoSignals, type DemoSignal } from "@/lib/demo-data";
+import type { DemoSignal } from "@/lib/demo-data";
 
 const types = ["ALL", "IMAGE", "LINK", "NOTE", "SONG", "CODE", "SCREENSHOT", "AUDIO", "DOCUMENT"];
 
@@ -15,7 +15,7 @@ export default function DiscoverPage() {
   const [persistedSignals, setPersistedSignals] = React.useState<DemoSignal[]>([]);
   React.useEffect(() => {
     let active = true;
-    fetch("/api/signals?limit=50").then((response) => response.ok ? response.json() : null).then((data) => {
+    fetch("/api/signals?limit=50&scope=public").then((response) => response.ok ? response.json() : null).then((data) => {
       if (!active || !Array.isArray(data?.signals)) return;
       setPersistedSignals(data.signals.map((raw: unknown) => { const signal=raw as Omit<DemoSignal,"tags">&{tags?:string|string[]}; return { ...signal, tags: Array.isArray(signal.tags) ? signal.tags : (signal.tags||"").split(",").filter(Boolean) }; }));
     }).finally(() => { if (active) setReady(true); });
@@ -23,8 +23,7 @@ export default function DiscoverPage() {
   }, []);
 
   const signals = React.useMemo(() => {
-    const combined = [...persistedSignals, ...demoSignals.filter((demo) => !persistedSignals.some((signal) => signal.id === demo.id))];
-    const filtered = type === "ALL" ? combined : combined.filter((signal) => signal.type === type);
+    const filtered = type === "ALL" ? [...persistedSignals] : persistedSignals.filter((signal) => signal.type === type);
     if (sort === "strongest") filtered.sort((a, b) => b.signalStrength - a.signalStrength);
     if (sort === "saved") filtered.sort((a, b) => b.saveCount - a.saveCount);
     return filtered;
