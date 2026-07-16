@@ -173,3 +173,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
   background-color: hsl(263 70% 50% / 0.3);
   color: hsl(0 0% 95%);
 }
+
+/* Uploaded avatars keep their original colors in people and inbox lists. */
+a[href^="/profile/"] > img.grayscale,
+a[href^="/inbox/"] > img.grayscale {
+  filter: none;
+}

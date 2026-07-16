@@ -14,8 +14,10 @@ import {
   MoreHorizontal,
   Pause,
   Play,
+  Share2,
   Star,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useAudioPlayer } from "@/components/audio-player-provider";
 import { usePlayer } from "@/components/player/player-provider";
@@ -80,8 +82,8 @@ export function SignalCard({
   signal: CardSignal;
   variant?: "default" | "compact" | "featured";
   showFrequency?: boolean;
-  onSave?: (id: string) => void;
-  onReact?: (id: string, type: string) => void;
+  onSave?: (id: string, saved: boolean) => void;
+  onReact?: (id: string, type: string, active: boolean) => void;
   onShare?: (id: string) => void;
   onReport?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -90,6 +92,9 @@ export function SignalCard({
   const mediaPlayer = usePlayer();
   const [saved, setSaved] = React.useState(Boolean(signal.isSaved));
   const [reacted, setReacted] = React.useState(Boolean(signal.isReacted));
+  const [reactionCount, setReactionCount] = React.useState(signal.reactionCount || 0);
+  const [saveCount, setSaveCount] = React.useState(signal.saveCount || 0);
+  const [actionBusy, setActionBusy] = React.useState<"react" | "save" | null>(null);
   const [copied, setCopied] = React.useState(false);
   const newestFiles = [...(signal.files || [])].reverse();
   const imageFile = newestFiles.find((file) =>
@@ -112,6 +117,51 @@ export function SignalCard({
     window.setTimeout(() => setCopied(false), 1200);
   }
 
+  async function toggleReaction() {
+    if (actionBusy) return;
+    setActionBusy("react");
+    try {
+      const response = await fetch(`/api/signals/${signal.id}/reactions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: "STAR" }) });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Reaction could not be updated");
+      setReactionCount((count) => Math.max(0, count + (result.active ? 1 : -1)));
+      setReacted(Boolean(result.active));
+      onReact?.(signal.id, "STAR", Boolean(result.active));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Reaction could not be updated");
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function toggleSave() {
+    if (actionBusy) return;
+    setActionBusy("save");
+    try {
+      const response = await fetch(`/api/signals/${signal.id}/save`, { method: "POST" });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Signal could not be saved");
+      setSaveCount((count) => Math.max(0, count + (result.saved ? 1 : -1)));
+      setSaved(Boolean(result.saved));
+      onSave?.(signal.id, Boolean(result.saved));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Signal could not be saved");
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function shareSignal() {
+    const url = `${window.location.origin}/signals/${signal.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: signal.title || "Signal", url });
+      else { await navigator.clipboard.writeText(url); toast.success("Signal link copied"); }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast.error("Signal could not be shared");
+    }
+  }
+
   return (
     <article
       className={cn(
@@ -125,12 +175,12 @@ export function SignalCard({
       {(signal.type === "IMAGE" || signal.type === "SCREENSHOT") && (
         <Link
           href={`/signals/${signal.id}`}
-          className="block h-[158px] overflow-hidden bg-zinc-900"
+          className={cn("block overflow-hidden bg-zinc-900", variant === "featured" ? "max-h-[80vh]" : "h-[158px]")}
         >
           <img
             src={image || ""}
             alt={signal.title || "Signal"}
-            className="h-full w-full object-cover opacity-75 grayscale-[.35] transition duration-500 group-hover:scale-[1.025] group-hover:opacity-90"
+            className={cn("w-full transition duration-500", variant === "featured" ? "h-auto max-h-[80vh] object-contain opacity-100" : "h-full object-cover opacity-75 grayscale-[.35] group-hover:scale-[1.025] group-hover:opacity-90")}
           />
         </Link>
       )}
@@ -357,10 +407,8 @@ export function SignalCard({
         </Link>
         <div className="ml-auto flex items-center gap-1">
           <button
-            onClick={() => {
-              setReacted(!reacted);
-              onReact?.(signal.id, "STAR");
-            }}
+            onClick={() => void toggleReaction()}
+            disabled={Boolean(actionBusy)}
             className={cn(
               "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
               reacted && "text-amber-400",
@@ -369,8 +417,7 @@ export function SignalCard({
           >
             <Star className={cn("h-3.5 w-3.5", reacted && "fill-current")} />
             <span>
-              {(signal.reactionCount || 0) +
-                (reacted && !signal.isReacted ? 1 : 0)}
+              {reactionCount}
             </span>
           </button>
           <Link
@@ -382,10 +429,8 @@ export function SignalCard({
             <span>{signal.commentCount || 0}</span>
           </Link>
           <button
-            onClick={() => {
-              setSaved(!saved);
-              onSave?.(signal.id);
-            }}
+            onClick={() => void toggleSave()}
+            disabled={Boolean(actionBusy)}
             className={cn(
               "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
               saved && "text-violet-300",
@@ -394,8 +439,11 @@ export function SignalCard({
           >
             <Bookmark className={cn("h-3.5 w-3.5", saved && "fill-current")} />
             <span>
-              {(signal.saveCount || 0) + (saved && !signal.isSaved ? 1 : 0)}
+              {saveCount}
             </span>
+          </button>
+          <button onClick={() => void shareSignal()} className="rounded p-1.5 hover:bg-white/5" aria-label="Share">
+            <Share2 className="h-3.5 w-3.5" />
           </button>
           {signal.sourceUrl ? (
             <a

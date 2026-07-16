@@ -31,6 +31,12 @@ export default async function SignalPage({
       );
     notFound();
   }
+  const [isReacted, isSaved] = session?.user?.id
+    ? await Promise.all([
+        db.reaction.count({ where: { signalId: record.id, userId: session.user.id, type: "STAR" } }).then(Boolean),
+        db.savedSignal.count({ where: { signalId: record.id, userId: session.user.id } }).then(Boolean),
+      ])
+    : [false, false];
   return (
     <SignalDetail
       canEdit={record.ownerId === session?.user?.id}
@@ -58,6 +64,8 @@ export default async function SignalPage({
         commentCount: record.commentCount,
         saveCount: record.saveCount,
         viewCount: record.viewCount,
+        isReacted,
+        isSaved,
         createdAt: record.createdAt.toISOString(),
         updatedAt: record.updatedAt.toISOString(),
         owner: {
