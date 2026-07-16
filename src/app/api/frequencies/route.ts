@@ -101,9 +101,9 @@ export async function GET(req: NextRequest) {
         ({ collaborators, followers, ...frequency }) => ({
           ...frequency,
           isOwner: frequency.ownerId === userId,
-          isFollowing: followers.length > 0,
+          isFollowing: Array.isArray(followers) && followers.length > 0,
           memberRole:
-            frequency.ownerId === userId ? "ADMIN" : collaborators[0]?.role,
+            frequency.ownerId === userId ? "ADMIN" : Array.isArray(collaborators) ? collaborators[0]?.role : undefined,
         }),
       ),
       total,
