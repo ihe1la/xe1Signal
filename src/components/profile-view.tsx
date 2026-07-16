@@ -40,6 +40,8 @@ export function ProfileView({
   const bannerInputRef = React.useRef<HTMLInputElement>(null);
   const [signals, setSignals] = React.useState<DemoSignal[]>([]);
   const [frequencies, setFrequencies] = React.useState<DemoFrequency[]>([]);
+  const [contentLoading, setContentLoading] = React.useState(true);
+  const [contentError, setContentError] = React.useState(false);
   const [recentTrail, setRecentTrail] = React.useState<{ id: string; title: string; nodeCount: number } | null>(null);
 
   React.useEffect(() => {
@@ -54,16 +56,18 @@ export function ProfileView({
 
   React.useEffect(() => {
     let active = true;
+    setContentLoading(true);
+    setContentError(false);
     Promise.all([
       fetch(`/api/signals?limit=50&authorId=${encodeURIComponent(user.id)}`).then((response) => response.ok ? response.json() : null),
-      fetch("/api/frequencies?limit=50").then((response) => response.ok ? response.json() : null),
+      fetch(`/api/frequencies?limit=50&ownerId=${encodeURIComponent(user.id)}`).then((response) => response.ok ? response.json() : null),
       own ? fetch("/api/sidebar").then((response) => response.ok ? response.json() : null) : Promise.resolve(null),
     ]).then(([signalData, frequencyData, sidebarData]) => {
       if (!active) return;
       if (Array.isArray(signalData?.signals)) setSignals(signalData.signals.map((signal: Omit<DemoSignal, "tags"> & { tags?: string | string[] }) => ({ ...signal, tags: Array.isArray(signal.tags) ? signal.tags : (signal.tags || "").split(",").filter(Boolean) })));
-      if (Array.isArray(frequencyData?.frequencies)) setFrequencies(frequencyData.frequencies.filter((frequency: { owner: { username: string } }) => frequency.owner.username === user.username).map((frequency: Omit<DemoFrequency, "tags"> & { tags?: string | string[] }, index: number) => ({ ...frequency, tags: Array.isArray(frequency.tags) ? frequency.tags : (frequency.tags || "").split(",").filter(Boolean), color: ["#8f7be9", "#779bd6", "#d8ad68", "#b77c86"][index % 4] })));
+      if (Array.isArray(frequencyData?.frequencies)) setFrequencies(frequencyData.frequencies.map((frequency: Omit<DemoFrequency, "tags"> & { tags?: string | string[] }, index: number) => ({ ...frequency, tags: Array.isArray(frequency.tags) ? frequency.tags : (frequency.tags || "").split(",").filter(Boolean), color: ["#8f7be9", "#779bd6", "#d8ad68", "#b77c86"][index % 4] })));
       if (sidebarData?.recentTrail) setRecentTrail(sidebarData.recentTrail);
-    }).catch(() => undefined);
+    }).catch(() => { if (active) setContentError(true); }).finally(() => { if (active) setContentLoading(false); });
     return () => { active = false; };
   }, [own, user.id, user.username]);
 
@@ -266,14 +270,14 @@ export function ProfileView({
         ))}
       </div>
       {tab === "Signals" && (
-        <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
+        contentLoading ? <ProfileContentLoading /> : contentError ? <ProfileContentMessage message="This profile's Signals could not be loaded." /> : signals.length ? <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
           {signals.map((item) => (
             <SignalCard key={item.id} signal={item} />
           ))}
-        </div>
+        </div> : <ProfileContentMessage message={own ? "You have not published a Signal yet." : `${user.name} has not published a Signal yet.`} />
       )}
       {tab === "Frequencies" && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        contentLoading ? <ProfileContentLoading /> : contentError ? <ProfileContentMessage message="This profile's frequencies could not be loaded." /> : frequencies.length ? <div className="grid gap-3 sm:grid-cols-2">
           {frequencies.map((f) => (
               <Link
                 key={f.id}
@@ -286,7 +290,7 @@ export function ProfileView({
                 </small>
               </Link>
             ))}
-        </div>
+        </div> : <ProfileContentMessage message={own ? "You have not created a frequency yet." : `${user.name} has not created a public frequency yet.`} />
       )}
       {tab === "Trails" && own && (
         <Link
@@ -312,4 +316,12 @@ export function ProfileView({
       )}
     </AppLayout>
   );
+}
+
+function ProfileContentLoading() {
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Loading profile content"><div className="h-64 animate-pulse rounded-xl border border-white/[.05] bg-white/[.02]"/><div className="hidden h-52 animate-pulse rounded-xl border border-white/[.05] bg-white/[.02] sm:block"/></div>;
+}
+
+function ProfileContentMessage({ message }: { message: string }) {
+  return <p className="rounded-xl border border-dashed border-white/[.08] px-6 py-16 text-center font-mono text-[10px] text-zinc-600">{message}</p>;
 }

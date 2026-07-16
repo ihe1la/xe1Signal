@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     const userId = session?.user?.id;
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim() ?? "";
+    const ownerId = searchParams.get("ownerId")?.trim() || undefined;
     const page = parsePositiveInteger(searchParams.get("page"), 1);
     const limit = Math.min(
       parsePositiveInteger(searchParams.get("limit"), 20),
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
       AND: [
         { isArchived: false },
         accessFilter,
+        ownerId ? { ownerId } : {},
         query
           ? {
               OR: [
