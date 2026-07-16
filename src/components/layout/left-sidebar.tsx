@@ -29,7 +29,6 @@ export function LeftSidebar() {
     return () => { active = false; };
   }, [session?.user?.id, pathname]);
   const username = summary.profile?.username || session?.user?.username || "user";
-  const name = summary.profile?.name || session?.user?.name || username;
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
       <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-9 font-mono text-[15px] tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-3 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
@@ -45,7 +44,7 @@ export function LeftSidebar() {
           {!summary.frequencies.length && <Link href="/frequencies/new" className="block rounded-lg border border-dashed border-white/[.07] px-3 py-3 font-mono text-[9px] text-zinc-600">Create your first frequency</Link>}
         </div>
       </div>
-      <div className="mx-7 mb-7 flex items-center gap-3 border-t border-white/[.06] pt-7"><Link href={`/profile/${username}`} className="flex min-w-0 flex-1 items-center gap-3">{summary.profile?.avatarUrl ? <img src={summary.profile.avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-md border border-white/10 object-cover"/> : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-white/10 bg-white/[.035]"><CircleUserRound className="h-5 w-5 text-zinc-500" /></span>}<span className="min-w-0"><span className="block truncate font-mono text-xs text-zinc-200">{name}</span><span className="mt-1 block truncate font-mono text-[8px] text-zinc-600">@{username}</span><span className="mt-1 flex"><StrengthBars value={summary.profile?.strength || 0}/></span></span></Link><Link href="/settings" aria-label="Settings" className="rounded-md p-2 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"><Settings className="h-4 w-4"/></Link></div>
+      <div className="mx-7 mb-7 flex items-center gap-3 border-t border-white/[.06] pt-7"><Link href={`/profile/${username}`} className="flex min-w-0 flex-1 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-white/10 bg-white/[.035]"><CircleUserRound className="h-5 w-5 text-zinc-500" /></span><span className="min-w-0"><span className="block truncate font-mono text-xs text-zinc-200">{username}</span><span className="mt-1 flex"><StrengthBars value={summary.profile?.strength || 0}/></span></span></Link><Link href="/settings" aria-label="Settings" className="rounded-md p-2 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"><Settings className="h-4 w-4"/></Link></div>
     </aside>
   );
 }
