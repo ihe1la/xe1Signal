@@ -1,11 +1,19 @@
 import { Prisma } from "@prisma/client";
-import { GhostModeDuration, type GhostModeDuration as GhostModeDurationValue, SignalVisibility } from "@/lib/model-values";
+import {
+  GhostModeDuration,
+  type GhostModeDuration as GhostModeDurationValue,
+  SignalVisibility,
+} from "@/lib/model-values";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isAllowedMediaThumbnail, parseMediaUrl } from "@/lib/media/parse-media-url";
+import {
+  isAllowedMediaThumbnail,
+  mediaIdentityMatches,
+  parseMediaUrl,
+} from "@/lib/media/parse-media-url";
 
 const ghostModeSchema = z.union([
   z.nativeEnum(GhostModeDuration),
@@ -17,13 +25,19 @@ const signalUpdateSchema = z.object({
   content: z.string().max(50000).optional(),
   description: z.string().max(2000).optional(),
   sourceUrl: z.string().url().optional().nullable(),
-  mediaProvider: z.enum(["youtube", "spotify"]).optional().nullable(),
+  mediaProvider: z.enum(["youtube", "spotify", "audius"]).optional().nullable(),
   mediaEntityType: z.string().max(30).optional().nullable(),
   externalId: z.string().max(100).optional().nullable(),
   providerUri: z.string().max(200).optional().nullable(),
   creatorName: z.string().max(300).optional().nullable(),
   thumbnailUrl: z.string().url().max(2048).optional().nullable(),
-  durationMs: z.number().int().nonnegative().max(86_400_000).optional().nullable(),
+  durationMs: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(86_400_000)
+    .optional()
+    .nullable(),
   frequencyId: z.string().trim().min(1).max(191).optional().nullable(),
   tags: z.union([z.string(), z.array(z.string())]).optional(),
   visibility: z.nativeEnum(SignalVisibility).optional(),
@@ -151,7 +165,8 @@ export async function GET(
       signal.visibility === SignalVisibility.PUBLIC ||
       signal.visibility === SignalVisibility.UNLISTED ||
       signal.ownerId === userId ||
-      (userId !== undefined && signal.selectedUserIds.split(",").includes(userId)) ||
+      (userId !== undefined &&
+        signal.selectedUserIds.split(",").includes(userId)) ||
       isCollaborator;
 
     if (!canView) {
@@ -220,11 +235,33 @@ export async function PATCH(
     const { id } = await params;
     const validated = signalUpdateSchema.parse(await req.json());
     if (validated.mediaProvider) {
-      const media = validated.sourceUrl ? parseMediaUrl(validated.sourceUrl) : null;
-      if (!media || media.provider !== validated.mediaProvider || media.externalId !== validated.externalId || media.entityType !== validated.mediaEntityType) {
-        return NextResponse.json({ error: "Media details do not match the provider URL" }, { status: 400 });
+      const media = validated.sourceUrl
+        ? parseMediaUrl(validated.sourceUrl)
+        : null;
+      if (
+        !mediaIdentityMatches(
+          media,
+          validated.mediaProvider,
+          validated.mediaEntityType,
+          validated.externalId,
+        )
+      ) {
+        return NextResponse.json(
+          { error: "Media details do not match the provider URL" },
+          { status: 400 },
+        );
       }
-      if (validated.thumbnailUrl && !isAllowedMediaThumbnail(validated.thumbnailUrl, validated.mediaProvider)) return NextResponse.json({ error: "Thumbnail must come from the selected provider" }, { status: 400 });
+      if (
+        validated.thumbnailUrl &&
+        !isAllowedMediaThumbnail(
+          validated.thumbnailUrl,
+          validated.mediaProvider,
+        )
+      )
+        return NextResponse.json(
+          { error: "Thumbnail must come from the selected provider" },
+          { status: 400 },
+        );
     }
     if (
       validated.visibility === SignalVisibility.SELECTED_USERS &&
@@ -252,7 +289,10 @@ export async function PATCH(
     if (!existingSignal) {
       return NextResponse.json({ error: "Signal not found" }, { status: 404 });
     }
-    const parsedMedia = validated.mediaProvider && validated.sourceUrl ? parseMediaUrl(validated.sourceUrl) : null;
+    const parsedMedia =
+      validated.mediaProvider && validated.sourceUrl
+        ? parseMediaUrl(validated.sourceUrl)
+        : null;
     if (
       existingSignal.ownerId !== session.user.id &&
       session.user.role !== "ADMIN"
@@ -295,16 +335,38 @@ export async function PATCH(
           content: validated.content,
           description: validated.description,
           sourceUrl: parsedMedia?.canonicalUrl || validated.sourceUrl,
-          sourceDomain: validated.mediaProvider === "youtube" ? "youtube.com" : validated.mediaProvider === "spotify" ? "open.spotify.com" : validated.mediaProvider === null ? null : undefined,
+          sourceDomain:
+            validated.mediaProvider === "youtube"
+              ? "youtube.com"
+              : validated.mediaProvider === "spotify"
+                ? "open.spotify.com"
+                : validated.mediaProvider === "audius"
+                  ? "audius.co"
+                  : validated.mediaProvider === null
+                    ? null
+                    : undefined,
           mediaProvider: validated.mediaProvider,
           mediaEntityType: validated.mediaEntityType,
           externalId: validated.externalId,
-          providerUri: parsedMedia?.provider === "spotify" ? parsedMedia.spotifyUri : validated.mediaProvider === null ? null : undefined,
+          providerUri:
+            parsedMedia?.provider === "spotify"
+              ? parsedMedia.spotifyUri
+              : validated.mediaProvider === null
+                ? null
+                : undefined,
           creatorName: validated.creatorName,
           thumbnailUrl: validated.thumbnailUrl,
           previewImageUrl: validated.thumbnailUrl,
           durationMs: validated.durationMs,
-          metadataJson: validated.mediaProvider ? JSON.stringify({ provider: validated.mediaProvider, entityType: validated.mediaEntityType, externalId: validated.externalId }) : validated.mediaProvider === null ? null : undefined,
+          metadataJson: validated.mediaProvider
+            ? JSON.stringify({
+                provider: validated.mediaProvider,
+                entityType: validated.mediaEntityType,
+                externalId: validated.externalId,
+              })
+            : validated.mediaProvider === null
+              ? null
+              : undefined,
           frequencyId: validated.frequencyId,
           visibility: validated.visibility,
           ghostMode:

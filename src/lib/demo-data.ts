@@ -53,7 +53,7 @@ export type DemoSignal = {
   description?: string;
   content?: string;
   sourceUrl?: string;
-  mediaProvider?: "youtube" | "spotify" | null;
+  mediaProvider?: "youtube" | "spotify" | "audius" | null;
   mediaEntityType?: string | null;
   externalId?: string | null;
   providerUri?: string | null;

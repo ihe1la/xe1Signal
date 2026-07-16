@@ -1,11 +1,20 @@
 import { Prisma } from "@prisma/client";
-import { GhostModeDuration, type GhostModeDuration as GhostModeDurationValue, SignalType, SignalVisibility } from "@/lib/model-values";
+import {
+  GhostModeDuration,
+  type GhostModeDuration as GhostModeDurationValue,
+  SignalType,
+  SignalVisibility,
+} from "@/lib/model-values";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isAllowedMediaThumbnail, parseMediaUrl } from "@/lib/media/parse-media-url";
+import {
+  isAllowedMediaThumbnail,
+  mediaIdentityMatches,
+  parseMediaUrl,
+} from "@/lib/media/parse-media-url";
 
 const ghostModeSchema = z.union([
   z.nativeEnum(GhostModeDuration),
@@ -19,13 +28,22 @@ const signalCreateSchema = z
     content: z.string().max(50000).optional(),
     description: z.string().max(2000).optional(),
     sourceUrl: z.string().url().optional().nullable(),
-    mediaProvider: z.enum(["youtube", "spotify"]).optional().nullable(),
+    mediaProvider: z
+      .enum(["youtube", "spotify", "audius"])
+      .optional()
+      .nullable(),
     mediaEntityType: z.string().max(30).optional().nullable(),
     externalId: z.string().max(100).optional().nullable(),
     providerUri: z.string().max(200).optional().nullable(),
     creatorName: z.string().max(300).optional().nullable(),
     thumbnailUrl: z.string().url().max(2048).optional().nullable(),
-    durationMs: z.number().int().nonnegative().max(86_400_000).optional().nullable(),
+    durationMs: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(86_400_000)
+      .optional()
+      .nullable(),
     frequencyId: z.string().trim().min(1).max(191).optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional(),
     visibility: z.nativeEnum(SignalVisibility).default("PUBLIC"),
@@ -58,12 +76,42 @@ const signalCreateSchema = z
     }
     if (value.mediaProvider) {
       const media = value.sourceUrl ? parseMediaUrl(value.sourceUrl) : null;
-      if (!media || media.provider !== value.mediaProvider || media.externalId !== value.externalId || media.entityType !== value.mediaEntityType) {
-        context.addIssue({ code: z.ZodIssueCode.custom, path: ["sourceUrl"], message: "Media details do not match the provider URL" });
+      if (
+        !mediaIdentityMatches(
+          media,
+          value.mediaProvider,
+          value.mediaEntityType,
+          value.externalId,
+        )
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["sourceUrl"],
+          message: "Media details do not match the provider URL",
+        });
       }
-      if (value.thumbnailUrl && !isAllowedMediaThumbnail(value.thumbnailUrl, value.mediaProvider)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["thumbnailUrl"], message: "Thumbnail must come from the selected provider" });
-    } else if (value.externalId || value.mediaEntityType || value.providerUri || value.creatorName || value.thumbnailUrl || value.durationMs) {
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ["mediaProvider"], message: "A media provider is required for provider metadata" });
+      if (
+        value.thumbnailUrl &&
+        !isAllowedMediaThumbnail(value.thumbnailUrl, value.mediaProvider)
+      )
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["thumbnailUrl"],
+          message: "Thumbnail must come from the selected provider",
+        });
+    } else if (
+      value.externalId ||
+      value.mediaEntityType ||
+      value.providerUri ||
+      value.creatorName ||
+      value.thumbnailUrl ||
+      value.durationMs
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mediaProvider"],
+        message: "A media provider is required for provider metadata",
+      });
     }
   });
 
@@ -220,7 +268,10 @@ export async function POST(req: NextRequest) {
     }
 
     const validated = signalCreateSchema.parse(await req.json());
-    const parsedMedia = validated.mediaProvider && validated.sourceUrl ? parseMediaUrl(validated.sourceUrl) : null;
+    const parsedMedia =
+      validated.mediaProvider && validated.sourceUrl
+        ? parseMediaUrl(validated.sourceUrl)
+        : null;
 
     if (validated.frequencyId) {
       const frequency = await db.frequency.findFirst({
@@ -258,16 +309,30 @@ export async function POST(req: NextRequest) {
           content: validated.content,
           description: validated.description,
           sourceUrl: parsedMedia?.canonicalUrl || validated.sourceUrl,
-          sourceDomain: validated.mediaProvider === "youtube" ? "youtube.com" : validated.mediaProvider === "spotify" ? "open.spotify.com" : undefined,
+          sourceDomain:
+            validated.mediaProvider === "youtube"
+              ? "youtube.com"
+              : validated.mediaProvider === "spotify"
+                ? "open.spotify.com"
+                : validated.mediaProvider === "audius"
+                  ? "audius.co"
+                  : undefined,
           mediaProvider: validated.mediaProvider,
           mediaEntityType: validated.mediaEntityType,
           externalId: validated.externalId,
-          providerUri: parsedMedia?.provider === "spotify" ? parsedMedia.spotifyUri : null,
+          providerUri:
+            parsedMedia?.provider === "spotify" ? parsedMedia.spotifyUri : null,
           creatorName: validated.creatorName,
           thumbnailUrl: validated.thumbnailUrl,
           previewImageUrl: validated.thumbnailUrl,
           durationMs: validated.durationMs,
-          metadataJson: validated.mediaProvider ? JSON.stringify({ provider: validated.mediaProvider, entityType: validated.mediaEntityType, externalId: validated.externalId }) : undefined,
+          metadataJson: validated.mediaProvider
+            ? JSON.stringify({
+                provider: validated.mediaProvider,
+                entityType: validated.mediaEntityType,
+                externalId: validated.externalId,
+              })
+            : undefined,
           frequencyId: validated.frequencyId,
           visibility: validated.visibility,
           ghostMode:
