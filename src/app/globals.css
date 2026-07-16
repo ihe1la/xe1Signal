@@ -178,4 +178,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 a[href^="/profile/"] > img.grayscale,
 a[href^="/inbox/"] > img.grayscale {
   filter: none;
+  object-fit: cover;
+  object-position: center;
 }
