@@ -10,12 +10,12 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Heart,
   MessageCircle,
   MoreHorizontal,
   Pause,
   Play,
   Share2,
-  Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -411,11 +411,11 @@ export function SignalCard({
             disabled={Boolean(actionBusy)}
             className={cn(
               "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
-              reacted && "text-amber-400",
+              reacted && "text-rose-400",
             )}
-            aria-label="React"
+            aria-label={reacted ? "Unlike" : "Like"}
           >
-            <Star className={cn("h-3.5 w-3.5", reacted && "fill-current")} />
+            <Heart className={cn("h-3.5 w-3.5", reacted && "fill-current")} />
             <span>
               {reactionCount}
             </span>
