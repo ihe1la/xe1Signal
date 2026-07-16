@@ -2,24 +2,28 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowRight, Check, Pencil, Plus, X } from "lucide-react";
+import { MOOD_SYMBOLS } from "@/lib/mood-symbols";
 
 type SidebarData = {
-  profile: { username: string; avatarUrl: string | null } | null;
+  profile: { username: string; name: string; avatarUrl: string | null; strength: number } | null;
   activeFrequency: { id: string; name: string; signalCount: number } | null;
   recentSignal: { id: string; title: string | null; previewImageUrl: string | null; createdAt: string } | null;
   recentTrail: { id: string; title: string; nodeCount: number; nodes: { id: string; title: string | null }[] } | null;
 };
 
 export function StrengthBars({ value = 76 }: { value?: number }) {
-  return <span className="flex items-end gap-1" aria-label={`Signal strength ${value}`}>{[20,35,50,65,80,95].map((level, index) => <i key={level} className="block w-1 rounded-sm" style={{height: `${5 + index * 2}px`, background: value >= level ? "#8f7be9" : "#24242e"}} />)}</span>;
+  return <span className="flex items-end gap-1" aria-label={`Signal strength ${value}`}>{[1,20,40,60,80,100].map((level, index) => <i key={level} className="block w-1 rounded-sm" style={{height: `${5 + index * 2}px`, background: value >= level ? "#8f7be9" : "#24242e"}} />)}</span>;
 }
 
 export function RightSidebar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [data, setData] = React.useState<SidebarData>({ profile: null, activeFrequency: null, recentSignal: null, recentTrail: null });
   const username = data.profile?.username || session?.user?.username || "user";
+  const name = data.profile?.name || session?.user?.name || username;
   const avatarUrl = data.profile?.avatarUrl;
   const [mood, setMood] = React.useState("low light / private");
   const [symbol, setSymbol] = React.useState("🌙");
@@ -45,7 +49,7 @@ export function RightSidebar() {
       if (sidebarData) setData(sidebarData);
     }).catch(() => undefined);
     return () => { active = false; };
-  }, [session?.user?.id, status]);
+  }, [pathname, session?.user?.id, status]);
 
   async function saveMood() {
     const value = draftMood.trim();
@@ -75,8 +79,9 @@ export function RightSidebar() {
         <div className="overflow-hidden rounded-[11px] border border-white/[.065] bg-gradient-to-br from-white/[.025] to-transparent">
           <section className="px-7 pb-7 pt-8">
             {avatarUrl ? <img src={avatarUrl} alt={username} className="mb-4 h-[72px] w-[72px] rounded-full border border-white/10 bg-black object-cover" /> : <span className="mb-4 grid h-[72px] w-[72px] place-items-center rounded-full border border-white/10 bg-white/[.04] font-mono text-2xl text-zinc-400">{username.slice(0, 1).toUpperCase()}</span>}
-            <p className="font-mono text-[15px] text-zinc-100">{username}</p>
-            <div className="mt-2 flex items-center gap-3 font-mono text-[11px] text-zinc-500"><span>signal strength</span><StrengthBars value={0} /></div>
+            <p className="font-mono text-[15px] text-zinc-100">{name}</p>
+            <p className="mt-1 font-mono text-[9px] text-zinc-600">@{username}</p>
+            <div className="mt-3 flex items-center gap-3 font-mono text-[11px] text-zinc-500"><span>signal strength</span><StrengthBars value={data.profile?.strength || 0} /></div>
           </section>
 
           <ContextSection label="Active frequency">
@@ -84,7 +89,7 @@ export function RightSidebar() {
           </ContextSection>
 
           <ContextSection label="Current mood">
-            {editingMood ? <div className="space-y-3"><div className="flex gap-2"><input autoFocus maxLength={12} value={draftSymbol} onChange={(event) => setDraftSymbol(event.target.value)} className="h-9 w-14 rounded-lg border border-white/[.09] bg-white/[.025] px-2 text-center text-lg outline-none focus:border-violet-400/30" aria-label="Mood symbol"/><input maxLength={60} value={draftMood} onChange={(event) => setDraftMood(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void saveMood(); if (event.key === "Escape") cancelMood(); }} className="h-9 min-w-0 flex-1 rounded-lg border border-white/[.09] bg-white/[.025] px-3 font-mono text-[11px] text-zinc-200 outline-none focus:border-violet-400/30" aria-label="Current mood"/></div><div className="flex justify-end gap-2"><button onClick={cancelMood} className="rounded-md p-2 text-zinc-600" aria-label="Cancel mood edit"><X className="h-3.5 w-3.5"/></button><button disabled={savingMood || !draftMood.trim() || !draftSymbol.trim()} onClick={() => void saveMood()} className="rounded-md bg-violet-400/[.12] p-2 text-violet-300 disabled:opacity-40" aria-label="Save mood"><Check className="h-3.5 w-3.5"/></button></div></div> : <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-zinc-500"><span className="min-w-0 flex-1 break-words">{mood}</span><span className="text-2xl" aria-label={`Mood symbol ${symbol}`}>{symbol}</span><button onClick={() => setEditingMood(true)} className="rounded-md p-2 text-zinc-600 hover:bg-white/5 hover:text-violet-300" aria-label="Edit current mood"><Pencil className="h-3.5 w-3.5" /></button></div>}
+            {editingMood ? <div className="space-y-3"><div className="flex flex-wrap gap-1.5" aria-label="Choose a mood symbol">{MOOD_SYMBOLS.map((item) => <button key={item} type="button" onClick={() => setDraftSymbol(item)} aria-label={`Use ${item}`} aria-pressed={draftSymbol === item} className={`grid h-8 w-8 place-items-center rounded-md border text-sm grayscale brightness-50 ${draftSymbol === item ? "border-violet-400/50 bg-violet-400/10" : "border-white/[.07] bg-white/[.02]"}`}>{item}</button>)}</div><input maxLength={60} value={draftMood} onChange={(event) => setDraftMood(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void saveMood(); if (event.key === "Escape") cancelMood(); }} className="h-9 w-full rounded-lg border border-white/[.09] bg-white/[.025] px-3 font-mono text-[11px] text-zinc-200 outline-none focus:border-violet-400/30" aria-label="Current mood"/><div className="flex justify-end gap-2"><button onClick={cancelMood} className="rounded-md p-2 text-zinc-600" aria-label="Cancel mood edit"><X className="h-3.5 w-3.5"/></button><button disabled={savingMood || !draftMood.trim() || !draftSymbol.trim()} onClick={() => void saveMood()} className="rounded-md bg-violet-400/[.12] p-2 text-violet-300 disabled:opacity-40" aria-label="Save mood"><Check className="h-3.5 w-3.5"/></button></div></div> : <div className="flex items-center justify-between gap-3 font-mono text-[11px] text-zinc-500"><span className="min-w-0 flex-1 break-words">{mood}</span><span className="text-base grayscale brightness-50" aria-label={`Mood symbol ${symbol}`}>{symbol}</span><button onClick={() => setEditingMood(true)} className="rounded-md p-2 text-zinc-600 hover:bg-white/5 hover:text-violet-300" aria-label="Edit current mood"><Pencil className="h-3.5 w-3.5" /></button></div>}
           </ContextSection>
 
           <ContextSection label="Recent trail">

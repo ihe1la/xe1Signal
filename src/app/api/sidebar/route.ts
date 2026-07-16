@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { calculateSignalStrength } from "@/lib/user-metrics";
 
 export async function GET() {
   const session = await auth();
@@ -10,14 +11,26 @@ export async function GET() {
   }
 
   const userId = session.user.id;
-  const [profile, activeFrequency, recentSignal, recentTrail] = await Promise.all([
+  const [profile, frequencies, recentSignal, recentTrail] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
-      select: { username: true, avatarUrl: true },
+      select: {
+        username: true,
+        name: true,
+        displayName: true,
+        avatarUrl: true,
+        _count: {
+          select: {
+            signals: { where: { isDeleted: false, isArchived: false } },
+            frequencies: { where: { isArchived: false } },
+          },
+        },
+      },
     }),
-    db.frequency.findFirst({
+    db.frequency.findMany({
       where: { ownerId: userId, isArchived: false },
       orderBy: { updatedAt: "desc" },
+      take: 7,
       select: { id: true, name: true, signalCount: true },
     }),
     db.signal.findFirst({
@@ -37,5 +50,16 @@ export async function GET() {
     }),
   ]);
 
-  return NextResponse.json({ profile, activeFrequency, recentSignal, recentTrail });
+  return NextResponse.json({
+    profile: profile ? {
+      username: profile.username,
+      name: profile.displayName || profile.name || profile.username,
+      avatarUrl: profile.avatarUrl,
+      strength: calculateSignalStrength(profile._count.signals, profile._count.frequencies),
+    } : null,
+    activeFrequency: frequencies[0] || null,
+    frequencies,
+    recentSignal,
+    recentTrail,
+  });
 }

@@ -30,6 +30,9 @@ export type DemoUser = {
   avatarUrl: string;
   bannerUrl?: string | null;
   strength: number;
+  followerCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean;
 };
 
 export type DemoFrequency = {

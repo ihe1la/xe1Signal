@@ -27,7 +27,9 @@ export function ProfileView({
   const own = user.username === currentUsername;
   const router = useRouter();
   const { update } = useSession();
-  const [following, setFollowing] = React.useState(false);
+  const [following, setFollowing] = React.useState(Boolean(user.isFollowing));
+  const [followerCount, setFollowerCount] = React.useState(user.followerCount || 0);
+  const [followingBusy, setFollowingBusy] = React.useState(false);
   const [tab, setTab] = React.useState("Signals");
   const [avatarUrl, setAvatarUrl] = React.useState(user.avatarUrl);
   const [bannerUrl, setBannerUrl] = React.useState(user.bannerUrl);
@@ -42,6 +44,28 @@ export function ProfileView({
     setAvatarUrl(user.avatarUrl);
     setBannerUrl(user.bannerUrl);
   }, [user.avatarUrl, user.bannerUrl]);
+
+  React.useEffect(() => {
+    setFollowing(Boolean(user.isFollowing));
+    setFollowerCount(user.followerCount || 0);
+  }, [user.isFollowing, user.followerCount]);
+
+  async function toggleFollow() {
+    if (followingBusy) return;
+    setFollowingBusy(true);
+    try {
+      const response = await fetch(`/api/users/${encodeURIComponent(user.username)}/follow`, { method: "POST" });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Follow could not be updated");
+      setFollowing(result.following);
+      setFollowerCount(result.followerCount);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Follow could not be updated");
+    } finally {
+      setFollowingBusy(false);
+    }
+  }
 
   async function uploadProfileImage(kind: "avatar" | "banner", file: File) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -165,8 +189,9 @@ export function ProfileView({
           <div className="mt-4 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
               <h1 className="font-mono text-2xl text-zinc-100">
-                {user.username}
+                {user.name}
               </h1>
+              <p className="mt-1 font-mono text-[10px] text-zinc-600">@{user.username}</p>
               <p className="mt-3 max-w-xl font-mono text-[11px] leading-5 text-zinc-500">
                 {user.bio}
               </p>
@@ -174,9 +199,9 @@ export function ProfileView({
                 <StrengthBars value={user.strength} />
                 <span>{user.strength} strength</span>
                 <span>·</span>
-                <span>128 followers</span>
+                <span>{followerCount} followers</span>
                 <span>·</span>
-                <span>41 following</span>
+                <span>{user.followingCount || 0} following</span>
               </div>
             </div>
             {own ? (
@@ -190,7 +215,8 @@ export function ProfileView({
             ) : (
               <div className="flex gap-2">
                 <button
-                  onClick={() => setFollowing(!following)}
+                  onClick={() => void toggleFollow()}
+                  disabled={followingBusy}
                   className="flex h-10 items-center gap-2 rounded-lg bg-violet-400/[.12] px-4 font-mono text-[10px] text-violet-300"
                 >
                   {following ? (
@@ -198,7 +224,7 @@ export function ProfileView({
                   ) : (
                     <UserPlus className="h-3.5 w-3.5" />
                   )}
-                  {following ? "Following" : "Follow"}
+                  {followingBusy ? "Updating..." : following ? "Following" : "Follow"}
                 </button>
                 <Link
                   href={`/inbox/${user.username}`}
