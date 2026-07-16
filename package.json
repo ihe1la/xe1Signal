@@ -14,6 +14,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:remove-demo-users": "tsx scripts/remove-demo-users.ts",
+    "db:seed-ihe1la": "tsx scripts/seed-ihe1la-samples.ts",
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",

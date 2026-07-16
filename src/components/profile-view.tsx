@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SignalCard } from "@/components/signals/signal-card";
 import { StrengthBars } from "@/components/layout/right-sidebar";
-import { type DemoUser, demoFrequencies, demoSignals } from "@/lib/demo-data";
+import { type DemoFrequency, type DemoSignal, type DemoUser } from "@/lib/demo-data";
 export function ProfileView({
   user,
   currentUsername,
@@ -38,7 +38,9 @@ export function ProfileView({
   );
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
   const bannerInputRef = React.useRef<HTMLInputElement>(null);
-  const signals = demoSignals.filter((s) => s.owner.username === user.username);
+  const [signals, setSignals] = React.useState<DemoSignal[]>([]);
+  const [frequencies, setFrequencies] = React.useState<DemoFrequency[]>([]);
+  const [recentTrail, setRecentTrail] = React.useState<{ id: string; title: string; nodeCount: number } | null>(null);
 
   React.useEffect(() => {
     setAvatarUrl(user.avatarUrl);
@@ -49,6 +51,21 @@ export function ProfileView({
     setFollowing(Boolean(user.isFollowing));
     setFollowerCount(user.followerCount || 0);
   }, [user.isFollowing, user.followerCount]);
+
+  React.useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch(`/api/signals?limit=50&authorId=${encodeURIComponent(user.id)}`).then((response) => response.ok ? response.json() : null),
+      fetch("/api/frequencies?limit=50").then((response) => response.ok ? response.json() : null),
+      own ? fetch("/api/sidebar").then((response) => response.ok ? response.json() : null) : Promise.resolve(null),
+    ]).then(([signalData, frequencyData, sidebarData]) => {
+      if (!active) return;
+      if (Array.isArray(signalData?.signals)) setSignals(signalData.signals.map((signal: Omit<DemoSignal, "tags"> & { tags?: string | string[] }) => ({ ...signal, tags: Array.isArray(signal.tags) ? signal.tags : (signal.tags || "").split(",").filter(Boolean) })));
+      if (Array.isArray(frequencyData?.frequencies)) setFrequencies(frequencyData.frequencies.filter((frequency: { owner: { username: string } }) => frequency.owner.username === user.username).map((frequency: Omit<DemoFrequency, "tags"> & { tags?: string | string[] }, index: number) => ({ ...frequency, tags: Array.isArray(frequency.tags) ? frequency.tags : (frequency.tags || "").split(",").filter(Boolean), color: ["#8f7be9", "#779bd6", "#d8ad68", "#b77c86"][index % 4] })));
+      if (sidebarData?.recentTrail) setRecentTrail(sidebarData.recentTrail);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [own, user.id, user.username]);
 
   async function toggleFollow() {
     if (followingBusy) return;
@@ -257,9 +274,7 @@ export function ProfileView({
       )}
       {tab === "Frequencies" && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {demoFrequencies
-            .filter((f) => f.owner.username === user.username)
-            .map((f) => (
+          {frequencies.map((f) => (
               <Link
                 key={f.id}
                 href={`/frequencies/${f.id}`}
@@ -275,11 +290,11 @@ export function ProfileView({
       )}
       {tab === "Trails" && own && (
         <Link
-          href="/trails/oauth-login"
+          href={recentTrail ? `/trails/${recentTrail.id}/edit` : "/trails/new/edit"}
           className="block rounded-xl border border-white/[.07] p-6 font-mono text-xs"
         >
-          The login path
-          <small className="mt-2 block text-zinc-600">6 connected nodes</small>
+          {recentTrail?.title || "Create your first trail"}
+          <small className="mt-2 block text-zinc-600">{recentTrail ? `${recentTrail.nodeCount} connected nodes` : "Start connecting signals"}</small>
         </Link>
       )}
       {tab === "Trails" && !own && (
