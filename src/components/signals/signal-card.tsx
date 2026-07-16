@@ -403,7 +403,7 @@ export function SignalCard({
           href={`/profile/${signal.owner.username}`}
           className="hover:text-zinc-200"
         >
-          {signal.owner.username}
+          {signal.owner.name || signal.owner.username}
         </Link>
         <div className="ml-auto flex items-center gap-1">
           <button

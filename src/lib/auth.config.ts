@@ -9,8 +9,9 @@ export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(db),
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 90 * 24 * 60 * 60,
   },
+  jwt: { maxAge: 90 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
     error: "/login",
