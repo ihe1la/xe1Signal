@@ -11,7 +11,7 @@ const frequencySeeds = [
 ];
 
 const signalSeeds = [
-  { id: "sample-ihe1la-blue", type: "SONG", title: "BLUE", description: "Billie Eilish — for the hours that feel almost underwater.", sourceUrl: "https://open.spotify.com/track/2prqm9sPLj10B4Wg0wE5x9", sourceDomain: "open.spotify.com", mediaProvider: "spotify", mediaEntityType: "track", externalId: "2prqm9sPLj10B4Wg0wE5x9", providerUri: "spotify:track:2prqm9sPLj10B4Wg0wE5x9", creatorName: "Billie Eilish", thumbnailUrl: "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0271d62ea7ea8a5be92d3c1f62", previewImageUrl: "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0271d62ea7ea8a5be92d3c1f62", durationMs: 343000, tags: "billie eilish,blue,night", frequencyId: "sample-ihe1la-songs-that-hurt" },
+  { id: "sample-ihe1la-blue", type: "SONG", title: "BLUE", description: "Billie Eilish", sourceUrl: null, sourceDomain: null, mediaProvider: null, mediaEntityType: null, externalId: null, providerUri: null, creatorName: null, thumbnailUrl: null, previewImageUrl: null, durationMs: 111000, tags: "billie eilish,blue,night", frequencyId: "sample-ihe1la-songs-that-hurt" },
   { id: "sample-ihe1la-tokyo", type: "IMAGE", title: "Tokyo textures", description: "Concrete curves, shadows, and quiet geometry.", previewImageUrl: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80", sourceUrl: "https://unsplash.com/photos/city-buildings", sourceDomain: "unsplash.com", tags: "tokyo,architecture,shadow", frequencyId: "sample-ihe1la-beautiful-interfaces" },
   { id: "sample-ihe1la-noticing", type: "LINK", title: "The Art of Noticing", description: "Relearning how to pay attention before the feed decides for you.", sourceUrl: "https://robwalker.substack.com/", sourceDomain: "robwalker.substack.com", previewImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80", tags: "attention,noticing,web", frequencyId: "sample-ihe1la-late-night" },
   { id: "sample-ihe1la-oauth-note", type: "NOTE", title: "OAuth is just trust with better formatting.", description: "A note from the middle of a broken login flow.", content: "The redirect is rarely the bug. The state you carry through it usually is.", tags: "oauth,trust,notes", frequencyId: "sample-ihe1la-broken-flows" },
@@ -34,10 +34,33 @@ async function main() {
     });
   }
 
+  const seededAt = Date.now();
   for (const [index, signal] of signalSeeds.entries()) {
-    const data = { ...signal, ownerId: owner.id, visibility: "PUBLIC", isArchived: false, isDeleted: false, isDraft: false, signalStrength: 72 - index * 4 };
+    const data = { ...signal, ownerId: owner.id, visibility: "PUBLIC", isArchived: false, isDeleted: false, isDraft: false, signalStrength: 72 - index * 4, createdAt: new Date(seededAt - index * 1000) };
     await db.signal.upsert({ where: { id: signal.id }, create: data, update: data });
   }
+
+  await db.signalFile.upsert({
+    where: { id: "sample-ihe1la-blue-file" },
+    create: {
+      id: "sample-ihe1la-blue-file",
+      signalId: "sample-ihe1la-blue",
+      filename: "c910e803-a4b8-432c-806b-ec0fc49f3e9c.mp3",
+      originalName: "Billie Eilish - BLUE.mp3",
+      mimeType: "audio/mpeg",
+      size: 4438125,
+      duration: 110.928,
+      url: "/api/files/c910e803-a4b8-432c-806b-ec0fc49f3e9c.mp3",
+    },
+    update: {
+      signalId: "sample-ihe1la-blue",
+      originalName: "Billie Eilish - BLUE.mp3",
+      mimeType: "audio/mpeg",
+      size: 4438125,
+      duration: 110.928,
+      url: "/api/files/c910e803-a4b8-432c-806b-ec0fc49f3e9c.mp3",
+    },
+  });
 
   for (const frequency of frequencySeeds) {
     const signalCount = await db.signal.count({ where: { frequencyId: frequency.id, isDeleted: false, isArchived: false } });
