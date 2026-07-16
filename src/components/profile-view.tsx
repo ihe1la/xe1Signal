@@ -34,6 +34,8 @@ export function ProfileView({
   const [uploading, setUploading] = React.useState<"avatar" | "banner" | null>(
     null,
   );
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const bannerInputRef = React.useRef<HTMLInputElement>(null);
   const signals = demoSignals.filter((s) => s.owner.username === user.username);
 
   React.useEffect(() => {
@@ -107,10 +109,9 @@ export function ProfileView({
           }
         >
           {own && (
-            <label
-              className={`absolute right-4 top-4 flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 font-mono text-[9px] text-zinc-200 backdrop-blur ${uploading ? "pointer-events-none opacity-60" : ""}`}
-            >
+            <>
               <input
+                ref={bannerInputRef}
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp"
                 aria-label="Change profile background"
@@ -119,13 +120,16 @@ export function ProfileView({
                   void handleImageChange("banner", event.currentTarget)
                 }
               />
-              {uploading === "banner" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ImageIcon className="h-3.5 w-3.5" />
-              )}
-              Change background
-            </label>
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={Boolean(uploading)}
+                className={`absolute right-4 top-4 flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-black/60 px-3 py-2 font-mono text-[9px] text-zinc-200 backdrop-blur ${uploading ? "pointer-events-none opacity-60" : ""}`}
+              >
+                {uploading === "banner" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                Change background
+              </button>
+            </>
           )}
         </div>
         <div className="px-6 pb-6">
@@ -136,24 +140,26 @@ export function ProfileView({
               className="h-24 w-24 rounded-full border-4 border-[#0b0c10] bg-zinc-900 object-cover"
             />
             {own && (
-              <label
-                className={`absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-white/15 bg-zinc-900 text-zinc-200 shadow-lg ${uploading ? "pointer-events-none opacity-60" : ""}`}
-              >
+              <>
                 <input
+                  ref={avatarInputRef}
                   type="file"
                   accept=".jpg,.jpeg,.png,.webp"
-                  aria-label="Change profile picture"
                   className="sr-only"
                   onChange={(event) =>
                     void handleImageChange("avatar", event.currentTarget)
                   }
                 />
-                {uploading === "avatar" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Camera className="h-3.5 w-3.5" />
-                )}
-              </label>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={Boolean(uploading)}
+                  aria-label="Change profile picture"
+                  className={`absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-white/15 bg-zinc-900 text-zinc-200 shadow-lg ${uploading ? "pointer-events-none opacity-60" : ""}`}
+                >
+                  {uploading === "avatar" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                </button>
+              </>
             )}
           </div>
           <div className="mt-4 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">

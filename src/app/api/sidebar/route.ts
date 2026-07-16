@@ -10,7 +10,11 @@ export async function GET() {
   }
 
   const userId = session.user.id;
-  const [activeFrequency, recentSignal, recentTrail] = await Promise.all([
+  const [profile, activeFrequency, recentSignal, recentTrail] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      select: { username: true, avatarUrl: true },
+    }),
     db.frequency.findFirst({
       where: { ownerId: userId, isArchived: false },
       orderBy: { updatedAt: "desc" },
@@ -33,5 +37,5 @@ export async function GET() {
     }),
   ]);
 
-  return NextResponse.json({ activeFrequency, recentSignal, recentTrail });
+  return NextResponse.json({ profile, activeFrequency, recentSignal, recentTrail });
 }

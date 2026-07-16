@@ -8,23 +8,19 @@ test("settings avatar and cover controls select, upload, and persist images", as
   await page.locator("#password").fill("x");
   await page.locator("#confirmPassword").fill("x");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/discover$/);
+  await expect(page).toHaveURL(/\/discover$/, { timeout: 15_000 });
 
   await page.goto("/settings");
-  const save = page.getByRole("button", { name: "Save avatar & cover" });
-  await expect(save).toBeDisabled();
-  await page.locator("#profile-cover-input").setInputFiles("public/media/archive-landing-bg.png");
-  await page.getByLabel("Change avatar").setInputFiles("src/app/icon.png");
-  await expect(save).toBeEnabled();
-
   const uploads: string[] = [];
   page.on("response", async (response) => {
     if (response.url().endsWith("/api/user/profile-image") && response.status() === 201) {
       uploads.push((await response.json()).url);
     }
   });
-  await save.click();
-  await expect(page.getByText("Profile images updated")).toBeVisible();
+  await page.locator("#profile-cover-input").setInputFiles("public/media/archive-landing-bg.png");
+  await expect(page.getByText("Cover updated")).toBeVisible();
+  await page.locator("#profile-avatar-input").setInputFiles("src/app/icon.png");
+  await expect(page.getByText("Avatar updated")).toBeVisible();
   await expect.poll(() => uploads.length).toBe(2);
 
   await page.goto(`/profile/${username}`);

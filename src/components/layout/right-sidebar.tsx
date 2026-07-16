@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { ArrowRight, Check, Pencil, Plus, X } from "lucide-react";
 
 type SidebarData = {
+  profile: { username: string; avatarUrl: string | null } | null;
   activeFrequency: { id: string; name: string; signalCount: number } | null;
   recentSignal: { id: string; title: string | null; previewImageUrl: string | null; createdAt: string } | null;
   recentTrail: { id: string; title: string; nodeCount: number; nodes: { id: string; title: string | null }[] } | null;
@@ -17,9 +18,9 @@ export function StrengthBars({ value = 76 }: { value?: number }) {
 
 export function RightSidebar() {
   const { data: session, status } = useSession();
-  const username = session?.user?.username || "user";
-  const avatarUrl = session?.user?.avatarUrl;
-  const [data, setData] = React.useState<SidebarData>({ activeFrequency: null, recentSignal: null, recentTrail: null });
+  const [data, setData] = React.useState<SidebarData>({ profile: null, activeFrequency: null, recentSignal: null, recentTrail: null });
+  const username = data.profile?.username || session?.user?.username || "user";
+  const avatarUrl = data.profile?.avatarUrl;
   const [mood, setMood] = React.useState("low light / private");
   const [symbol, setSymbol] = React.useState("🌙");
   const [draftMood, setDraftMood] = React.useState(mood);

@@ -95,8 +95,8 @@ export default function SettingsPage() {
   const [isImageSaving, setIsImageSaving] = React.useState(false);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
   const [coverPreview, setCoverPreview] = React.useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
-  const [coverFile, setCoverFile] = React.useState<File | null>(null);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -150,7 +150,31 @@ export default function SettingsPage() {
     }).catch(() => undefined);
   }, [session?.user?.id, profileForm]);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadProfileImage = async (kind: "avatar" | "banner", file: File) => {
+    setIsImageSaving(true);
+    try {
+      const body = new FormData();
+      body.set("kind", kind);
+      body.set("file", file);
+      const response = await fetch("/api/user/profile-image", { method: "POST", body });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "The image could not be saved");
+      if (kind === "avatar") {
+        setAvatarPreview(result.url);
+        await update({ avatarUrl: result.url });
+      } else {
+        setCoverPreview(result.url);
+      }
+      router.refresh();
+      toast.success(kind === "avatar" ? "Avatar updated" : "Cover updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The image could not be saved");
+    } finally {
+      setIsImageSaving(false);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -161,14 +185,12 @@ export default function SettingsPage() {
         toast.error("Avatar must be under 2MB");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => setAvatarPreview(reader.result as string);
-      reader.readAsDataURL(file);
-      setAvatarFile(file);
+      await uploadProfileImage("avatar", file);
     }
+    e.target.value = "";
   };
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -179,38 +201,9 @@ export default function SettingsPage() {
         toast.error("Cover image must be under 5MB");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => setCoverPreview(reader.result as string);
-      reader.readAsDataURL(file);
-      setCoverFile(file);
+      await uploadProfileImage("banner", file);
     }
-  };
-
-  const saveProfileImages = async () => {
-    if (!avatarFile && !coverFile) return;
-    setIsImageSaving(true);
-    try {
-      let savedAvatar: string | undefined;
-      for (const [kind, file] of [["avatar", avatarFile], ["banner", coverFile]] as const) {
-        if (!file) continue;
-        const body = new FormData();
-        body.set("kind", kind);
-        body.set("file", file);
-        const response = await fetch("/api/user/profile-image", { method: "POST", body });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || `Failed to save ${kind}`);
-        if (kind === "avatar") savedAvatar = result.url;
-      }
-      if (savedAvatar) await update({ avatarUrl: savedAvatar });
-      setAvatarFile(null);
-      setCoverFile(null);
-      router.refresh();
-      toast.success("Profile images updated");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Profile images could not be saved");
-    } finally {
-      setIsImageSaving(false);
-    }
+    e.target.value = "";
   };
 
   const onProfileSubmit = async (data: ProfileForm) => {
@@ -387,16 +380,17 @@ export default function SettingsPage() {
                     </div>
                   )}
                   <input
+                    ref={coverInputRef}
                     id="profile-cover-input"
                     type="file"
                     accept=".jpg,.jpeg,.png,.webp"
                     onChange={handleCoverChange}
                     className="sr-only"
                   />
-                  <label htmlFor="profile-cover-input" className="absolute bottom-4 right-4 inline-flex h-9 cursor-pointer items-center rounded-md bg-secondary px-3 text-sm font-medium text-secondary-foreground hover:bg-secondary/80">
+                  <button type="button" disabled={isImageSaving} onClick={() => coverInputRef.current?.click()} className="absolute bottom-4 right-4 inline-flex h-9 cursor-pointer items-center rounded-md bg-secondary px-3 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50">
                       <ImageIcon className="h-4 w-4" />
-                      <span className="ml-1">Change Cover</span>
-                  </label>
+                      <span className="ml-1">{isImageSaving ? "Uploading..." : "Change Cover"}</span>
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -414,15 +408,16 @@ export default function SettingsPage() {
                       )}
                     </Avatar>
                     <input
+                      ref={avatarInputRef}
                       id="profile-avatar-input"
                       type="file"
                       accept=".jpg,.jpeg,.png,.webp"
                       onChange={handleAvatarChange}
                       className="sr-only"
                     />
-                    <label htmlFor="profile-avatar-input" aria-label="Change avatar" className="absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                    <button type="button" disabled={isImageSaving} onClick={() => avatarInputRef.current?.click()} aria-label="Change avatar" className="absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50">
                         <ImageIcon className="h-4 w-4" />
-                    </label>
+                    </button>
                   </div>
                   <div>
                     <p className="font-medium">Avatar</p>
@@ -431,15 +426,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  onClick={saveProfileImages}
-                  disabled={isImageSaving || (!avatarFile && !coverFile)}
-                  className="w-full sm:w-auto"
-                >
-                  {isImageSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {isImageSaving ? "Uploading..." : "Save avatar & cover"}
-                </Button>
+                <p className="text-xs text-muted-foreground">Images save immediately after you choose a file.</p>
               </CardContent>
             </Card>
 
