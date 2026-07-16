@@ -167,3 +167,20 @@ export function mediaIdentityMatches(
     );
   return media.externalId === externalId;
 }
+
+export function isAllowedAudiusApiRedirect(value: string, base: string) {
+  try {
+    const url = new URL(value, base);
+    return (
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      url.hostname === "api.audius.co" &&
+      /^\/v1\/tracks\/[A-Za-z0-9]{4,64}$/.test(url.pathname) &&
+      !url.search &&
+      !url.hash
+    );
+  } catch {
+    return false;
+  }
+}

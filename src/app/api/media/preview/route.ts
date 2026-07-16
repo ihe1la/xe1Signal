@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
+  isAllowedAudiusApiRedirect,
   isAllowedMediaThumbnail,
   isSpotifyShortLink,
   parseMediaUrl,
@@ -55,12 +56,26 @@ async function resolveSpotifyShortLink(value: string) {
   throw new Error("Short link could not be resolved");
 }
 
-async function fetchProviderJson(url: string) {
-  const response = await fetch(url, {
-    redirect: "error",
-    signal: AbortSignal.timeout(4000),
-    headers: { accept: "application/json" },
-  });
+async function fetchProviderJson(url: string, allowAudiusRedirect = false) {
+  let current = url;
+  let response: Response | null = null;
+  for (let redirects = 0; redirects < 2; redirects += 1) {
+    response = await fetch(current, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(4000),
+      headers: { accept: "application/json" },
+    });
+    if (response.status < 300 || response.status >= 400) break;
+    const location = response.headers.get("location");
+    if (
+      !allowAudiusRedirect ||
+      !location ||
+      !isAllowedAudiusApiRedirect(location, current)
+    )
+      throw new Error("Unexpected provider redirect");
+    current = new URL(location, current).toString();
+  }
+  if (!response) throw new Error("Metadata unavailable");
   if (
     !response.ok ||
     !response.headers.get("content-type")?.toLowerCase().includes("json")
@@ -120,6 +135,7 @@ export async function POST(request: Request) {
       const parsed = audiusResponseSchema.safeParse(
         await fetchProviderJson(
           `https://api.audius.co/v1/resolve?url=${encodeURIComponent(media.canonicalUrl)}`,
+          true,
         ),
       );
       if (!parsed.success) throw new Error("Audius metadata unavailable");

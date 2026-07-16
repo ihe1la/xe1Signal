@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isAllowedAudiusApiRedirect,
   isAllowedMediaThumbnail,
   isSpotifyShortLink,
   mediaIdentityMatches,
@@ -53,6 +54,18 @@ describe("parseMediaUrl", () => {
     expect(mediaIdentityMatches(media, "audius", "track", "2ANlJpp")).toBe(
       true,
     );
+  });
+
+  it("only allows Audius resolve redirects to official track endpoints", () => {
+    const base = "https://api.audius.co/v1/resolve?url=track";
+    expect(isAllowedAudiusApiRedirect("/v1/tracks/9dpRlM2", base)).toBe(true);
+    expect(
+      isAllowedAudiusApiRedirect(
+        "https://evil.test/v1/tracks/9dpRlM2",
+        base,
+      ),
+    ).toBe(false);
+    expect(isAllowedAudiusApiRedirect("/v1/users/9dpRlM2", base)).toBe(false);
   });
 
   it.each([
