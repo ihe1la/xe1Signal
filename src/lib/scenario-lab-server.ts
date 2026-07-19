@@ -4,7 +4,7 @@ import { canAccessScenarioLab } from "@/lib/scenario-lab";
 const saves = new Map<string, number[]>();
 export async function requireScenarioLab() {
   const session = await auth();
-  return session?.user?.id && canAccessScenarioLab(process.env.ENABLE_SCENARIO_LAB === "true", session.user.username) ? session : null;
+  return session?.user?.id && canAccessScenarioLab(process.env.ENABLE_SCENARIO_LAB === "true", session.user.id) ? session : null;
 }
 export function isSameOrigin(request: Request) {
   const origin = request.headers.get("origin");

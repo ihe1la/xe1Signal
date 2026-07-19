@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canAccessScenarioLab, compareAccess, compileSafeRegex, simulateFilter, simulateOAuth } from "./scenario-lab";
 const base = { id: "1", name: "rule", pattern: "bad", matchType: "CONTAINS" as const, action: "BLOCK" as const, replacement: "", enabled: true, order: 0 };
-describe("Scenario Lab access", () => { it("requires both the flag and ihe1la", () => { expect(canAccessScenarioLab(true, "ihe1la")).toBe(true); expect(canAccessScenarioLab(false, "ihe1la")).toBe(false); expect(canAccessScenarioLab(true, "hela")).toBe(false); }); });
+describe("Scenario Lab access", () => { it("requires the flag and any authenticated user", () => { expect(canAccessScenarioLab(true, "user-1")).toBe(true); expect(canAccessScenarioLab(true, "new-user")).toBe(true); expect(canAccessScenarioLab(false, "user-1")).toBe(false); expect(canAccessScenarioLab(true, undefined)).toBe(false); }); });
 describe("filter simulation", () => {
   it("runs rules in order", () => { const rules = [{ ...base, name: "second", action: "ALLOW" as const, order: 2 }, { ...base, name: "first", action: "BLOCK" as const, order: 1 }]; expect(simulateFilter("bad", rules, "Plain text").matchedRule).toBe("first"); });
   it("supports contains and insensitive matching", () => { expect(simulateFilter("bad", [base], "Plain text").result).toBe("Blocked"); expect(simulateFilter("BAD", [{ ...base, matchType: "CONTAINS_INSENSITIVE" }], "Plain text").result).toBe("Blocked"); });

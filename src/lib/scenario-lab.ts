@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-export const LAB_OWNER_USERNAME = "ihe1la";
 export const LAB_MAX_RULES = 20;
 export const LAB_MAX_PATTERN = 240;
 export const LAB_MAX_INPUT = 2000;
@@ -17,7 +16,7 @@ export const filterRuleSchema = z.object({
 });
 export const filterRunSchema = z.object({ rules: z.array(filterRuleSchema).max(LAB_MAX_RULES), values: z.array(z.string().max(LAB_MAX_INPUT)).max(LAB_MAX_VALUES), context: z.enum(["HTML text", "HTML attribute", "JSON string", "JavaScript string", "URL value", "Plain text"]) });
 
-export function canAccessScenarioLab(enabled: boolean, username?: string | null) { return enabled && username === LAB_OWNER_USERNAME; }
+export function canAccessScenarioLab(enabled: boolean, userId?: string | null) { return enabled && Boolean(userId); }
 export function htmlEncode(value: string) { return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!); }
 
 export function compileSafeRegex(pattern: string) {
