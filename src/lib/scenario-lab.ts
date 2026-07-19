@@ -16,7 +16,17 @@ export const filterRuleSchema = z.object({
 });
 export const filterRunSchema = z.object({ rules: z.array(filterRuleSchema).max(LAB_MAX_RULES), values: z.array(z.string().max(LAB_MAX_INPUT)).max(LAB_MAX_VALUES), context: z.enum(["HTML text", "HTML attribute", "JSON string", "JavaScript string", "URL value", "Plain text"]) });
 
-export function canAccessScenarioLab(enabled: boolean, userId?: string | null) { return enabled && Boolean(userId); }
+export function canAccessScenarioLab(enabled: boolean, username?: string | null) { return enabled && username === "ihe1la"; }
+export function isTrustedLabOrigin(requestUrl: string, origin: string | null, forwardedProto: string | null, forwardedHost: string | null, host: string | null, production: boolean) {
+  if (!origin) return !production;
+  try {
+    const internalOrigin = new URL(requestUrl).origin;
+    const proxyHost = (forwardedHost || host)?.split(",")[0]?.trim();
+    const proxyProto = forwardedProto?.split(",")[0]?.trim();
+    const publicOrigin = proxyHost ? `${proxyProto || new URL(requestUrl).protocol.replace(":", "")}://${proxyHost}` : null;
+    return origin === internalOrigin || origin === publicOrigin;
+  } catch { return false; }
+}
 export function htmlEncode(value: string) { return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!); }
 
 export function compileSafeRegex(pattern: string) {

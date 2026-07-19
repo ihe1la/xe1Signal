@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, LogOut, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function Header() {
+export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: boolean }) {
   const router = useRouter();
   const { status } = useSession();
   const [query, setQuery] = React.useState("");
@@ -58,7 +59,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-30 h-20 border-b border-white/[0.055] bg-[#08090d]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11 2xl:pr-[348px]">
+        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[348px]")}>
           <button onClick={() => setMobileSearch(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-white/[0.07] text-zinc-400 lg:hidden" aria-label="Open search"><Menu className="h-5 w-5" /></button>
           <form onSubmit={submit} className="relative hidden max-w-[720px] flex-1 md:block">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
