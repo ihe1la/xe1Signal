@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const LAB_OWNER_USERNAME = "hela";
+export const LAB_OWNER_USERNAME = "ihe1la";
 export const LAB_MAX_RULES = 20;
 export const LAB_MAX_PATTERN = 240;
 export const LAB_MAX_INPUT = 2000;
