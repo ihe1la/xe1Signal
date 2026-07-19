@@ -1,0 +1,9 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { isSameOrigin, requireScenarioLab, withinLabSaveLimit } from "@/lib/scenario-lab-server";
+
+const configurationSchema = z.record(z.string(), z.union([z.string().max(2000), z.number(), z.boolean(), z.null(), z.array(z.string().max(500)).max(30)]));
+const schema = z.object({ module: z.enum(["XSS Filter Playground", "OAuth Flow Simulator", "Access Control Matrix"]), title: z.string().trim().min(1).max(160), summary: z.string().trim().min(1).max(2000), result: z.string().max(60), configuration: configurationSchema, ownerNotes: z.string().max(2000).default("") });
+export async function GET() { const session = await requireScenarioLab(); if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 }); const runs = await db.labRun.findMany({ where: { createdById: session.user.id }, orderBy: { createdAt: "desc" }, take: 100, select: { id: true, module: true, title: true, summary: true, result: true, ownerNotes: true, createdAt: true } }); return NextResponse.json({ runs }); }
+export async function POST(request: Request) { const session = await requireScenarioLab(); if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 }); if (!isSameOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 }); if (!withinLabSaveLimit(session.user.id)) return NextResponse.json({ error: "Save limit reached. Try again shortly." }, { status: 429 }); const parsed = schema.safeParse(await request.json().catch(() => null)); if (!parsed.success) return NextResponse.json({ error: "Invalid lab result" }, { status: 400 }); const { configuration, ...values } = parsed.data; const run = await db.labRun.create({ data: { ...values, configurationJson: JSON.stringify(configuration), createdById: session.user.id } }); return NextResponse.json({ run }, { status: 201 }); }

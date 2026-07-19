@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { requireScenarioLab } from "@/lib/scenario-lab-server"; export async function GET(){return await requireScenarioLab()?NextResponse.json({allowed:true}):NextResponse.json({error:"Not found"},{status:404})}

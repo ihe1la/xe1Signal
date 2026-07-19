@@ -91,6 +91,13 @@ export default async function InternalEnvironmentPage({ searchParams }: PageProp
             </div>
           </dl>
         </section>
+
+        {process.env.ENABLE_TEST_LAB === 'true' && session?.user?.role === 'OWNER' && (
+          <Link href="/internal/reflection-mapper" className="block rounded-lg border border-violet-500/40 bg-violet-500/10 p-5 transition-colors hover:bg-violet-500/15">
+            <span className="text-sm font-medium">Open Reflection Mapper</span>
+            <span className="mt-1 block text-xs text-muted-foreground">Inspect harmless query markers on explicitly allowlisted Test Lab targets.</span>
+          </Link>
+        )}
       </div>
     </main>
   );

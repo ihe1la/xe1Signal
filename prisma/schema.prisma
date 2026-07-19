@@ -54,10 +54,87 @@ model User {
   trailCollaborations ResearchTrailCollaborator[]
   settings          UserSettings?
   auditLogs         AuditLog[]
+  reflectionRuns    ReflectionRun[]
+  labRuns           LabRun[]
+  labFilterRules    LabFilterRule[]
 
   @@index([username])
   @@index([email])
   @@index([role])
+}
+
+model ReflectionRun {
+  id              String             @id @default(cuid())
+  targetUrl       String
+  finalRequestUrl String
+  mode            String
+  statusCode      Int
+  contentType     String
+  responseSize    Int
+  responseTimeMs  Int
+  requestCount    Int                @default(1)
+  createdById     String
+  createdAt       DateTime           @default(now())
+
+  createdBy User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  results   ReflectionResult[]
+
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+model ReflectionResult {
+  id              String   @id @default(cuid())
+  runId           String
+  parameterName   String
+  occurrenceIndex Int
+  marker          String
+  reflected       Boolean
+  reflectionCount Int
+  firstPosition   Int?
+  context         String?
+  encoding        String?
+  responseSection String?
+  snippet         String?
+
+  run ReflectionRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([reflected])
+}
+
+model LabRun {
+  id                String   @id @default(cuid())
+  module            String
+  title             String
+  summary           String
+  result            String
+  configurationJson String
+  ownerNotes        String   @default("")
+  createdById       String
+  createdAt         DateTime @default(now())
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById, createdAt])
+}
+
+model LabFilterRule {
+  id          String   @id @default(cuid())
+  name        String
+  pattern     String
+  matchType   String
+  action      String
+  replacement String   @default("")
+  enabled     Boolean  @default(true)
+  sortOrder   Int
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById, sortOrder])
 }
 
 model PasswordResetToken {

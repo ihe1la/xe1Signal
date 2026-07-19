@@ -4,28 +4,31 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
-import { Archive, Bell, CircleUserRound, Compass, Mail, Plus, Radio, Settings, Users } from "lucide-react";
+import { Archive, Bell, CircleUserRound, Compass, FlaskConical, Mail, Plus, Radio, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
+import type { LucideIcon } from "lucide-react";
 
 type SidebarSummary = {
   profile: { username: string; name: string; avatarUrl: string | null; strength: number } | null;
   frequencies: { id: string; name: string; signalCount: number }[];
 };
 
-const navigation = [
+const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/discover", "Discover", Compass], ["/frequencies", "Frequencies", Radio], ["/archive", "Archive", Archive],
   ["/people", "People", Users], ["/inbox", "Inbox", Mail], ["/notifications", "Notifications", Bell],
-] as const;
+];
 
 export function LeftSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [summary, setSummary] = React.useState<SidebarSummary>({ profile: null, frequencies: [] });
+  const [labAllowed, setLabAllowed] = React.useState(false);
   React.useEffect(() => {
     if (!session?.user?.id) return;
     let active = true;
     fetch("/api/sidebar").then((response) => response.ok ? response.json() : null).then((data) => { if (active && data) setSummary(data); }).catch(() => undefined);
+    fetch("/api/internal/lab/access").then((response) => { if (active) setLabAllowed(response.ok); }).catch(() => undefined);
     return () => { active = false; };
   }, [session?.user?.id, pathname]);
   const username = summary.profile?.username || session?.user?.username || "user";
@@ -34,7 +37,7 @@ export function LeftSidebar() {
       <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-9 font-mono text-[15px] tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-3 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
         <nav className="space-y-1">
-          {navigation.map(([href, label, Icon]) => { const active = pathname === href || pathname.startsWith(`${href}/`); return (
+          {navigation.flatMap((item) => item[0] === "/inbox" && labAllowed ? [["/internal/lab", "Lab", FlaskConical] as const, item] : [item]).map(([href, label, Icon]) => { const active = pathname === href || pathname.startsWith(`${href}/`); return (
             <Link key={href} href={href} className={cn("flex h-11 items-center gap-4 rounded-[9px] px-3 font-mono text-[13px] transition", active ? "bg-white/[0.035] text-zinc-100" : "text-zinc-500 hover:bg-white/[0.025] hover:text-zinc-300")}><Icon className={cn("h-[18px] w-[18px]", active && "text-violet-400")} /><span>{label}</span></Link>
           ); })}
         </nav>

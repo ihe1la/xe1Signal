@@ -1,0 +1,1 @@
+import { notFound } from "next/navigation"; import { XssLab } from "@/components/scenario-lab"; import { requireScenarioLab } from "@/lib/scenario-lab-server"; export default async function Page(){if(!await requireScenarioLab())notFound();return <XssLab/>}
