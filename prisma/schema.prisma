@@ -57,6 +57,7 @@ model User {
   reflectionRuns    ReflectionRun[]
   labRuns           LabRun[]
   labFilterRules    LabFilterRule[]
+  partyQueueItems   PartyQueueItem[]
 
   @@index([username])
   @@index([email])
@@ -597,4 +598,42 @@ model SearchIndex {
   lastIndexedAt DateTime @default(now())
 
   @@index([entityType])
+}
+
+model PartyRoom {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  currentItemId String?
+  isPlaying     Boolean          @default(false)
+  revision      Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  queue         PartyQueueItem[]
+
+  @@index([slug])
+}
+
+model PartyQueueItem {
+  id              String    @id @default(cuid())
+  roomId          String
+  addedById       String
+  position        Int
+  unstreamJobId   String?
+  unstreamTrackId String?
+  title           String
+  artists         String    @default("")
+  cover           String?
+  sourceUrl       String
+  status          String    @default("resolving")
+  error           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  room    PartyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  addedBy User      @relation(fields: [addedById], references: [id], onDelete: Cascade)
+
+  @@index([roomId, position])
+  @@index([roomId, status])
+  @@index([unstreamJobId])
 }

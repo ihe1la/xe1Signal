@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
-import { Archive, Bell, CircleUserRound, Compass, FlaskConical, Mail, Plus, Radio, Settings, Users } from "lucide-react";
+import { Archive, Bell, CircleUserRound, Compass, FlaskConical, Headphones, Mail, Plus, Radio, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
 import type { LucideIcon } from "lucide-react";
@@ -16,7 +16,7 @@ type SidebarSummary = {
 
 const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/discover", "Discover", Compass], ["/frequencies", "Frequencies", Radio], ["/archive", "Archive", Archive],
-  ["/people", "People", Users], ["/inbox", "Inbox", Mail], ["/notifications", "Notifications", Bell],
+  ["/party", "Party", Headphones], ["/people", "People", Users], ["/inbox", "Inbox", Mail], ["/notifications", "Notifications", Bell],
 ];
 
 export function LeftSidebar() {

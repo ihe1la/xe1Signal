@@ -35,6 +35,7 @@ All demo accounts use the password `Archive!2026`.
 - YouTube and Spotify Signals store canonical provider IDs and cached oEmbed metadata only. Audius track Signals resolve through the official Audius API and stream through the same native persistent player as uploaded audio, with no provider frame. Provider media is never downloaded, converted, or hosted by Signal Archive.
 - Frequencies, follows, saves, reactions, comments/replies, profiles, inbox messages, notifications, and moderation foundations.
 - Grouped/debounced search, archive filters, research trails with draggable nodes, zoom, sharing state, and local autosave.
+- Shared `/party` room with a single persisted queue, SSE plus polling synchronization, and native audio playback from Unstream-finished files.
 - Responsive desktop context panel, tablet layout, mobile search overlay, and bottom navigation.
 
 ## Validation
@@ -51,7 +52,20 @@ The Playwright suite expects the development server on `http://127.0.0.1:3000` a
 
 ## Environment
 
-Origins are configurable through `NEXT_PUBLIC_APP_URL`, `APP_ORIGIN`, `API_ORIGIN`, `FILE_ORIGIN`, and `PREVIEW_ORIGIN`. Change `AUTH_SECRET` before any shared deployment. `CRON_SECRET` protects the ghost cleanup endpoint.
+Origins are configurable through `NEXT_PUBLIC_APP_URL`, `APP_ORIGIN`, `API_ORIGIN`, `FILE_ORIGIN`, and `PREVIEW_ORIGIN`. `UNSTREAM_API_URL` points xe1Signal's server to the running Unstream API; locally this is normally `http://127.0.0.1:8020`. Change `AUTH_SECRET` before any shared deployment. `CRON_SECRET` protects the ghost cleanup endpoint.
+
+## Shared Party and Unstream
+
+The `/party` room delegates metadata resolution, YouTube fallback/search, and downloads to Unstream. xe1Signal does not run yt-dlp, carry YouTube cookies, or rely on a YouTube iframe for primary Party playback. Once Unstream reports a finished track, xe1Signal's authenticated audio route relays the exact Unstream file endpoint to the browser's native audio element.
+
+Before local Party YouTube testing, start the already-configured Unstream checkout:
+
+```powershell
+cd D:\cursor\unstream
+.\start-local.ps1
+```
+
+For production, Unstream must run on the VPS or be reachable from the xe1Signal host through `UNSTREAM_API_URL`. Its own signed-in cookie, yt-dlp remote-component, Deno, and pot-provider setup must be maintained on that host; a green xe1Signal build alone cannot make YouTube extraction work.
 
 ## VPS file storage
 
@@ -69,6 +83,7 @@ APP_ORIGIN="https://archive.example.com"
 API_ORIGIN="https://archive.example.com"
 FILE_ORIGIN="https://archive.example.com"
 PREVIEW_ORIGIN="https://archive.example.com"
+UNSTREAM_API_URL="http://127.0.0.1:8020"
 AUTH_URL="https://archive.example.com"
 AUTH_TRUST_HOST="true"
 AUTH_SECRET="replace-with-a-random-secret-of-at-least-32-characters"
