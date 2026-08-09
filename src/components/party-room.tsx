@@ -72,6 +72,7 @@ export function PartyRoom() {
       artist: item.artists.join(", ") || "Unknown artist",
       src: item.fileUrl,
       href: "/party",
+      onToggle: () => { void controlRef.current(roomPlayingRef.current ? "pause" : "play", item.id).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not update playback")); },
     };
     setPlaybackBlocked(false);
     playerRef.current.playTrack(track, {

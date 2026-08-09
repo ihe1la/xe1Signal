@@ -12,6 +12,7 @@ export type AudioTrack = {
   artist?: string;
   src: string;
   href?: string;
+  onToggle?: () => void;
 };
 
 type AudioPlayerValue = {
@@ -79,6 +80,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   async function toggle() {
     const player = audio.current;
     if (!player || !current) return;
+    if (current.onToggle) { current.onToggle(); return; }
     if (player.paused) { await player.play(); setPlaying(true); }
     else { player.pause(); setPlaying(false); }
   }
