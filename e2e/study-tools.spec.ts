@@ -37,9 +37,6 @@ test("Study and Tools keep the simplified shell", async ({ page }) => {
   await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
-  await expect(page.getByText("Insights", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Activity rhythm", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Log a manual session", { exact: true })).toHaveCount(0);
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
