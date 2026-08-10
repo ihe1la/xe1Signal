@@ -92,7 +92,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setCurrent(null); setPlaying(false); setProgress(0); setDuration(0);
   }
 
-  async function shareNowPlaying(){if(!current)return;const recipient=session?.user?.username==="hela"?"test":"hela";const href=current.href||`${window.location.origin}${current.signalId?`/signals/${current.signalId}`:"/party"}`;const response=await fetch("/api/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({username:recipient,content:`🎧 Now playing: ${current.title}${current.artist?` — ${current.artist}`:""}\n${href}`})});if(response.ok){setSharing(false);setShared(true);window.setTimeout(()=>setShared(false),1800)}}
+  async function shareNowPlaying(){if(!current)return;const recipient=session?.user?.username==="hela"?"test":"hela";const href=current.href||`${window.location.origin}${current.signalId?`/signals/${current.signalId}`:"/vibe"}`;const response=await fetch("/api/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({username:recipient,content:`🎧 Now playing: ${current.title}${current.artist?` — ${current.artist}`:""}\n${href}`})});if(response.ok){setSharing(false);setShared(true);window.setTimeout(()=>setShared(false),1800)}}
 
   return <AudioPlayerContext.Provider value={{ current, playing, progress, duration, playTrack, toggle, stop: close }}>
     {children}

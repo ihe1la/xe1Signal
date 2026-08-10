@@ -57,7 +57,7 @@ model User {
   reflectionRuns    ReflectionRun[]
   labRuns           LabRun[]
   labFilterRules    LabFilterRule[]
-  partyQueueItems   PartyQueueItem[]
+  vibeQueueItems   VibeQueueItem[]
 
   @@index([username])
   @@index([email])
@@ -600,7 +600,7 @@ model SearchIndex {
   @@index([entityType])
 }
 
-model PartyRoom {
+model VibeRoom {
   id            String           @id @default(cuid())
   slug          String           @unique
   currentItemId String?
@@ -609,12 +609,12 @@ model PartyRoom {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  queue         PartyQueueItem[]
+  queue         VibeQueueItem[]
 
   @@index([slug])
 }
 
-model PartyQueueItem {
+model VibeQueueItem {
   id              String    @id @default(cuid())
   roomId          String
   addedById       String
@@ -630,7 +630,7 @@ model PartyQueueItem {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  room    PartyRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room    VibeRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   addedBy User      @relation(fields: [addedById], references: [id], onDelete: Cascade)
 
   @@index([roomId, position])

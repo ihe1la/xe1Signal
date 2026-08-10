@@ -10,12 +10,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const item = await db.partyQueueItem.findFirst({
+  const item = await db.vibeQueueItem.findFirst({
     where: { id, room: { slug: "main" } },
     select: { unstreamJobId: true, unstreamTrackId: true, status: true },
   });
   if (!item || !["ready", "playing"].includes(item.status) || !item.unstreamJobId || !item.unstreamTrackId) {
-    return NextResponse.json({ error: "Party track is not ready" }, { status: 404 });
+    return NextResponse.json({ error: "Vibe track is not ready" }, { status: 404 });
   }
 
   let upstream: Response;
@@ -24,7 +24,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unstream is unavailable" }, { status: 502 });
   }
-  if (!upstream.ok) return NextResponse.json({ error: "Party track is not available" }, { status: upstream.status === 404 ? 404 : 502 });
+  if (!upstream.ok) return NextResponse.json({ error: "Vibe track is not available" }, { status: upstream.status === 404 ? 404 : 502 });
   const headers = new Headers();
   for (const name of ["accept-ranges", "content-length", "content-range", "content-type"]) {
     const value = upstream.headers.get(name);

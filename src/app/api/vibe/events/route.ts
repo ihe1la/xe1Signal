@@ -1,17 +1,17 @@
 import { auth } from "@/lib/auth";
 import {
-  ensureMainPartyRoom,
-  getPartySnapshot,
-  subscribeToParty,
-  syncActivePartyJobs,
-} from "@/lib/party-server";
+  ensureMainVibeRoom,
+  getVibeSnapshot,
+  subscribeToVibe,
+  syncActiveVibeJobs,
+} from "@/lib/vibe-server";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
-  const room = await ensureMainPartyRoom();
+  const room = await ensureMainVibeRoom();
   const encoder = new TextEncoder();
   let closed = false;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -26,15 +26,15 @@ export async function GET(request: Request) {
 
       const send = (payload: string) => {
         if (closed) return;
-        controller.enqueue(encoder.encode(`event: party\ndata: ${payload}\n\n`));
+        controller.enqueue(encoder.encode(`event: vibe\ndata: ${payload}\n\n`));
       };
 
       const sendSnapshot = async () => {
         if (closed || snapshotInFlight) return;
         snapshotInFlight = true;
         try {
-          await syncActivePartyJobs(room.id);
-          const payload = JSON.stringify(await getPartySnapshot(room.id));
+          await syncActiveVibeJobs(room.id);
+          const payload = JSON.stringify(await getVibeSnapshot(room.id));
           if (payload !== lastPayload) {
             lastPayload = payload;
             send(payload);
@@ -46,8 +46,8 @@ export async function GET(request: Request) {
         }
       };
 
-      const onPartyUpdate = () => { void sendSnapshot(); };
-      unsubscribe = subscribeToParty(onPartyUpdate);
+      const onVibeUpdate = () => { void sendSnapshot(); };
+      unsubscribe = subscribeToVibe(onVibeUpdate);
       pollTimer = setInterval(() => { void sendSnapshot(); }, 3_000);
       heartbeatTimer = setInterval(() => {
         if (!closed) controller.enqueue(encoder.encode(": heartbeat\n\n"));

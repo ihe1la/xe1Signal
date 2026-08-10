@@ -16,7 +16,7 @@ type SidebarSummary = {
 
 const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/discover", "Discover", Compass], ["/frequencies", "Frequencies", Radio], ["/archive", "Archive", Archive],
-  ["/party", "Party", Headphones], ["/people", "People", Users], ["/inbox", "Inbox", Mail], ["/notifications", "Notifications", Bell],
+  ["/vibe", "Vibe", Headphones], ["/people", "People", Users], ["/inbox", "Inbox", Mail], ["/notifications", "Notifications", Bell],
 ];
 
 export function LeftSidebar() {

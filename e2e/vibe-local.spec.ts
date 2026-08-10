@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("Party uses the local Unstream WILDFLOWER pipeline", async ({ page, browser }) => {
-  test.skip(process.env.RUN_PARTY_E2E !== "true", "Requires the configured local Unstream service");
+test("Vibe uses the local Unstream WILDFLOWER pipeline", async ({ page, browser }) => {
+  test.skip(process.env.RUN_VIBE_E2E !== "true", "Requires the configured local Unstream service");
   test.setTimeout(180_000);
   const issues: string[] = [];
   page.on("pageerror", (error) => issues.push(`pageerror ${error.message}`));
@@ -18,35 +18,35 @@ test("Party uses the local Unstream WILDFLOWER pipeline", async ({ page, browser
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/discover$/, { timeout: 30_000 });
 
-  await page.goto("/party");
-  await expect(page.getByRole("heading", { name: "Party, together." })).toBeVisible();
+  await page.goto("/vibe");
+  await expect(page.getByRole("heading", { name: "Vibe, together." })).toBeVisible();
   const clear = page.getByRole("button", { name: "Clear all" });
   if (await clear.count()) {
     await clear.click();
     await expect(clear).toHaveCount(0);
   }
 
-  const queued = page.waitForResponse((response) => response.url().endsWith("/api/party/queue") && response.request().method() === "POST");
+  const queued = page.waitForResponse((response) => response.url().endsWith("/api/vibe/queue") && response.request().method() === "POST");
   await page.getByLabel("Music link").fill("https://www.youtube.com/watch?v=wKBYEhTgoHU");
-  await page.getByRole("button", { name: "Add to party" }).click();
+  await page.getByRole("button", { name: "Add to vibe" }).click();
   const queuedResponse = await queued;
   expect(queuedResponse.status()).toBe(201);
   await expect(page.getByText("WILDFLOWER (Music Video)", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 
   await expect.poll(async () => {
-    const response = await page.request.get("/api/party");
+    const response = await page.request.get("/api/vibe");
     const data = await response.json();
     return data.nowPlaying?.fileUrl || "pending";
-  }, { timeout: 120_000, intervals: [2_000, 3_000, 5_000] }).toMatch(/\/api\/party\/queue\/.*\/file/);
+  }, { timeout: 120_000, intervals: [2_000, 3_000, 5_000] }).toMatch(/\/api\/vibe\/queue\/.*\/file/);
 
-  const snapshotResponse = await page.request.get("/api/party");
+  const snapshotResponse = await page.request.get("/api/vibe");
   const snapshot = await snapshotResponse.json();
   expect(snapshot.room.isPlaying).toBe(true);
-  expect(snapshot.nowPlaying.fileUrl).toMatch(/\/api\/party\/queue\/.*\/file/);
+  expect(snapshot.nowPlaying.fileUrl).toMatch(/\/api\/vibe\/queue\/.*\/file/);
   const audioResponse = await page.request.get(snapshot.nowPlaying.fileUrl, { headers: { range: "bytes=0-1" } });
   expect([200, 206]).toContain(audioResponse.status());
   expect(audioResponse.headers()["content-type"]).toMatch(/^audio\//);
-  await expect.poll(() => page.locator("audio").evaluate((audio) => (audio as HTMLAudioElement).currentSrc), { timeout: 15_000 }).toMatch(/\/api\/party\/queue\/.*\/file/);
+  await expect.poll(() => page.locator("audio").evaluate((audio) => (audio as HTMLAudioElement).currentSrc), { timeout: 15_000 }).toMatch(/\/api\/vibe\/queue\/.*\/file/);
 
   const second = await browser.newPage();
   await second.goto("/login");
@@ -54,11 +54,11 @@ test("Party uses the local Unstream WILDFLOWER pipeline", async ({ page, browser
   await second.locator("#password").fill("Archive!2026");
   await second.getByRole("button", { name: "Sign in" }).click();
   await expect(second).toHaveURL(/\/discover$/, { timeout: 30_000 });
-  await second.goto("/party");
+  await second.goto("/vibe");
   await expect(second.getByText("WILDFLOWER (Music Video)", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-  await second.getByRole("button", { name: "Pause party" }).click();
+  await second.getByRole("button", { name: "Pause vibe" }).click();
   await expect(page.getByText("paused", { exact: true })).toBeVisible({ timeout: 10_000 });
-  await page.getByRole("button", { name: "Play party" }).click();
+  await page.getByRole("button", { name: "Play vibe" }).click();
   await expect(second.getByText("live", { exact: true })).toBeVisible({ timeout: 10_000 });
   await second.close();
   expect(issues).toEqual([]);

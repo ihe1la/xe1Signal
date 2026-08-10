@@ -6,7 +6,7 @@ export const config = {
     "/settings/:path*",
     "/inbox/:path*",
     "/notifications/:path*",
-    "/party/:path*",
+    "/vibe/:path*",
     "/signals/new",
     "/signals/:id/edit",
     "/frequencies/new",
