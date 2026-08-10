@@ -48,10 +48,51 @@ type TrackerHallOfFame = {
 };
 
 type TrackerTimerStatus = {
+  today?: unknown;
+  max_session_ms?: unknown;
+  today_entries_seconds?: unknown;
+  today_total_seconds?: unknown;
   session?: {
     running?: unknown;
+    started_at?: unknown;
+    accumulated_ms?: unknown;
+    elapsed_ms?: unknown;
+    capped?: unknown;
+    label_id?: unknown;
+    task_id?: unknown;
+    description?: unknown;
   } | null;
-  today_total_seconds?: unknown;
+};
+
+type TrackerLabel = {
+  id?: unknown;
+  name?: unknown;
+  color?: unknown;
+  icon?: unknown;
+  archived?: unknown;
+};
+
+type TrackerTask = {
+  id?: unknown;
+  title?: unknown;
+  parent_id?: unknown;
+  status?: unknown;
+  priority?: unknown;
+};
+
+type TrackerEntry = {
+  id?: unknown;
+  date?: unknown;
+  duration_seconds?: unknown;
+  label_id?: unknown;
+  description?: unknown;
+  started_at?: unknown;
+  ended_at?: unknown;
+  label_name?: unknown;
+  label_color?: unknown;
+  task_id?: unknown;
+  task_title?: unknown;
+  parent_title?: unknown;
 };
 
 export type StudySummary = {
@@ -72,6 +113,75 @@ export type StudySummary = {
   updatedAt: string;
 };
 
+export type StudyTimer = {
+  today: string;
+  maxSessionMs: number | null;
+  todayEntriesSeconds: number;
+  todayTotalSeconds: number;
+  running: boolean;
+  startedAt: string | null;
+  accumulatedMs: number;
+  elapsedMs: number;
+  capped: boolean;
+  labelId: number | null;
+  taskId: number | null;
+  description: string;
+};
+
+export type StudyLabel = {
+  id: number;
+  name: string;
+  color: string;
+  icon: string;
+};
+
+export type StudyTask = {
+  id: number;
+  title: string;
+  parentId: number | null;
+  status: string;
+  priority: number;
+};
+
+export type StudyEntry = {
+  id: number;
+  date: string;
+  durationSeconds: number;
+  labelId: number | null;
+  description: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  labelName: string;
+  labelColor: string;
+  taskId: number | null;
+  taskTitle: string;
+  parentTitle: string;
+};
+
+export type StudyWorkspace = {
+  timer: StudyTimer;
+  labels: StudyLabel[];
+  tasks: StudyTask[];
+  entries: StudyEntry[];
+};
+
+export type TrackerTimerAction = "start" | "pause" | "stop";
+
+export type TrackerTimerActionInput = {
+  action: TrackerTimerAction;
+  labelId?: number | null;
+  taskId?: number | null;
+  description?: string | null;
+};
+
+export type TrackerEntryInput = {
+  date: string;
+  durationSeconds: number;
+  labelId?: number | null;
+  taskId?: number | null;
+  description?: string | null;
+};
+
 function numberValue(value: unknown): number {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
@@ -79,6 +189,16 @@ function numberValue(value: unknown): number {
 
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function nullableNumberValue(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
 function cookieHeader(): string | null {
@@ -103,6 +223,72 @@ async function getTrackerJson<T>(path: string, cookies: string): Promise<T | nul
   } catch {
     return null;
   }
+}
+
+function normalizeTimer(value: TrackerTimerStatus): StudyTimer {
+  const session = objectValue(value.session);
+  return {
+    today: stringValue(value.today),
+    maxSessionMs: nullableNumberValue(value.max_session_ms),
+    todayEntriesSeconds: numberValue(value.today_entries_seconds),
+    todayTotalSeconds: numberValue(value.today_total_seconds),
+    running: session.running === true || session.running === "true",
+    startedAt: stringValue(session.started_at) || null,
+    accumulatedMs: numberValue(session.accumulated_ms),
+    elapsedMs: numberValue(session.elapsed_ms),
+    capped: session.capped === true || session.capped === "true",
+    labelId: nullableNumberValue(session.label_id),
+    taskId: nullableNumberValue(session.task_id),
+    description: stringValue(session.description),
+  };
+}
+
+function normalizeLabels(value: unknown): StudyLabel[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const label = item as TrackerLabel;
+    return {
+      id: numberValue(label.id),
+      name: stringValue(label.name) || "Unlabeled",
+      color: stringValue(label.color) || "#8b74eb",
+      icon: stringValue(label.icon),
+    };
+  }).filter((label) => label.id > 0 && label.name);
+}
+
+function normalizeTasks(value: unknown): StudyTask[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const task = item as TrackerTask;
+    return {
+      id: numberValue(task.id),
+      title: stringValue(task.title) || "Untitled task",
+      parentId: nullableNumberValue(task.parent_id),
+      status: stringValue(task.status) || "active",
+      priority: numberValue(task.priority),
+    };
+  }).filter((task) => task.id > 0 && task.title);
+}
+
+function normalizeEntries(value: unknown): StudyEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const entry = item as TrackerEntry;
+    return {
+      id: numberValue(entry.id),
+      date: stringValue(entry.date),
+      durationSeconds: numberValue(entry.duration_seconds),
+      labelId: nullableNumberValue(entry.label_id),
+      description: stringValue(entry.description),
+      startedAt: stringValue(entry.started_at) || null,
+      endedAt: stringValue(entry.ended_at) || null,
+      labelName: stringValue(entry.label_name),
+      labelColor: stringValue(entry.label_color) || "#8b74eb",
+      taskId: nullableNumberValue(entry.task_id),
+      taskTitle: stringValue(entry.task_title),
+      parentTitle: stringValue(entry.parent_title),
+    };
+  }).filter((entry) => entry.id > 0).slice(0, 20);
 }
 
 function labelsFromResponse(value: unknown): StudySummary["todayLabels"] {
@@ -193,6 +379,81 @@ const getCachedStudySummary = unstable_cache(
 
 export async function getTrackerStudySummary(): Promise<StudySummary | null> {
   return getCachedStudySummary();
+}
+
+export async function getTrackerStudyWorkspace(): Promise<StudyWorkspace | null> {
+  const cookies = cookieHeader();
+  if (!cookies) return null;
+
+  const [timer, labels, entries, tasks] = await Promise.all([
+    getTrackerJson<TrackerTimerStatus>("/api/timer/status", cookies),
+    getTrackerJson<{ labels?: unknown }>("/api/labels", cookies),
+    getTrackerJson<{ entries?: unknown }>("/api/entries", cookies),
+    getTrackerJson<{ tasks?: unknown }>("/api/tasks?status=active&sort=priority", cookies),
+  ]);
+
+  if (!timer) return null;
+  return {
+    timer: normalizeTimer(timer),
+    labels: normalizeLabels(labels?.labels),
+    tasks: normalizeTasks(tasks?.tasks),
+    entries: normalizeEntries(entries?.entries),
+  };
+}
+
+function trackerMetadata(input: { labelId?: number | null; taskId?: number | null; description?: string | null }) {
+  return {
+    label_id: input.labelId ?? null,
+    task_id: input.taskId ?? null,
+    description: input.description?.trim() || null,
+  };
+}
+
+async function trackerMutation(path: string, method: "POST" | "PATCH", cookies: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${TRACKER_ORIGIN}${path}`, {
+      method,
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        cookie: cookies,
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.ok) return { ok: true };
+    const payload = await response.json().catch(() => null) as { error?: unknown } | null;
+    return { ok: false, error: stringValue(payload?.error) || "The tracker rejected the update." };
+  } catch {
+    return { ok: false, error: "The tracker could not be reached." };
+  }
+}
+
+export async function updateTrackerTimer(input: TrackerTimerActionInput): Promise<{ workspace: StudyWorkspace | null; error?: string }> {
+  const cookies = cookieHeader();
+  if (!cookies) return { workspace: null, error: "Study tracking is not configured." };
+
+  const metadata = trackerMetadata(input);
+  const metadataResult = await trackerMutation("/api/timer/meta", "PATCH", cookies, metadata);
+  if (!metadataResult.ok && input.action !== "pause") return { workspace: null, error: metadataResult.error };
+
+  const path = input.action === "start" ? "/api/timer/start" : input.action === "pause" ? "/api/timer/pause" : "/api/timer/stop";
+  const result = await trackerMutation(path, "POST", cookies, input.action === "pause" ? undefined : metadata);
+  if (!result.ok) return { workspace: null, error: result.error };
+  return { workspace: await getTrackerStudyWorkspace() };
+}
+
+export async function createTrackerEntry(input: TrackerEntryInput): Promise<{ workspace: StudyWorkspace | null; error?: string }> {
+  const cookies = cookieHeader();
+  if (!cookies) return { workspace: null, error: "Study tracking is not configured." };
+  const result = await trackerMutation("/api/entries", "POST", cookies, {
+    date: input.date,
+    duration_seconds: input.durationSeconds,
+    ...trackerMetadata(input),
+  });
+  if (!result.ok) return { workspace: null, error: result.error };
+  return { workspace: await getTrackerStudyWorkspace() };
 }
 
 export function trackerUsernameMatches(username?: string | null): boolean {

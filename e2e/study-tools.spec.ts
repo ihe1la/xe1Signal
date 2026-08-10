@@ -5,8 +5,8 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   page.on("pageerror", (error) => issues.push(`pageerror ${error.message}`));
   page.on("console", (message) => {
     const text = message.text();
-    const knownExternalError = text.includes("ClientFetchError") || text.includes("Failed to load resource: the server responded with a status of 403");
-    if (message.type() === "error" && !knownExternalError) issues.push(`console ${text}`);
+    const knownAuthError = text.includes("ClientFetchError") || text.includes("errors.authjs.dev#autherror");
+    if (message.type() === "error" && !knownAuthError) issues.push(`console ${text}`);
   });
   page.on("requestfailed", (request) => {
     const hostname = new URL(request.url()).hostname;
@@ -22,49 +22,45 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-async function expectRemotePage(page: import("@playwright/test").Page, title: string, url: string, iframeTitle?: string) {
-  await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-  if (iframeTitle) {
-    await expect(page.locator("iframe")).toHaveCount(1);
-    await expect(page.locator("iframe")).toHaveAttribute("src", url);
-    await expect(page.locator("iframe")).toHaveAttribute("title", iframeTitle);
-  } else {
-    await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
-    await expect(page.locator("iframe")).toHaveCount(0);
-  }
-}
-
-test("Study and Tools keep the existing desktop shell and expose their remote apps", async ({ page }) => {
+test("Study and Tools keep the simplified shell and Pinqued attribution", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
   await page.goto("/study");
   const sidebar = page.locator("aside").first();
+  await expect(page.getByRole("heading", { name: "Study", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "People", exact: true })).toBeVisible();
-  await expectRemotePage(page, "Study", "https://tracker.l30on.top/");
+  await expect(sidebar.getByRole("link", { name: "Lab", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
-  await expectRemotePage(page, "Tools", "https://pinqued.top/recon", "Tools");
+  await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pinqued" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
+  await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /JSON Formatter/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Recon/ })).toHaveAttribute("href", "https://pinqued.top/recon");
   expect(issues).toEqual([]);
 });
 
-test("Study and Tools remain available through the existing mobile navigation", async ({ browser }) => {
+test("Study and Tools remain available through mobile navigation", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const issues = collectLocalIssues(page);
 
   await page.goto("/study");
   const navigation = page.getByRole("navigation");
-  const studyLink = navigation.getByRole("link", { name: "Study", exact: true });
-  const toolsLink = navigation.getByRole("link", { name: "Tools", exact: true });
-  await expect(studyLink).toBeVisible();
-  await expect(toolsLink).toBeVisible();
-  await toolsLink.scrollIntoViewIfNeeded();
+  await expect(navigation.getByRole("link", { name: "Study", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
 
   await page.goto("/tools");
-  await expect(page.locator("iframe")).toHaveCount(1);
-  await expect(page.locator("iframe")).toHaveAttribute("src", "https://pinqued.top/recon");
+  await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
   expect(issues).toEqual([]);
   await page.close();
 });

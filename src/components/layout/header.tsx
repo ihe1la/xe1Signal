@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Bell, LogOut, Menu, Plus, Search, X } from "lucide-react";
+import { Bell, LogOut, Mail, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -13,23 +13,34 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
   const { status } = useSession();
   const [query, setQuery] = React.useState("");
   const [mobileSearch, setMobileSearch] = React.useState(false);
-  const [unread,setUnread]=React.useState(0);
+  const [unread, setUnread] = React.useState(0);
+  const [unreadMessages, setUnreadMessages] = React.useState(0);
 
   React.useEffect(() => {
     if (status !== "authenticated") {
       setUnread(0);
+      setUnreadMessages(0);
       return;
     }
 
     let active = true;
-    const load = () => fetch("/api/notifications")
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => {
-        if (active) {
-          setUnread((data?.notifications || []).filter((item: { isRead: boolean }) => !item.isRead).length);
-        }
-      })
-      .catch(() => undefined);
+    const load = () => {
+      fetch("/api/notifications")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (active) {
+            setUnread((data?.notifications || []).filter((item: { isRead: boolean }) => !item.isRead).length);
+          }
+        })
+        .catch(() => undefined);
+
+      fetch("/api/messages/unread")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (active) setUnreadMessages(Number(data?.unread) || 0);
+        })
+        .catch(() => undefined);
+    };
 
     load();
     const timer = window.setInterval(load, 30000);
@@ -68,7 +79,18 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
           </form>
           <div className="ml-auto flex items-center gap-2 sm:gap-4">
             <Button asChild className="h-10 rounded-lg bg-violet-400/[0.09] px-4 font-mono text-[13px] text-violet-300 hover:bg-violet-400/[0.15]"><Link href="/signals/new"><Plus className="mr-2 h-4 w-4" />New signal</Link></Button>
-            <Button asChild variant="ghost" size="icon" className="relative text-zinc-400"><Link href="/notifications" aria-label={unread?`Notifications, ${unread} unread`:"Notifications"}><Bell className="h-[18px] w-[18px]" />{unread>0&&<span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unread>9?"9+":unread}</span>}</Link></Button>
+            <Button asChild variant="ghost" size="icon" className="relative text-zinc-400">
+              <Link href="/inbox" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : "Messages"}>
+                <Mail className="h-[18px] w-[18px]" />
+                {unreadMessages > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unreadMessages > 9 ? "9+" : unreadMessages}</span>}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="icon" className="relative text-zinc-400">
+              <Link href="/notifications" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+                <Bell className="h-[18px] w-[18px]" />
+                {unread > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unread > 9 ? "9+" : unread}</span>}
+              </Link>
+            </Button>
             <Button onClick={() => signOut({ callbackUrl: "/login" })} variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-200" aria-label="Log out"><LogOut className="h-[18px] w-[18px]" /></Button>
           </div>
         </div>
