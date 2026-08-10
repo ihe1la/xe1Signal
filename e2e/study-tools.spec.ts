@@ -43,6 +43,8 @@ test("Study and Tools keep the simplified shell", async ({ page }) => {
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByText("XMind sheet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Add branch/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Base64/ })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveCount(0);
   expect(issues).toEqual([]);
@@ -60,6 +62,7 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByText("XMind sheet", { exact: true })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });
