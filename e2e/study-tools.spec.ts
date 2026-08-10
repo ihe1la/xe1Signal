@@ -44,7 +44,22 @@ test("Study and Tools keep the simplified shell and Pinqued attribution", async 
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
   await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /JSON Formatter/ })).toBeVisible();
+  for (const name of ["HTML Encode / Decode", "JWT Decoder", "URL Parser", "Timestamp Converter", "Text Diff", "Hash Generator", "UUID Generator", "Lorem Ipsum"]) {
+    await expect(page.getByRole("button", { name: new RegExp(name) })).toBeVisible();
+  }
+  await expect(page.getByRole("heading", { name: "More tools · Pinqued workspace" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "l30on dashboard" })).toHaveAttribute("href", "https://l30on.top/dashboard/");
   await expect(page.getByRole("link", { name: /Recon/ })).toHaveAttribute("href", "https://pinqued.top/recon");
+
+  await page.getByLabel("Search tools").fill("JWT");
+  await expect(page.getByRole("button", { name: /JWT Decoder/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Base64/ })).toHaveCount(0);
+  await page.getByLabel("Search tools").fill("");
+
+  await page.getByRole("button", { name: /JSON Formatter/ }).click();
+  await page.getByLabel("Tool input").fill('{"signal":true}');
+  await page.getByRole("button", { name: "Format", exact: true }).click();
+  await expect(page.getByLabel("Tool output")).toHaveValue(/"signal": true/);
   expect(issues).toEqual([]);
 });
 

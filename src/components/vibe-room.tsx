@@ -51,7 +51,7 @@ export function VibeRoom() {
     const response = await fetch("/api/vibe/control", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, ...(action === "clear" ? {} : { itemId }) }),
+      body: JSON.stringify({ action, ...(itemId ? { itemId } : {}) }),
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new Error(data?.error || "Vibe control failed");
@@ -122,7 +122,7 @@ export function VibeRoom() {
       <div>
         <p className="mb-3 font-mono text-[10px] uppercase tracking-[.18em] text-violet-400">Shared room · main</p>
         <h1 className="font-mono text-[30px] leading-tight tracking-tight text-zinc-100 sm:text-[36px]">Vibe, together.</h1>
-        <p className="mt-2 max-w-xl font-mono text-[11px] leading-6 text-zinc-500">Paste a YouTube, Spotify, or SoundCloud link. Unstream prepares the audio once, then everyone hears the same shared queue.</p>
+        <p className="mt-2 max-w-xl font-mono text-[11px] leading-6 text-zinc-500">Paste a YouTube, Spotify, or SoundCloud link. Unstream prepares the audio once, then everyone hears the same shared queue. Click any ready track to play it.</p>
       </div>
       <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.14em] text-zinc-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> shared state</div>
     </header>
@@ -136,8 +136,8 @@ export function VibeRoom() {
 
     {loading ? <LoadingVibe /> : <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
       <section className="rounded-2xl border border-white/[.07] bg-white/[.018]" aria-label="Vibe queue">
-        <div className="flex items-center justify-between border-b border-white/[.06] px-5 py-4"><div><p className="font-mono text-[10px] uppercase tracking-[.14em] text-zinc-500">Room queue</p><p className="mt-1 font-mono text-[9px] text-zinc-700">{snapshot?.queue.length || 0} track{snapshot?.queue.length === 1 ? "" : "s"}</p></div>{snapshot?.queue.length ? <button onClick={() => void sendControl("clear").catch((cause) => setError(cause instanceof Error ? cause.message : "Could not clear the queue"))} className="font-mono text-[9px] uppercase tracking-wider text-zinc-600 transition hover:text-rose-300">Clear all</button> : null}</div>
-        {snapshot?.queue.length ? <ol className="divide-y divide-white/[.045]">{snapshot.queue.map((item) => <QueueRow key={item.id} item={item} active={item.id === currentId} onRemove={() => void removeItem(item.id)} />)}</ol> : <div className="px-6 py-20 text-center"><Headphones className="mx-auto h-7 w-7 text-zinc-700" /><p className="mt-4 font-mono text-xs text-zinc-500">The room is quiet.</p><p className="mt-2 font-mono text-[10px] text-zinc-700">Add the first link and it will appear here.</p></div>}
+        <div className="flex items-center justify-between border-b border-white/[.06] px-5 py-4"><div><p className="font-mono text-[10px] uppercase tracking-[.14em] text-zinc-500">Room queue</p><p className="mt-1 font-mono text-[9px] text-zinc-700">{snapshot?.queue.length || 0} track{snapshot?.queue.length === 1 ? "" : "s"} · tap ready to play</p></div>{snapshot?.queue.length ? <button onClick={() => void sendControl("clear").catch((cause) => setError(cause instanceof Error ? cause.message : "Could not clear the queue"))} className="font-mono text-[9px] uppercase tracking-wider text-zinc-600 transition hover:text-rose-300">Clear all</button> : null}</div>
+        {snapshot?.queue.length ? <ol className="divide-y divide-white/[.045]">{snapshot.queue.map((item) => <QueueRow key={item.id} item={item} active={item.id === currentId} onSelect={() => void sendControl("select", item.id).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))} onRemove={() => void removeItem(item.id)} />)}</ol> : <div className="px-6 py-20 text-center"><Headphones className="mx-auto h-7 w-7 text-zinc-700" /><p className="mt-4 font-mono text-xs text-zinc-500">The room is quiet.</p><p className="mt-2 font-mono text-[10px] text-zinc-700">Add the first link and it will appear here.</p></div>}
       </section>
 
       <section className="h-fit rounded-2xl border border-violet-300/15 bg-[radial-gradient(circle_at_top,rgba(139,116,235,.12),transparent_62%)] p-5" aria-label="Now playing">
@@ -149,15 +149,24 @@ export function VibeRoom() {
   </div>;
 }
 
-type VibeAction = "play" | "pause" | "skip" | "clear";
+type VibeAction = "play" | "pause" | "skip" | "clear" | "select";
 
-function QueueRow({ item, active, onRemove }: { item: VibeQueuePayload; active: boolean; onRemove: () => void }) {
-  return <li className={`flex items-center gap-3 px-5 py-4 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
-    <span className="w-5 shrink-0 text-center font-mono text-[9px] text-zinc-700">{active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}</span>
-    {item.cover ? <img src={item.cover} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <div className="h-10 w-10 shrink-0 rounded-lg bg-white/[.04]" />}
-    <div className="min-w-0 flex-1"><p className={`truncate font-mono text-[11px] ${active ? "text-violet-100" : "text-zinc-300"}`}>{item.title}</p><p className="mt-1 truncate font-mono text-[9px] text-zinc-600">{item.artists.join(", ") || "Unknown artist"}</p></div>
-    <span className={`hidden shrink-0 font-mono text-[9px] uppercase tracking-wider sm:block ${item.status === "failed" ? "text-rose-300" : item.status === "ready" || item.status === "playing" ? "text-emerald-300/70" : "text-zinc-600"}`}>{statusLabel(item.status)}</span>
-    <button onClick={onRemove} className="rounded-md p-2 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}><Trash2 className="h-3.5 w-3.5" /></button>
+function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload; active: boolean; onSelect: () => void; onRemove: () => void }) {
+  const playable = item.status === "ready" || item.status === "playing";
+  return <li className={`flex items-center gap-3 px-5 py-4 transition ${active ? "bg-violet-400/[.06]" : playable ? "hover:bg-white/[.02]" : ""}`}>
+    <button
+      type="button"
+      disabled={!playable}
+      onClick={onSelect}
+      className={`flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-not-allowed ${playable ? "cursor-pointer" : "opacity-70"}`}
+      aria-label={playable ? (active ? `Playing ${item.title}` : `Play ${item.title}`) : `${item.title} is ${statusLabel(item.status)}`}
+    >
+      <span className="w-5 shrink-0 text-center font-mono text-[9px] text-zinc-700">{active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}</span>
+      {item.cover ? <img src={item.cover} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <div className="h-10 w-10 shrink-0 rounded-lg bg-white/[.04]" />}
+      <div className="min-w-0 flex-1"><p className={`truncate font-mono text-[11px] ${active ? "text-violet-100" : "text-zinc-300"}`}>{item.title}</p><p className="mt-1 truncate font-mono text-[9px] text-zinc-600">{item.artists.join(", ") || "Unknown artist"}</p></div>
+      <span className={`hidden shrink-0 font-mono text-[9px] uppercase tracking-wider sm:block ${item.status === "failed" ? "text-rose-300" : playable ? "text-emerald-300/70" : "text-zinc-600"}`}>{statusLabel(item.status)}</span>
+    </button>
+    <button type="button" onClick={onRemove} className="rounded-md p-2 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}><Trash2 className="h-3.5 w-3.5" /></button>
   </li>;
 }
 

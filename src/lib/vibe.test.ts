@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assertVibeSourceUrl, isVibePlayableStatus, joinVibeArtists, splitVibeArtists } from "@/lib/vibe";
+import { assertVibeSourceUrl, isVibePlayableStatus, joinVibeArtists, splitVibeArtists, vibeControlSchema } from "@/lib/vibe";
 
 describe("vibe source validation", () => {
   it("accepts the supported provider hosts and strips credentials", () => {
@@ -24,5 +24,15 @@ describe("vibe metadata helpers", () => {
     expect(isVibePlayableStatus("ready")).toBe(true);
     expect(isVibePlayableStatus("playing")).toBe(true);
     expect(isVibePlayableStatus("downloading")).toBe(false);
+  });
+});
+
+describe("vibe control schema", () => {
+  it("accepts select with a target item id", () => {
+    expect(vibeControlSchema.parse({ action: "select", itemId: "track-1" })).toEqual({ action: "select", itemId: "track-1" });
+  });
+
+  it("requires itemId for select", () => {
+    expect(vibeControlSchema.safeParse({ action: "select" }).success).toBe(false);
   });
 });

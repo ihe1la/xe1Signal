@@ -317,12 +317,13 @@ export async function syncActiveVibeJobs(roomId: string) {
   await Promise.all(jobs.flatMap((item) => item.unstreamJobId ? [syncVibeJob(item.unstreamJobId)] : []));
 }
 
-export async function applyVibeControl(action: "play" | "pause" | "skip" | "clear", expectedItemId?: string) {
+export async function applyVibeControl(action: "play" | "pause" | "skip" | "clear" | "select", itemId?: string) {
   const room = await ensureMainVibeRoom();
   await db.$transaction(async (tx) => {
     const currentRoom = await tx.vibeRoom.findUnique({ where: { id: room.id } });
     if (!currentRoom) return;
-    if (expectedItemId && currentRoom.currentItemId !== expectedItemId) return;
+    // play/pause/skip still use itemId as a concurrency guard against stale clients.
+    if (action !== "select" && itemId && currentRoom.currentItemId !== itemId) return;
     if (action === "clear") {
       await tx.vibeQueueItem.deleteMany({ where: { roomId: room.id } });
       await tx.vibeRoom.update({ where: { id: room.id }, data: { currentItemId: null, isPlaying: false, revision: { increment: 1 } } });
@@ -334,6 +335,15 @@ export async function applyVibeControl(action: "play" | "pause" | "skip" | "clea
     if (action === "pause") {
       if (current && isVibePlayableStatus(current.status) && current.status !== "ready") await tx.vibeQueueItem.update({ where: { id: current.id }, data: { status: "ready" } });
       await tx.vibeRoom.update({ where: { id: room.id }, data: { isPlaying: false, revision: { increment: 1 } } });
+      return;
+    }
+
+    if (action === "select") {
+      const selected = itemId ? items.find((item) => item.id === itemId) : null;
+      if (!selected || !isVibePlayableStatus(selected.status)) return;
+      if (current && current.id !== selected.id && current.status === "playing") await tx.vibeQueueItem.update({ where: { id: current.id }, data: { status: "ready" } });
+      if (selected.status !== "playing") await tx.vibeQueueItem.update({ where: { id: selected.id }, data: { status: "playing" } });
+      await tx.vibeRoom.update({ where: { id: room.id }, data: { currentItemId: selected.id, isPlaying: true, revision: { increment: 1 } } });
       return;
     }
 

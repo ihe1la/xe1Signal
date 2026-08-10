@@ -1,43 +1,61 @@
 # Pinqued / l30on Tools Integration
 
-Short note for `/tools` in xe1Signal.
+Short note for `/tools` in xe1Signal. The page keeps the graphite/violet shell and uses local browser-only utilities for the simple tools that can be reproduced without a private backend.
 
-## Discovered (live inspection)
+## Live discovery — 2026-08-11
 
 ### https://pinqued.top/
-- Public: login wall, `/app` desktop/Android downloads
-- Auth-gated (redirect to `/login`): `/recon`, `/terminal`, `/files`, `/dashboard`, `/tools`, `/vibe`
-- Meta: "Recon and File Management"
-- No `X-Frame-Options` / `frame-ancestors` on public responses; iframe can load, but authenticated sessions are not reliable cross-origin (third-party cookies). Do not reverse-proxy to bypass that.
+
+- `/` is public but exposes only the Pinqued login entry point.
+- `/tools` returns a `307` redirect to `/login?returnUrl=%2Ftools`.
+- `/app` is a public download page for the desktop and Android applications; it is not an in-browser tools catalog.
+- The sampled public/login responses did not expose `X-Frame-Options`, `Content-Security-Policy`, or `frame-ancestors`, but authenticated cross-origin iframe sessions are still not a reliable integration contract. No proxy or policy bypass is used.
 
 ### https://l30on.top/dashboard/
-- Currently Cloudflare **403** from this environment
-- Tool names/layout taken from the provided dashboard reference: URL Encode/Decode, Base64, HTML Encode/Decode, JWT Decoder, JSON Formatter, URL Parser, Timestamp Converter, Text Diff, Hash Generator, UUID Generator, Lorem Ipsum
 
-## What xe1Signal implements locally
-Lightweight client-side only:
+- The live page currently returns Cloudflare `403 Forbidden` from this environment (`server: cloudflare`).
+- The available dashboard reference identifies these utility names: URL Encode/Decode, Base64, HTML Encode/Decode, JWT Decoder, JSON Formatter, URL Parser, Timestamp Converter, Text Diff, Hash Generator, UUID Generator, Lorem Ipsum, and More Tools.
+- Because the live dashboard is unavailable here, the reference list is documented as a discovery source rather than a claim about its current complete catalog.
+
+## Implemented locally
+
+All local tools run in the browser and do not send input to Pinqued, l30on, or xe1Signal APIs:
+
 - URL Encode / Decode
 - Base64
+- HTML Encode / Decode
 - JSON Formatter
-- Hash Generator (SHA-1 / SHA-256 / SHA-512)
+- JWT Decoder (header/payload inspection only; no signature verification)
+- URL Parser
+- Timestamp Converter
+- Text Diff
+- Hash Generator (MD5 / SHA-1 / SHA-256 / SHA-512)
 - UUID Generator
+- Lorem Ipsum
 
-## What stays on the original sites
-Pinqued auth workspaces (open original, stay synced):
+## Linked to originals
+
+Authenticated Pinqued workspaces remain outbound links so their real session, backend, and permissions stay on Pinqued:
+
 - https://pinqued.top/recon
 - https://pinqued.top/terminal
 - https://pinqued.top/files
 - https://pinqued.top/dashboard
 - https://pinqued.top/app
 
-Also linked: https://l30on.top/dashboard/
+The original l30on dashboard is also linked from the Tools workspace:
 
-## Attribution (required)
-- Header credit + footer: Pinqued → https://pinqued.top/
-- Open original ↗ → https://pinqued.top/ (`target="_blank"` `rel="noopener noreferrer"`)
-- Mention l30on dashboard inspiration
+- https://l30on.top/dashboard/
+
+## Attribution
+
+- Header: “Utilities powered by / inspired by Pinqued” with links to Pinqued and the l30on dashboard.
+- Top-right `Open original ↗`: https://pinqued.top/ with `target="_blank"` and `rel="noopener noreferrer"`.
+- Footer: “Original tools by Pinqued” plus l30on dashboard inspiration.
+- Credits remain visible on mobile.
 
 ## Not integrated
-- Full Pinqued recon/terminal/file backends (private, login-required)
-- Full l30on dashboard catalog (site 403 here; kept to a small local subset + outbound link)
-- No credentials, cookies, or secret scraping
+
+- Pinqued recon, terminal, files, dashboard, and app backends are private/auth-gated; xe1Signal does not recreate or proxy them.
+- The full l30on dashboard catalog cannot be verified while the source returns 403; the page keeps the reference-grounded local subset and an original link.
+- No credentials, cookies, private API tokens, or server-side scraping are used.
