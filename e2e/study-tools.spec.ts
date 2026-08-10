@@ -27,7 +27,8 @@ async function expectBrowserSessionLaunch(page: import("@playwright/test").Page,
   await expect(page.locator("iframe")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("target", "_self");
-  const launch = page.getByRole("link", { name: new RegExp(`Open ${title === "Study" ? "tracker" : "dashboard"} in this browser session`) });
+  const launchName = title === "Study" ? "tracker" : "pinqued workspace";
+  const launch = page.getByRole("link", { name: new RegExp(`Open ${launchName} in this browser session`) });
   await expect(launch).toHaveAttribute("href", url);
   await expect(launch).toHaveAttribute("target", "_self");
 }
@@ -44,7 +45,7 @@ test("Study and Tools keep the existing desktop shell and launch their original 
   await expectBrowserSessionLaunch(page, "Study", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
-  await expectBrowserSessionLaunch(page, "Tools", "https://l30on.top/dashboard/");
+  await expectBrowserSessionLaunch(page, "Tools", "https://pinqued.top/recon");
   expect(issues).toEqual([]);
 });
 
@@ -62,7 +63,7 @@ test("Study and Tools remain available through the existing mobile navigation", 
   await expect(page.getByRole("link", { name: /Open tracker in this browser session/ })).toBeVisible();
 
   await page.goto("/tools");
-  await expect(page.getByRole("link", { name: /Open dashboard in this browser session/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open pinqued workspace in this browser session/ })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });

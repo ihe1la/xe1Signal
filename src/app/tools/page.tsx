@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Tools" };
 export default function ToolsPage() {
   return (
     <AppLayout showRightSidebar={false}>
-      <RemoteAppFrame title="Tools" url="https://l30on.top/dashboard/" mode="browser-session" />
+      <RemoteAppFrame title="Tools" url="https://pinqued.top/recon" mode="browser-session" remoteLabel="pinqued workspace" />
     </AppLayout>
   );
 }

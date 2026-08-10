@@ -7,14 +7,15 @@ type RemoteAppFrameProps = {
   title: string;
   url: string;
   mode?: "embed" | "browser-session";
+  remoteLabel?: string;
 };
 
-export function RemoteAppFrame({ title, url, mode = "embed" }: RemoteAppFrameProps) {
+export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel }: RemoteAppFrameProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [loadState, setLoadState] = React.useState<"loading" | "loaded" | "error">("loading");
   const [reloadKey, setReloadKey] = React.useState(0);
 
-  const remoteName = title.toLowerCase() === "study" ? "tracker" : "dashboard";
+  const remoteName = remoteLabel || (title.toLowerCase() === "study" ? "tracker" : "dashboard");
 
   if (mode === "browser-session") {
     return (
