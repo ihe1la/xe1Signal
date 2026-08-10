@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Clock3, Pause, Play, Plus, RefreshCw, Square } from "lucide-react";
-import type { StudyEntry, StudySummary, StudyTask, StudyWorkspace as TrackerStudyWorkspace } from "@/lib/tracker-client";
+import { Clock3, Pause, Play, RefreshCw, Square } from "lucide-react";
+import type { StudyEntry, StudyTask, StudyWorkspace as TrackerStudyWorkspace } from "@/lib/tracker-client";
 
 function formatTimer(milliseconds: number) {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
@@ -19,12 +19,6 @@ function formatDuration(seconds: number) {
   if (hours && minutes) return `${hours}h ${minutes}m`;
   if (hours) return `${hours}h`;
   return `${minutes}m`;
-}
-
-function formatTrendBucket(bucket: string) {
-  const date = new Date(bucket);
-  if (Number.isNaN(date.getTime())) return bucket.slice(0, 10);
-  return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
 }
 
 function formatClock(value: string | null) {
@@ -50,48 +44,13 @@ function taskLabel(task: StudyTask, tasks: StudyTask[]) {
   return parent ? `${parent.title} · ${task.title}` : task.title;
 }
 
-function ActivityRhythm({ summary }: { summary: StudySummary | null | undefined }) {
-  const trend = summary?.weeklyTrend || [];
-  if (!trend.length) return null;
-
-  const maxTrend = Math.max(...trend.map((item) => item.seconds), 1);
-
-  return (
-    <section className="border-t border-white/[.06] px-5 py-5 sm:px-7" aria-label="Weekly study activity">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="font-sans text-sm font-medium text-zinc-200">Activity rhythm</p>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[.14em] text-zinc-600">last 7 days</p>
-        </div>
-        <p className="font-mono text-[10px] text-zinc-500">{formatDuration(summary?.weekSeconds ?? 0)} total</p>
-      </div>
-
-      <div className="mt-5 grid grid-cols-7 items-end gap-2 sm:gap-4">
-        {trend.map((item) => (
-          <div key={item.bucket} className="min-w-0 text-center">
-            <div className="mx-auto flex h-20 w-full max-w-10 items-end rounded-md bg-white/[.02] p-1">
-              <div className="w-full rounded-[3px] bg-gradient-to-t from-violet-500/90 to-fuchsia-300/70" style={{ height: `${Math.max(7, (item.seconds / maxTrend) * 100)}%` }} title={formatDuration(item.seconds)} />
-            </div>
-            <p className="mt-2 truncate font-sans text-[10px] text-zinc-500">{formatTrendBucket(item.bucket)}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function StudyWorkspace({ initialWorkspace, summary }: { initialWorkspace: TrackerStudyWorkspace; summary?: StudySummary | null }) {
+export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: TrackerStudyWorkspace }) {
   const [workspace, setWorkspace] = React.useState(initialWorkspace);
   const [loadedAt, setLoadedAt] = React.useState(() => Date.now());
   const [now, setNow] = React.useState(() => Date.now());
   const [labelId, setLabelId] = React.useState(initialWorkspace.timer.labelId ? String(initialWorkspace.timer.labelId) : "");
   const [taskId, setTaskId] = React.useState(initialWorkspace.timer.taskId ? String(initialWorkspace.timer.taskId) : "");
   const [description, setDescription] = React.useState(initialWorkspace.timer.description);
-  const [hours, setHours] = React.useState("0");
-  const [minutes, setMinutes] = React.useState("25");
-  const [entryDescription, setEntryDescription] = React.useState("");
-  const [entryLabelId, setEntryLabelId] = React.useState("");
-  const [entryTaskId, setEntryTaskId] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -155,44 +114,6 @@ export function StudyWorkspace({ initialWorkspace, summary }: { initialWorkspace
       syncWorkspace(next);
     } catch {
       setError("The timer could not be updated.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function addEntry(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const durationSeconds = (Number(hours) * 60 + Number(minutes)) * 60;
-    if (!Number.isInteger(durationSeconds) || durationSeconds <= 0) {
-      setError("Enter a duration before saving the session.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/study/entries", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          date: workspace.timer.today,
-          durationSeconds,
-          labelId: entryLabelId ? Number(entryLabelId) : null,
-          taskId: entryTaskId ? Number(entryTaskId) : null,
-          description: entryDescription.trim() || null,
-        }),
-      });
-      const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
-      if (!response.ok || !next || !("timer" in next)) {
-        setError((next && "error" in next && next.error) || "The study session could not be saved.");
-        return;
-      }
-      syncWorkspace(next);
-      setHours("0");
-      setMinutes("25");
-      setEntryDescription("");
-    } catch {
-      setError("The study session could not be saved.");
     } finally {
       setLoading(false);
     }
@@ -281,24 +202,6 @@ export function StudyWorkspace({ initialWorkspace, summary }: { initialWorkspace
               </div>
             ) : <div className="mt-5 rounded-lg border border-dashed border-white/[.08] px-4 py-8 text-center"><p className="font-sans text-xs text-zinc-500">No sessions logged today.</p><p className="mt-1 font-mono text-[10px] text-zinc-700">Your completed focus will appear here.</p></div>}
           </div>
-        </div>
-
-        <ActivityRhythm summary={summary} />
-      </section>
-
-      <section className="rounded-xl border border-white/[.07] bg-white/[.015] p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5"><span className="grid h-8 w-8 place-items-center rounded-lg border border-white/[.07] bg-white/[.025] text-zinc-500"><Plus className="h-4 w-4" /></span><div><h2 className="font-sans text-sm font-medium text-zinc-200">Log a manual session</h2><p className="mt-1 font-mono text-[10px] uppercase tracking-[.14em] text-zinc-600">add focus from earlier today</p></div></div>
-        </div>
-        <form onSubmit={addEntry} className="mt-5 grid gap-3 md:grid-cols-[100px_100px_minmax(0,1fr)_auto] md:items-end">
-          <label className="font-mono text-[10px] text-zinc-500">Hours<input type="number" min="0" max="24" value={hours} onChange={(event) => setHours(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" /></label>
-          <label className="font-mono text-[10px] text-zinc-500">Minutes<input type="number" min="0" max="59" value={minutes} onChange={(event) => setMinutes(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" /></label>
-          <label className="font-mono text-[10px] text-zinc-500">Description<input value={entryDescription} onChange={(event) => setEntryDescription(event.target.value)} maxLength={1000} placeholder="Optional note" className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition placeholder:text-zinc-700 focus:border-violet-300/30" /></label>
-          <button type="submit" disabled={loading} className="h-10 rounded-lg border border-white/[.09] px-4 font-mono text-[10px] text-zinc-300 transition hover:border-violet-300/30 hover:bg-violet-400/[.05] hover:text-violet-200 disabled:opacity-50">Save session</button>
-        </form>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <select aria-label="Session label" value={entryLabelId} onChange={(event) => setEntryLabelId(event.target.value)} className="h-10 rounded-lg border border-white/[.07] bg-[#090a0e] px-3 font-mono text-[10px] text-zinc-400 outline-none transition focus:border-violet-300/30"><option value="">No label</option>{workspace.labels.map((label) => <option key={label.id} value={label.id}>{label.name}</option>)}</select>
-          <select aria-label="Session task" value={entryTaskId} onChange={(event) => setEntryTaskId(event.target.value)} className="h-10 rounded-lg border border-white/[.07] bg-[#090a0e] px-3 font-mono text-[10px] text-zinc-400 outline-none transition focus:border-violet-300/30"><option value="">No task</option>{workspace.tasks.map((task) => <option key={task.id} value={task.id}>{taskLabel(task, workspace.tasks)}</option>)}</select>
         </div>
       </section>
 

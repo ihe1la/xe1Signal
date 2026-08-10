@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { AppLayout } from "@/components/layout/app-layout";
-import { StudySummary, StudyUnavailable } from "@/components/study-summary";
+import { StudyUnavailable } from "@/components/study-summary";
 import { getTrackerStudySummary, getTrackerStudyWorkspace, trackerUsernameMatches } from "@/lib/tracker-client";
 import { StudyWorkspace } from "@/components/study-workspace";
 
@@ -34,10 +34,7 @@ export default async function StudyPage() {
         ) : !linked ? (
           <StudyUnavailable reason="This xe1Signal profile is not linked to the tracker profile." />
         ) : workspace ? (
-          <>
-            <StudyWorkspace initialWorkspace={workspace} summary={summary} />
-            {summary && <StudySummary summary={summary} />}
-          </>
+          <StudyWorkspace initialWorkspace={workspace} />
         ) : (
           <StudyUnavailable reason="Study data is unavailable right now." />
         )}
