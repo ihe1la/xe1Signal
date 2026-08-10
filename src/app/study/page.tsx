@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Study" };
 export default function StudyPage() {
   return (
     <AppLayout showRightSidebar={false}>
-      <RemoteAppFrame title="Study" url="https://tracker.l30on.top/" />
+      <RemoteAppFrame title="Study" url="https://tracker.l30on.top/" mode="browser-session" />
     </AppLayout>
   );
 }

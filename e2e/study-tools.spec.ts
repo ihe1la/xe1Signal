@@ -22,15 +22,17 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-async function expectRemoteFrame(page: import("@playwright/test").Page, title: string, url: string) {
+async function expectBrowserSessionLaunch(page: import("@playwright/test").Page, title: string, url: string) {
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-  const iframe = page.locator(`iframe[title="${title}"]`);
-  await expect(iframe).toHaveAttribute("src", url);
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("target", "_blank");
-  await expect(iframe).toBeVisible();
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("target", "_self");
+  const launch = page.getByRole("link", { name: new RegExp(`Open ${title === "Study" ? "tracker" : "dashboard"} in this browser session`) });
+  await expect(launch).toHaveAttribute("href", url);
+  await expect(launch).toHaveAttribute("target", "_self");
 }
 
-test("Study and Tools keep the existing desktop shell and embed their original apps", async ({ page }) => {
+test("Study and Tools keep the existing desktop shell and launch their original apps in the browser session", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
@@ -39,10 +41,10 @@ test("Study and Tools keep the existing desktop shell and embed their original a
   await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "People", exact: true })).toBeVisible();
-  await expectRemoteFrame(page, "Study", "https://tracker.l30on.top/");
+  await expectBrowserSessionLaunch(page, "Study", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
-  await expectRemoteFrame(page, "Tools", "https://l30on.top/dashboard/");
+  await expectBrowserSessionLaunch(page, "Tools", "https://l30on.top/dashboard/");
   expect(issues).toEqual([]);
 });
 
@@ -57,10 +59,10 @@ test("Study and Tools remain available through the existing mobile navigation", 
   await expect(studyLink).toBeVisible();
   await expect(toolsLink).toBeVisible();
   await toolsLink.scrollIntoViewIfNeeded();
-  await expect(page.locator('iframe[title="Study"]')).toHaveCSS("width", /.+/);
+  await expect(page.getByRole("link", { name: /Open tracker in this browser session/ })).toBeVisible();
 
   await page.goto("/tools");
-  await expect(page.locator('iframe[title="Tools"]')).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open dashboard in this browser session/ })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });

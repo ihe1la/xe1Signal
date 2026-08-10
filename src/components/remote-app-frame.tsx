@@ -6,14 +6,42 @@ import { Maximize2, RefreshCw } from "lucide-react";
 type RemoteAppFrameProps = {
   title: string;
   url: string;
+  mode?: "embed" | "browser-session";
 };
 
-export function RemoteAppFrame({ title, url }: RemoteAppFrameProps) {
+export function RemoteAppFrame({ title, url, mode = "embed" }: RemoteAppFrameProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [loadState, setLoadState] = React.useState<"loading" | "loaded" | "error">("loading");
   const [reloadKey, setReloadKey] = React.useState(0);
 
   const remoteName = title.toLowerCase() === "study" ? "tracker" : "dashboard";
+
+  if (mode === "browser-session") {
+    return (
+      <section className="flex h-[calc(100dvh-12.75rem)] min-h-[420px] flex-col gap-4 lg:h-[calc(100dvh-10rem)] lg:min-h-[560px]">
+        <div className="flex shrink-0 items-center justify-between gap-3">
+          <h1 className="font-mono text-2xl tracking-tight text-zinc-100 sm:text-[30px]">{title}</h1>
+          <a href={url} target="_self" rel="noreferrer" className="font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">
+            Open original ↗
+          </a>
+        </div>
+
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[10px] border border-white/[.07] bg-[#0b0c10]">
+          <a
+            href={url}
+            target="_self"
+            rel="noreferrer"
+            className="grid h-full place-items-center px-6 text-center transition hover:bg-white/[.02]"
+          >
+            <span>
+              <span className="block font-mono text-[11px] text-zinc-400">Open {remoteName} in this browser session ↗</span>
+              <span className="mt-2 block font-mono text-[9px] text-zinc-600">Uses your existing {remoteName} login.</span>
+            </span>
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   function reload() {
     setLoadState("loading");
