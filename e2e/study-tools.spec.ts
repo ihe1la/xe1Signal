@@ -22,13 +22,19 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-async function expectRemotePage(page: import("@playwright/test").Page, title: string, url: string) {
+async function expectRemotePage(page: import("@playwright/test").Page, title: string, url: string, iframeTitle?: string) {
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
-  await expect(page.locator("iframe")).toHaveCount(0);
+  if (iframeTitle) {
+    await expect(page.locator("iframe")).toHaveCount(1);
+    await expect(page.locator("iframe")).toHaveAttribute("src", url);
+    await expect(page.locator("iframe")).toHaveAttribute("title", iframeTitle);
+  } else {
+    await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
+    await expect(page.locator("iframe")).toHaveCount(0);
+  }
 }
 
-test("Study and Tools keep the existing desktop shell and launch their original apps in the browser session", async ({ page }) => {
+test("Study and Tools keep the existing desktop shell and expose their remote apps", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
@@ -40,7 +46,7 @@ test("Study and Tools keep the existing desktop shell and launch their original 
   await expectRemotePage(page, "Study", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
-  await expectRemotePage(page, "Tools", "https://pinqued.top/recon");
+  await expectRemotePage(page, "Tools", "https://pinqued.top/recon", "Tools");
   expect(issues).toEqual([]);
 });
 
@@ -55,10 +61,10 @@ test("Study and Tools remain available through the existing mobile navigation", 
   await expect(studyLink).toBeVisible();
   await expect(toolsLink).toBeVisible();
   await toolsLink.scrollIntoViewIfNeeded();
-  await expect(page.getByRole("link", { name: /Open original/ })).toBeVisible();
 
   await page.goto("/tools");
-  await expect(page.getByRole("link", { name: /Open original/ })).toBeVisible();
+  await expect(page.locator("iframe")).toHaveCount(1);
+  await expect(page.locator("iframe")).toHaveAttribute("src", "https://pinqued.top/recon");
   expect(issues).toEqual([]);
   await page.close();
 });

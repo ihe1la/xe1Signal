@@ -8,9 +8,10 @@ type RemoteAppFrameProps = {
   url: string;
   mode?: "embed" | "browser-session";
   remoteLabel?: string;
+  showOriginalLink?: boolean;
 };
 
-export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel }: RemoteAppFrameProps) {
+export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel, showOriginalLink = true }: RemoteAppFrameProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [loadState, setLoadState] = React.useState<"loading" | "loaded" | "error">("loading");
   const [reloadKey, setReloadKey] = React.useState(0);
@@ -22,9 +23,9 @@ export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel }: Remo
       <section className="flex h-[calc(100dvh-12.75rem)] min-h-[420px] flex-col gap-4 lg:h-[calc(100dvh-10rem)] lg:min-h-[560px]">
         <div className="flex shrink-0 items-center justify-between gap-3">
           <h1 className="font-mono text-2xl tracking-tight text-zinc-100 sm:text-[30px]">{title}</h1>
-          <a href={url} target="_self" rel="noreferrer" className="font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">
+          {showOriginalLink && <a href={url} target="_self" rel="noreferrer" className="font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">
             Open original ↗
-          </a>
+          </a>}
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-[10px] border border-white/[.07] bg-[#0b0c10]">
@@ -69,7 +70,7 @@ export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel }: Remo
           <button type="button" onClick={toggleFullscreen} aria-label={`Fullscreen ${title}`} className="rounded-md p-2 text-zinc-600 transition hover:bg-white/[.04] hover:text-zinc-300">
             <Maximize2 className="h-3.5 w-3.5" />
           </button>
-          <a href={url} target="_blank" rel="noreferrer" className="ml-1 font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">Open original ↗</a>
+          {showOriginalLink && <a href={url} target="_blank" rel="noreferrer" className="ml-1 font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">Open original ↗</a>}
         </div>
       </div>
 
@@ -90,6 +91,7 @@ export function RemoteAppFrame({ title, url, mode = "embed", remoteLabel }: Remo
             title={title}
             onLoad={() => setLoadState("loaded")}
             onError={() => setLoadState("error")}
+            allow="clipboard-read; clipboard-write"
             referrerPolicy="strict-origin-when-cross-origin"
             className="h-full w-full border-0 bg-[#08090d]"
           />

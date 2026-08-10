@@ -18,8 +18,8 @@ export default async function StudyPage() {
     <AppLayout showRightSidebar={false}>
       <div className="mx-auto max-w-[1300px]">
         <header className="mb-6 flex items-center justify-between gap-4">
-          <h1 className="font-mono text-2xl tracking-tight text-zinc-100 sm:text-[30px]">Study</h1>
-          <a href={TRACKER_URL} target="_blank" rel="noreferrer" className="shrink-0 font-mono text-[10px] text-zinc-500 transition hover:text-zinc-200">
+          <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Study</h1>
+          <a href={TRACKER_URL} target="_blank" rel="noreferrer" className="shrink-0 font-sans text-xs text-zinc-500 transition hover:text-zinc-200">
             Open original ↗
           </a>
         </header>
