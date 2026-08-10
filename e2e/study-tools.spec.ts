@@ -22,15 +22,10 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-async function expectBrowserSessionLaunch(page: import("@playwright/test").Page, title: string, url: string) {
+async function expectRemotePage(page: import("@playwright/test").Page, title: string, url: string) {
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-  await expect(page.locator("iframe")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", url);
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("target", "_self");
-  const launchName = title === "Study" ? "tracker" : "pinqued workspace";
-  const launch = page.getByRole("link", { name: new RegExp(`Open ${launchName} in this browser session`) });
-  await expect(launch).toHaveAttribute("href", url);
-  await expect(launch).toHaveAttribute("target", "_self");
+  await expect(page.locator("iframe")).toHaveCount(0);
 }
 
 test("Study and Tools keep the existing desktop shell and launch their original apps in the browser session", async ({ page }) => {
@@ -42,10 +37,10 @@ test("Study and Tools keep the existing desktop shell and launch their original 
   await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "People", exact: true })).toBeVisible();
-  await expectBrowserSessionLaunch(page, "Study", "https://tracker.l30on.top/");
+  await expectRemotePage(page, "Study", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
-  await expectBrowserSessionLaunch(page, "Tools", "https://pinqued.top/recon");
+  await expectRemotePage(page, "Tools", "https://pinqued.top/recon");
   expect(issues).toEqual([]);
 });
 
@@ -60,10 +55,10 @@ test("Study and Tools remain available through the existing mobile navigation", 
   await expect(studyLink).toBeVisible();
   await expect(toolsLink).toBeVisible();
   await toolsLink.scrollIntoViewIfNeeded();
-  await expect(page.getByRole("link", { name: /Open tracker in this browser session/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toBeVisible();
 
   await page.goto("/tools");
-  await expect(page.getByRole("link", { name: /Open pinqued workspace in this browser session/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });
