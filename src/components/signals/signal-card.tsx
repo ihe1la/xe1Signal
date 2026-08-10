@@ -165,89 +165,84 @@ export function SignalCard({
   return (
     <article
       className={cn(
-        "signal-archive-card group relative mb-4 inline-block w-full overflow-hidden rounded-[11px] border border-white/[.075] bg-[#0d0e13] align-top shadow-[0_18px_50px_rgba(0,0,0,.12)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[.13]",
+        "signal-archive-card group relative mb-3.5 inline-block w-full overflow-hidden rounded-[10px] border border-white/[.065] bg-[#0d0e13] align-top transition duration-200 hover:border-white/[.11]",
         variant === "compact" && "flex",
       )}
     >
-      <div className="absolute left-4 top-3 z-10 font-mono text-[9px] uppercase tracking-wide text-zinc-500">
+      <div className="absolute left-3.5 top-2.5 z-10 font-mono text-[8px] uppercase tracking-[.14em] text-zinc-600">
         {signal.type === "AUDIO" ? "VOICE" : signal.type}
       </div>
       {(signal.type === "IMAGE" || signal.type === "SCREENSHOT") && (
         <Link
           href={`/signals/${signal.id}`}
-          className={cn("block overflow-hidden bg-zinc-900", variant === "featured" ? "max-h-[80vh]" : "h-[158px]")}
+          className={cn("block overflow-hidden bg-zinc-900", variant === "featured" ? "max-h-[80vh]" : "h-[148px]")}
         >
           <img
             src={image || ""}
             alt={signal.title || "Signal"}
-            className={cn("w-full transition duration-500", variant === "featured" ? "h-auto max-h-[80vh] object-contain opacity-100" : "h-full object-cover opacity-75 grayscale-[.35] group-hover:scale-[1.025] group-hover:opacity-90")}
+            className={cn(
+              "w-full transition duration-500",
+              variant === "featured"
+                ? "h-auto max-h-[80vh] object-contain opacity-100"
+                : "h-full object-cover opacity-80 grayscale-[.28] group-hover:scale-[1.02] group-hover:opacity-95",
+            )}
           />
         </Link>
       )}
       {signal.type === "LINK" && image && (
-        <Link
-          href={`/signals/${signal.id}`}
-          className="block h-[158px] overflow-hidden"
-        >
+        <Link href={`/signals/${signal.id}`} className="block h-[148px] overflow-hidden">
           <img
             src={image}
             alt=""
-            className="h-full w-full object-cover opacity-70 grayscale-[.25] transition duration-500 group-hover:scale-[1.025]"
+            className="h-full w-full object-cover opacity-75 grayscale-[.2] transition duration-500 group-hover:scale-[1.02]"
           />
         </Link>
       )}
       {signal.type === "CODE" && (
-        <div className="relative h-[178px] overflow-hidden bg-[#0a0b10] px-5 pb-4 pt-12">
+        <div className="relative h-[156px] overflow-hidden bg-[#0a0b10] px-4 pb-3 pt-10">
           <button
             onClick={copyCode}
-            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
+            className="absolute right-2.5 top-2.5 z-10 rounded-md p-1.5 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
             aria-label="Copy code"
           >
-            {copied ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
+            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
-          <pre className="overflow-hidden whitespace-pre-wrap break-words font-mono text-[9px] leading-[1.55] text-zinc-400">
+          <pre className="overflow-hidden whitespace-pre-wrap break-words font-mono text-[9px] leading-[1.5] text-zinc-500">
             <code>{signal.content}</code>
           </pre>
-          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0a0b10]" />
+          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#0a0b10]" />
         </div>
       )}
       {signal.type === "NOTE" && (
-        <Link
-          href={`/signals/${signal.id}`}
-          className="block min-h-[198px] px-5 pb-7 pt-16"
-        >
-          <p className="max-w-[18ch] font-mono text-[17px] leading-[1.35] text-zinc-200">
-            {signal.title}
-          </p>
+        <Link href={`/signals/${signal.id}`} className="block min-h-[148px] px-4 pb-5 pt-11">
+          <p className="max-w-[20ch] font-mono text-[15px] leading-[1.35] text-zinc-200">{signal.title}</p>
+          {signal.content && (
+            <p className="mt-2 line-clamp-3 font-mono text-[10px] leading-5 text-zinc-500">
+              {signal.content}
+            </p>
+          )}
         </Link>
       )}
       {(signal.type === "DOCUMENT" || signal.type === "FILE") && (
-        <div className="flex min-h-[150px] items-center gap-4 px-6 pt-6">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[.03]">
-            <FileText className="h-5 w-5 text-violet-300" />
+        <div className="flex min-h-[120px] items-center gap-3 px-4 pt-9">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[.03]">
+            <FileText className="h-4 w-4 text-violet-300/80" />
           </span>
           <span className="min-w-0 flex-1">
-            <Link
-              href={`/signals/${signal.id}`}
-              className="block truncate font-mono text-sm text-zinc-200"
-            >
+            <Link href={`/signals/${signal.id}`} className="block truncate font-mono text-[13px] text-zinc-200">
               {signal.title}
             </Link>
-            <small className="mt-2 block truncate font-mono text-[10px] text-zinc-600">
+            <small className="mt-1.5 block truncate font-mono text-[9px] text-zinc-600">
               {documentFile?.originalName || "Saved document"}
             </small>
           </span>
           {documentFile && (
             <a
               href={`${documentFile.url}?download=1`}
-              className="rounded-lg border border-white/[.08] p-2.5 text-zinc-500 hover:text-violet-300"
+              className="rounded-md border border-white/[.08] p-2 text-zinc-500 hover:text-violet-300"
               aria-label={`Download ${documentFile.originalName}`}
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-3.5 w-3.5" />
             </a>
           )}
         </div>
@@ -256,14 +251,14 @@ export function SignalCard({
       signal.mediaProvider &&
       signal.externalId &&
       signal.sourceUrl ? (
-        <div className="pt-10">
+        <div className="pt-8">
           <div className="relative aspect-video overflow-hidden bg-zinc-950">
             {signal.thumbnailUrl ? (
               signal.mediaProvider === "audius" ? (
                 <img
                   src={signal.thumbnailUrl}
                   alt={signal.title || "Media thumbnail"}
-                  className="h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-[1.02] group-hover:opacity-90"
+                  className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-[1.02] group-hover:opacity-95"
                 />
               ) : (
                 <Image
@@ -271,13 +266,13 @@ export function SignalCard({
                   alt={signal.title || "Media thumbnail"}
                   fill
                   sizes="(max-width: 640px) 100vw, 360px"
-                  className="object-cover opacity-75 transition duration-500 group-hover:scale-[1.02] group-hover:opacity-90"
+                  className="object-cover opacity-80 transition duration-500 group-hover:scale-[1.02] group-hover:opacity-95"
                 />
               )
             ) : (
-              <div className="h-full bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,.18),transparent_55%)]" />
+              <div className="h-full bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,.14),transparent_55%)]" />
             )}
-            <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/60 px-2 py-1 font-mono text-[8px] uppercase text-zinc-300">
+            <span className="absolute left-2.5 top-2.5 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 font-mono text-[8px] uppercase text-zinc-400">
               {signal.mediaProvider} · {signal.mediaEntityType}
             </span>
             {signal.mediaProvider === "audius" ? (
@@ -300,24 +295,21 @@ export function SignalCard({
                 className="absolute inset-0 grid place-items-center"
                 aria-label={`Play ${signal.title || "media"}`}
               >
-                <span className="grid h-12 w-12 place-items-center rounded-full border border-white/30 bg-black/55 text-white backdrop-blur">
-                  <Play className="ml-0.5 h-4 w-4 fill-current" />
+                <span className="grid h-10 w-10 place-items-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur">
+                  <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
                 </span>
               </button>
             )}
           </div>
-          <div className="px-5 pb-5 pt-4">
-            <Link
-              href={`/signals/${signal.id}`}
-              className="line-clamp-2 font-mono text-[13px] text-zinc-200"
-            >
+          <div className="px-4 pb-3.5 pt-3">
+            <Link href={`/signals/${signal.id}`} className="line-clamp-2 font-mono text-[12px] text-zinc-200">
               {signal.title}
             </Link>
-            <p className="mt-2 truncate font-mono text-[10px] text-zinc-500">
+            <p className="mt-1.5 truncate font-mono text-[9px] text-zinc-500">
               {signal.creatorName || signal.mediaProvider}
             </p>
             {signal.frequency && (
-              <p className="mt-3 font-mono text-[9px] text-violet-300/70">
+              <p className="mt-2 font-mono text-[8px] uppercase tracking-[.08em] text-violet-300/60">
                 {signal.frequency.name}
               </p>
             )}
@@ -325,143 +317,114 @@ export function SignalCard({
         </div>
       ) : (
         (signal.type === "SONG" || signal.type === "AUDIO") && (
-          <div className="min-h-[190px] px-5 pb-5 pt-14">
-            <Link
-              href={`/signals/${signal.id}`}
-              className="font-mono text-[14px] text-zinc-200"
-            >
+          <div className="min-h-[150px] px-4 pb-4 pt-10">
+            <Link href={`/signals/${signal.id}`} className="font-mono text-[13px] text-zinc-200">
               {signal.title}
             </Link>
-            <p className="mt-2 truncate font-mono text-[10px] text-zinc-500">
+            <p className="mt-1.5 truncate font-mono text-[9px] text-zinc-500">
               {signal.artist || signal.description || audioFile?.originalName}
             </p>
             <AudioPlayer
               signalId={signal.id}
               title={signal.title || "Untitled audio"}
-              artist={
-                signal.artist || signal.description || audioFile?.originalName
-              }
+              artist={signal.artist || signal.description || audioFile?.originalName}
               src={audioFile?.url}
               fallbackDuration={signal.duration}
             />
           </div>
         )
       )}
-      {![
-        "IMAGE",
-        "SCREENSHOT",
-        "LINK",
-        "CODE",
-        "NOTE",
-        "DOCUMENT",
-        "FILE",
-        "SONG",
-        "AUDIO",
-      ].includes(signal.type) && (
-        <div className="min-h-[150px] px-5 pt-14">
-          <p>{signal.title}</p>
+      {!["IMAGE", "SCREENSHOT", "LINK", "CODE", "NOTE", "DOCUMENT", "FILE", "SONG", "AUDIO"].includes(
+        signal.type,
+      ) && (
+        <div className="min-h-[120px] px-4 pt-10">
+          <p className="font-mono text-[13px] text-zinc-200">{signal.title}</p>
         </div>
       )}
 
       {["IMAGE", "SCREENSHOT", "LINK"].includes(signal.type) && (
-        <div
-          className={cn(
-            "px-5 pb-5",
-            signal.type === "LINK" && !image ? "pt-12" : "pt-4",
-          )}
-        >
-          <Link
-            href={`/signals/${signal.id}`}
-            className="font-mono text-[13px] text-zinc-200 hover:text-white"
-          >
+        <div className={cn("px-4 pb-3.5", signal.type === "LINK" && !image ? "pt-10" : "pt-3")}>
+          <Link href={`/signals/${signal.id}`} className="font-mono text-[12px] text-zinc-200 hover:text-white">
             {signal.title}
           </Link>
           {signal.description && (
-            <p className="mt-2 line-clamp-1 font-mono text-[10px] text-zinc-500">
-              {signal.description}
-            </p>
+            <p className="mt-1.5 line-clamp-1 font-mono text-[9px] text-zinc-500">{signal.description}</p>
           )}
           {signal.sourceDomain && (
-            <p className="mt-2 font-mono text-[10px] text-zinc-500">
+            <p className="mt-1.5 font-mono text-[9px] uppercase tracking-[.08em] text-zinc-600">
               {signal.sourceDomain}
             </p>
           )}
         </div>
       )}
       {signal.type === "CODE" && (
-        <div className="px-5 pb-4 pt-3">
-          <Link
-            href={`/signals/${signal.id}`}
-            className="font-mono text-[12px] text-zinc-200"
-          >
+        <div className="px-4 pb-3 pt-2.5">
+          <Link href={`/signals/${signal.id}`} className="font-mono text-[12px] text-zinc-200">
             {signal.title}
           </Link>
         </div>
       )}
-      <footer className="flex h-10 items-center border-t border-white/[.06] px-4 font-mono text-[10px] text-zinc-500">
-        <Link
-          href={`/profile/${signal.owner.username}`}
-          className="hover:text-zinc-200"
-        >
+      <footer className="flex h-9 items-center border-t border-white/[.05] px-3.5 font-mono text-[9px] text-zinc-600">
+        <Link href={`/profile/${signal.owner.username}`} className="truncate hover:text-zinc-300">
           {signal.owner.name || signal.owner.username}
         </Link>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-0.5">
           <button
             onClick={() => void toggleReaction()}
             disabled={Boolean(actionBusy)}
             className={cn(
-              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
+              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5 hover:text-zinc-300",
               reacted && "text-rose-400",
             )}
             aria-label={reacted ? "Unlike" : "Like"}
           >
-            <Heart className={cn("h-3.5 w-3.5", reacted && "fill-current")} />
-            <span>
-              {reactionCount}
-            </span>
+            <Heart className={cn("h-3 w-3", reacted && "fill-current")} />
+            <span>{reactionCount}</span>
           </button>
           <Link
             href={`/signals/${signal.id}#comments`}
-            className="flex items-center gap-1 rounded p-1.5 hover:bg-white/5"
+            className="flex items-center gap-1 rounded p-1.5 hover:bg-white/5 hover:text-zinc-300"
             aria-label="Comments"
           >
-            <MessageCircle className="h-3.5 w-3.5" />
+            <MessageCircle className="h-3 w-3" />
             <span>{signal.commentCount || 0}</span>
           </Link>
           <button
             onClick={() => void toggleSave()}
             disabled={Boolean(actionBusy)}
             className={cn(
-              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
+              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5 hover:text-zinc-300",
               saved && "text-violet-300",
             )}
             aria-label="Save"
           >
-            <Bookmark className={cn("h-3.5 w-3.5", saved && "fill-current")} />
-            <span>
-              {saveCount}
-            </span>
+            <Bookmark className={cn("h-3 w-3", saved && "fill-current")} />
+            <span>{saveCount}</span>
           </button>
-          <button onClick={() => void shareSignal()} className="rounded p-1.5 hover:bg-white/5" aria-label="Share">
-            <Share2 className="h-3.5 w-3.5" />
+          <button
+            onClick={() => void shareSignal()}
+            className="rounded p-1.5 hover:bg-white/5 hover:text-zinc-300"
+            aria-label="Share"
+          >
+            <Share2 className="h-3 w-3" />
           </button>
           {signal.sourceUrl ? (
             <a
               href={signal.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded p-1.5 hover:bg-white/5"
+              className="rounded p-1.5 hover:bg-white/5 hover:text-zinc-300"
               aria-label="Open source"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3 w-3" />
             </a>
           ) : (
             <Link
               href={`/signals/${signal.id}`}
-              className="rounded p-1.5 hover:bg-white/5"
+              className="rounded p-1.5 hover:bg-white/5 hover:text-zinc-300"
               aria-label="More"
             >
-              <MoreHorizontal className="h-3.5 w-3.5" />
+              <MoreHorizontal className="h-3 w-3" />
             </Link>
           )}
         </div>
@@ -523,7 +486,7 @@ function AudioPlayer({
   const duration = active ? player.duration : 0;
 
   return (
-    <div className="mt-7 flex items-center gap-3">
+    <div className="mt-5 flex items-center gap-3">
       {src ? (
         <button
           onClick={() =>
@@ -537,26 +500,26 @@ function AudioPlayer({
               })
               .catch(() => undefined)
           }
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-violet-300/70 text-zinc-200"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-violet-300/60 text-zinc-200"
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? (
-            <Pause className="h-3.5 w-3.5 fill-current" />
+            <Pause className="h-3 w-3 fill-current" />
           ) : (
-            <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
+            <Play className="ml-0.5 h-3 w-3 fill-current" />
           )}
         </button>
       ) : (
         <button
           disabled
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-zinc-700 text-zinc-700"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-zinc-700 text-zinc-700"
           aria-label="No audio file"
         >
-          <Play className="h-3.5 w-3.5" />
+          <Play className="h-3 w-3" />
         </button>
       )}
       <Wave progress={progress} />
-      <span className="font-mono text-[9px] text-zinc-500">
+      <span className="font-mono text-[8px] text-zinc-500">
         {duration ? formatDuration(duration) : fallbackDuration || "--:--"}
       </span>
     </div>
