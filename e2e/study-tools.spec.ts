@@ -22,15 +22,56 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-test("Study and Tools findings capture and search", async ({ page }) => {
+test("Study and Tools stay private for guests", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
-  await page.goto("/study");
+  await page.goto("/discover");
   const sidebar = page.locator("aside").first();
-  await expect(page.getByRole("heading", { name: "Study", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
+
+  await page.goto("/study");
+  await expect(page.getByRole("heading", { name: "Study", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+
+  await page.goto("/tools");
+  await expect(page.getByRole("heading", { name: "Tools", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
+
+  expect(issues).toEqual([]);
+});
+
+test("Study and Tools stay private for non-owner accounts", async ({ page }) => {
+  test.setTimeout(60_000);
+  const issues = collectLocalIssues(page);
+
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill("test@signal.local");
+  await page.locator("#password").fill("Archive!2026");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/discover$/, { timeout: 30_000 });
+
+  const sidebar = page.locator("aside").first();
+  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
+
+  await page.goto("/tools");
+  await expect(page.getByRole("heading", { name: "Tools", exact: true })).toHaveCount(0);
+
+  expect(issues).toEqual([]);
+});
+
+test("Owner can open Tools findings", async ({ page }) => {
+  test.setTimeout(60_000);
+  test.skip(process.env.RUN_OWNER_TOOLS_E2E !== "true", "Requires an ihe1la login on this environment");
+  const issues = collectLocalIssues(page);
+
+  await page.goto("/login");
+  await page.getByLabel("Email or username").fill(process.env.OWNER_E2E_EMAIL || "");
+  await page.locator("#password").fill(process.env.OWNER_E2E_PASSWORD || "");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/discover$/, { timeout: 30_000 });
 
   await page.goto("/tools");
   await page.evaluate(() => window.localStorage.removeItem("xe1signal-tools-findings-v1"));
@@ -38,69 +79,19 @@ test("Study and Tools findings capture and search", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Findings" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Claim Chain" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Snippets" })).toBeVisible();
-  await expect(page.getByLabel("Findings section")).toBeVisible();
-  await expect(page.getByLabel("Capture finding")).toBeVisible();
   await expect(page.getByLabel("Findings list")).toContainText("linktr.ee/ihe1la");
 
-  await page.getByLabel("Capture finding").fill("saw X-Request-Id on api.target.com #header");
-  await page.getByRole("button", { name: "Save finding" }).click();
-  await expect(page.getByLabel("Findings list")).toContainText("saw X-Request-Id on api.target.com #header");
-
-  await page.getByLabel("Search findings").fill("request-id");
-  await expect(page.getByLabel("Findings list")).toContainText("X-Request-Id");
-
-  await page.getByRole("button", { name: "#linktree" }).first().click();
-  await expect(page.getByLabel("Findings list")).toContainText("l30on.top");
-
   expect(issues).toEqual([]);
 });
 
-test("Tools claim chain can save a spine", async ({ page }) => {
-  test.setTimeout(60_000);
-  const issues = collectLocalIssues(page);
-
-  await page.goto("/tools");
-  await page.evaluate(() => window.localStorage.removeItem("xe1signal-tools-claim-chains-v1"));
-  await page.reload();
-  await page.getByRole("tab", { name: "Claim Chain" }).click();
-  await expect(page.getByLabel("Claim Chain section")).toBeVisible();
-  await page.getByLabel("Claim").fill("/users/{id} leaks profiles #idor");
-  await page.getByLabel("Proof").fill("Authed as A, fetched B → 200");
-  await page.getByLabel("Impact").fill("PII exposure across accounts");
-  await page.getByLabel("Next").fill("Map object endpoints");
-  await page.getByRole("button", { name: "Save chain" }).click();
-  await expect(page.getByLabel("Claim chains list")).toContainText("/users/{id} leaks profiles #idor");
-  await expect(page.getByLabel("Claim chains list")).toContainText("PII exposure");
-  expect(issues).toEqual([]);
-});
-
-test("Tools snippets can encode Base64", async ({ page }) => {
-  test.setTimeout(60_000);
-  const issues = collectLocalIssues(page);
-
-  await page.goto("/tools");
-  await page.getByRole("tab", { name: "Snippets" }).click();
-  await expect(page.getByLabel("Snippets section")).toBeVisible();
-  await page.getByRole("button", { name: /Base64 Encode/ }).click();
-  await page.getByLabel("Input").fill("hello");
-  await page.getByRole("button", { name: "Run" }).click();
-  await expect(page.getByLabel("Output")).toHaveValue("aGVsbG8=");
-  expect(issues).toEqual([]);
-});
-
-test("Study and Tools remain available through mobile navigation", async ({ browser }) => {
+test("Study and Tools stay hidden in mobile nav for guests", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const issues = collectLocalIssues(page);
 
-  await page.goto("/study");
-  await expect(page.getByRole("link", { name: "Study", exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Tools", exact: true }).first()).toBeVisible();
+  await page.goto("/discover");
+  await expect(page.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
 
-  await page.goto("/tools");
-  await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Snippets" })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });

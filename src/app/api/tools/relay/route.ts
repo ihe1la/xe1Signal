@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { canAccessOwnerTools } from "@/lib/owner-access";
 import { assertSafeUrl } from "@/lib/safe-url";
 
 const schema = z.object({ url: z.string().url().max(2048) });
@@ -28,6 +29,7 @@ async function readText(response: Response) {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canAccessOwnerTools(session.user.username)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body: unknown;
   try {

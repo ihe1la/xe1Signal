@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AppLayout } from "@/components/layout/app-layout";
 import { StudySummary, StudyUnavailable } from "@/components/study-summary";
 import { getTrackerStudySummary, getTrackerStudyWorkspace, trackerUsernameMatches } from "@/lib/tracker-client";
 import { StudyWorkspace } from "@/components/study-workspace";
+import { canAccessOwnerTools } from "@/lib/owner-access";
 
 export const metadata: Metadata = { title: "Study" };
 
 export default async function StudyPage() {
   const session = await auth();
   const username = session?.user?.username;
+  if (!canAccessOwnerTools(username)) notFound();
+
   const linked = trackerUsernameMatches(username);
   const [summary, workspace] = linked
     ? await Promise.all([getTrackerStudySummary(), getTrackerStudyWorkspace()])
@@ -29,9 +33,7 @@ export default async function StudyPage() {
             <a href="https://tracker.l30on.top/" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-400 transition hover:text-violet-200">Open original ↗</a>
           </div>
         </header>
-        {!username ? (
-          <StudyUnavailable reason="Sign in to xe1Signal to view your tracker profile." />
-        ) : !linked ? (
+        {!linked ? (
           <StudyUnavailable reason="This xe1Signal profile is not linked to the tracker profile." />
         ) : workspace ? (
           <>

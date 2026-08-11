@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { canAccessOwnerTools } from "@/lib/owner-access";
 import { trackerUsernameMatches, updateTrackerTimer } from "@/lib/tracker-client";
 
 const schema = z.object({
@@ -13,6 +14,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canAccessOwnerTools(session.user.username)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!trackerUsernameMatches(session.user.username)) return NextResponse.json({ error: "Study tracker is not linked" }, { status: 403 });
 
   let body: unknown;

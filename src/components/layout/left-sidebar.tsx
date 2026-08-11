@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
 import { Archive, CircleUserRound, Compass, Grid2X2, Headphones, Plus, Radio, Settings, Timer, Users } from "lucide-react";
+import { canAccessOwnerTools } from "@/lib/owner-access";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
 import type { LucideIcon } from "lucide-react";
@@ -14,20 +15,25 @@ type SidebarSummary = {
   frequencies: { id: string; name: string; signalCount: number }[];
 };
 
-const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
+const publicNavigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/discover", "Discover", Compass],
   ["/frequencies", "Frequencies", Radio],
   ["/archive", "Archive", Archive],
   ["/vibe", "Vibe", Headphones],
+  ["/people", "People", Users],
+];
+
+const ownerNavigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/study", "Study", Timer],
   ["/tools", "Tools", Grid2X2],
-  ["/people", "People", Users],
 ];
 
 export function LeftSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [summary, setSummary] = React.useState<SidebarSummary>({ profile: null, frequencies: [] });
+  const isOwner = canAccessOwnerTools(session?.user?.username);
+  const navigation = isOwner ? [...publicNavigation.slice(0, 4), ...ownerNavigation, publicNavigation[4]] : publicNavigation;
 
   React.useEffect(() => {
     if (!session?.user?.id) return;

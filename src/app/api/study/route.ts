@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { canAccessOwnerTools } from "@/lib/owner-access";
 import { getTrackerStudyWorkspace, trackerUsernameMatches } from "@/lib/tracker-client";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canAccessOwnerTools(session.user.username)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!trackerUsernameMatches(session.user.username)) return NextResponse.json({ error: "Study tracker is not linked" }, { status: 403 });
 
   const workspace = await getTrackerStudyWorkspace();
