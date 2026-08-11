@@ -3,9 +3,10 @@
 import * as React from "react";
 import { FindingsWorkspace } from "@/components/findings-workspace";
 import { SnippetsWorkspace } from "@/components/snippets-workspace";
+import { ClaimChainWorkspace } from "@/components/claim-chain-workspace";
 import { cn } from "@/lib/utils";
 
-type ToolsTab = "findings" | "snippets";
+type ToolsTab = "findings" | "claim-chain" | "snippets";
 
 export function ToolsWorkspace() {
   const [tab, setTab] = React.useState<ToolsTab>("findings");
@@ -15,7 +16,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-sans text-sm text-zinc-500">
-          Local lab for findings and text transforms.
+          Local lab for findings, claim spines, and text transforms.
         </p>
       </header>
 
@@ -23,6 +24,7 @@ export function ToolsWorkspace() {
         {(
           [
             ["findings", "Findings"],
+            ["claim-chain", "Claim Chain"],
             ["snippets", "Snippets"],
           ] as const
         ).map(([id, label]) => (
@@ -42,7 +44,9 @@ export function ToolsWorkspace() {
         ))}
       </div>
 
-      {tab === "findings" ? <FindingsWorkspace /> : <SnippetsWorkspace />}
+      {tab === "findings" ? <FindingsWorkspace /> : null}
+      {tab === "claim-chain" ? <ClaimChainWorkspace /> : null}
+      {tab === "snippets" ? <SnippetsWorkspace /> : null}
     </div>
   );
 }

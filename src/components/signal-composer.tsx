@@ -194,6 +194,23 @@ export function SignalComposer({ signalId }: { signalId?: string }) {
   }, [signalId]);
 
   React.useEffect(() => {
+    if (signalId) return;
+    try {
+      const raw = window.sessionStorage.getItem("xe1signal-claim-chain-signal-draft-v1");
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { title?: string; description?: string; tags?: string; source?: string };
+      if (draft.source !== "claim-chain") return;
+      if (typeof draft.title === "string" && draft.title.trim()) setTitle(draft.title);
+      if (typeof draft.description === "string" && draft.description.trim()) setDescription(draft.description);
+      if (typeof draft.tags === "string") setTags(draft.tags);
+      setType("NOTE");
+      window.sessionStorage.removeItem("xe1signal-claim-chain-signal-draft-v1");
+    } catch {
+      /* ignore bad draft payloads */
+    }
+  }, [signalId]);
+
+  React.useEffect(() => {
     if (!signalId) return;
     fetch(`/api/signals/${signalId}`)
       .then((response) => (response.ok ? response.json() : Promise.reject()))

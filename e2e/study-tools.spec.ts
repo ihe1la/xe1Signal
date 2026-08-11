@@ -38,6 +38,7 @@ test("Study and Tools findings capture and search", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Findings" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Claim Chain" })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Snippets" })).toBeVisible();
   await expect(page.getByLabel("Findings section")).toBeVisible();
   await expect(page.getByLabel("Capture finding")).toBeVisible();
@@ -49,6 +50,25 @@ test("Study and Tools findings capture and search", async ({ page }) => {
   await page.getByLabel("Search findings").fill("request-id");
   await expect(page.getByLabel("Findings list")).toContainText("X-Request-Id");
 
+  expect(issues).toEqual([]);
+});
+
+test("Tools claim chain can save a spine", async ({ page }) => {
+  test.setTimeout(60_000);
+  const issues = collectLocalIssues(page);
+
+  await page.goto("/tools");
+  await page.evaluate(() => window.localStorage.removeItem("xe1signal-tools-claim-chains-v1"));
+  await page.reload();
+  await page.getByRole("tab", { name: "Claim Chain" }).click();
+  await expect(page.getByLabel("Claim Chain section")).toBeVisible();
+  await page.getByLabel("Claim").fill("/users/{id} leaks profiles #idor");
+  await page.getByLabel("Proof").fill("Authed as A, fetched B → 200");
+  await page.getByLabel("Impact").fill("PII exposure across accounts");
+  await page.getByLabel("Next").fill("Map object endpoints");
+  await page.getByRole("button", { name: "Save chain" }).click();
+  await expect(page.getByLabel("Claim chains list")).toContainText("/users/{id} leaks profiles #idor");
+  await expect(page.getByLabel("Claim chains list")).toContainText("PII exposure");
   expect(issues).toEqual([]);
 });
 
