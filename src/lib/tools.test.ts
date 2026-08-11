@@ -5,9 +5,11 @@ import {
   decodeBase64,
   decodeHtml,
   decodeJwt,
+  decodeUrl,
   diffLines,
   encodeBase64,
   encodeHtml,
+  encodeUrl,
   formatDiff,
   formatJson,
   generateLorem,
@@ -16,6 +18,10 @@ import {
 } from "@/lib/tools";
 
 describe("local tools", () => {
+  it("round-trips URL-encoded text", () => {
+    expect(decodeUrl(encodeUrl("Signal archive ✓ / tools"))).toBe("Signal archive ✓ / tools");
+  });
+
   it("round-trips Unicode Base64 text", () => {
     const value = "Signal archive ✓";
     expect(decodeBase64(encodeBase64(value))).toBe(value);

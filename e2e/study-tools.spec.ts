@@ -43,8 +43,14 @@ test("Study and Tools keep the simplified shell", async ({ page }) => {
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Base64/ })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
+  await page.getByRole("button", { name: /Base64/ }).click();
+  await page.getByLabel("Tool input").fill("Signal archive ✓");
+  await page.getByRole("button", { name: "Encode", exact: true }).click();
+  await expect(page.getByLabel("Tool output")).toHaveValue("U2lnbmFsIGFyY2hpdmUg4pyT");
+  await page.getByRole("button", { name: "Back to tools", exact: true }).click();
+  await expect(page.getByRole("button", { name: /UUID Generator/ })).toBeVisible();
   expect(issues).toEqual([]);
 });
 
@@ -60,6 +66,7 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByText("Original tools by", { exact: false })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });

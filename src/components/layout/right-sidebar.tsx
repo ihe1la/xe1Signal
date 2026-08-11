@@ -15,7 +15,7 @@ type SidebarData = {
 };
 
 export function StrengthBars({ value = 76 }: { value?: number }) {
-  return <span className="flex items-end gap-1" aria-label={`Signal strength ${value}`}>{[1,20,40,60,80,100].map((level, index) => <i key={level} className="block w-1 rounded-sm" style={{height: `${5 + index * 2}px`, background: value >= level ? "#8f7be9" : "#24242e"}} />)}</span>;
+  return <span className="flex items-end gap-[2px]" aria-label={`Signal strength ${value}`}>{[1,20,40,60,80,100].map((level, index) => <i key={level} className="block w-[3px] rounded-sm" style={{height: `${4 + index * 2}px`, background: value >= level ? "#a178f5" : "#282934"}} />)}</span>;
 }
 
 export function RightSidebar() {
@@ -74,18 +74,18 @@ export function RightSidebar() {
   }
 
   return (
-    <aside className="fixed bottom-0 right-0 top-20 z-20 hidden w-[304px] border-l border-white/[.055] bg-[#08090d] 2xl:block">
-      <div className="scrollbar-thin h-full overflow-y-auto p-3">
-        <div className="overflow-hidden rounded-[11px] border border-white/[.065] bg-gradient-to-br from-white/[.025] to-transparent">
-          <section className="px-5 pb-5 pt-6">
-            {avatarUrl ? <img src={avatarUrl} alt={username} className="mb-3 h-12 w-12 rounded-full border border-white/10 bg-black object-cover" /> : <span className="mb-3 grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/[.04] font-mono text-lg text-zinc-400">{username.slice(0, 1).toUpperCase()}</span>}
-            <p className="font-mono text-[14px] text-zinc-100">{name}</p>
+    <aside className="fixed bottom-0 right-0 top-20 z-20 hidden w-[248px] border-l border-white/[.055] bg-[#08090d] 2xl:block">
+      <div className="scrollbar-thin h-full overflow-y-auto p-2">
+        <div className="overflow-hidden rounded-[8px] border border-white/[.065] bg-gradient-to-br from-white/[.025] to-transparent">
+          <section className="px-4 pb-4 pt-4">
+            {avatarUrl ? <img src={avatarUrl} alt={username} className="mb-3 h-11 w-11 rounded-full border border-white/10 bg-black object-cover" /> : <span className="mb-3 grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.04] font-mono text-base text-zinc-400">{username.slice(0, 1).toUpperCase()}</span>}
+            <p className="font-mono text-[12px] font-medium text-zinc-100">{name}</p>
             <p className="mt-1 font-mono text-[9px] text-zinc-600">@{username}</p>
-            <div className="mt-3 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[.08em] text-zinc-600"><span>signal strength</span><StrengthBars value={data.profile?.strength || 0} /></div>
+            <div className="mt-3 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.08em] text-zinc-600"><span>signal strength</span><StrengthBars value={data.profile?.strength || 0} /></div>
           </section>
 
           <ContextSection label="Active frequency">
-            {data.activeFrequency ? <Link href={`/frequencies/${data.activeFrequency.id}`} className="block rounded-lg bg-white/[.025] px-4 py-3"><span className="font-mono text-[13px] text-zinc-200">{data.activeFrequency.name}</span><span className="mt-1 flex items-center justify-between font-mono text-[10px] text-zinc-600"><span>{data.activeFrequency.signalCount} signals</span><StrengthBars value={data.activeFrequency.signalCount ? 50 : 0} /></span></Link> : <EmptyAction href="/frequencies/new" label="Create your first frequency" />}
+            {data.activeFrequency ? <Link href={`/frequencies/${data.activeFrequency.id}`} className="block rounded-md bg-white/[.025] px-3 py-2.5"><span className="font-mono text-[11px] text-zinc-200">{data.activeFrequency.name}</span><span className="mt-1 flex items-center justify-between font-mono text-[9px] text-zinc-600"><span>{data.activeFrequency.signalCount} signals</span><StrengthBars value={data.activeFrequency.signalCount ? 50 : 0} /></span></Link> : <EmptyAction href="/frequencies/new" label="Create your first frequency" />}
           </ContextSection>
 
           <ContextSection label="Current mood">
@@ -93,14 +93,14 @@ export function RightSidebar() {
           </ContextSection>
 
           <ContextSection label="Recent trail">
-            {data.recentTrail ? <Link href={`/trails/${data.recentTrail.id}/edit`} className="block rounded-lg border border-white/[.06] p-3"><span className="font-mono text-[11px] text-zinc-300">{data.recentTrail.title}</span><small className="mt-2 block font-mono text-[9px] text-zinc-600">{data.recentTrail.nodeCount ? `${data.recentTrail.nodeCount} nodes · continue editing` : "Empty trail · add your first node"}</small></Link> : <EmptyAction href="/trails/new/edit" label="Create your first trail" />}
+            {data.recentTrail ? <Link href={`/trails/${data.recentTrail.id}/edit`} className="block rounded-md border border-white/[.06] p-3"><span className="font-mono text-[10px] text-zinc-300">{data.recentTrail.title}</span><small className="mt-1.5 block font-mono text-[8px] text-zinc-600">{data.recentTrail.nodeCount ? `${data.recentTrail.nodeCount} nodes · continue editing` : "Empty trail · add your first node"}</small></Link> : <EmptyAction href="/trails/new/edit" label="Create your first trail" />}
           </ContextSection>
 
           <ContextSection label="Recent signal">
-            {data.recentSignal ? <Link href={`/signals/${data.recentSignal.id}`} className="flex gap-3">{data.recentSignal.previewImageUrl ? <img src={data.recentSignal.previewImageUrl} alt="" className="h-14 w-[72px] rounded-md border border-white/10 object-cover" /> : <span className="grid h-14 w-[72px] place-items-center rounded-md border border-white/10 bg-white/[.03] font-mono text-[9px] text-zinc-600">SIGNAL</span>}<span className="font-mono text-[11px] leading-5 text-zinc-300">{data.recentSignal.title || "Untitled signal"}<small className="block text-zinc-600">Recently created</small></span></Link> : <EmptyAction href="/signals/new" label="Create your first signal" />}
+            {data.recentSignal ? <Link href={`/signals/${data.recentSignal.id}`} className="flex gap-2.5 rounded-md bg-white/[.025] p-2.5">{data.recentSignal.previewImageUrl ? <img src={data.recentSignal.previewImageUrl} alt="" className="h-11 w-12 rounded border border-white/10 object-cover" /> : <span className="grid h-11 w-12 place-items-center rounded border border-white/10 bg-white/[.03] font-mono text-[8px] text-zinc-600">SIGNAL</span>}<span className="min-w-0 font-mono text-[10px] leading-4 text-zinc-300">{data.recentSignal.title || "Untitled signal"}<small className="mt-1 block text-[8px] text-zinc-600">Recently created</small></span></Link> : <EmptyAction href="/signals/new" label="Create your first signal" />}
           </ContextSection>
 
-          <Link href={`/profile/${username}`} className="flex items-center gap-2 px-5 py-5 font-mono text-[9px] uppercase tracking-wider text-zinc-500 hover:text-zinc-200">View profile <ArrowRight className="h-3 w-3" /></Link>
+          <Link href={`/profile/${username}`} className="flex items-center gap-2 px-4 py-4 font-mono text-[8px] uppercase tracking-[.14em] text-zinc-500 hover:text-zinc-200">View profile <ArrowRight className="h-3 w-3" /></Link>
         </div>
       </div>
     </aside>
@@ -112,5 +112,5 @@ function EmptyAction({ href, label }: { href: string; label: string }) {
 }
 
 function ContextSection({ label, children }: { label: string; children: React.ReactNode }) {
-  return <section className="border-t border-white/[.055] px-5 py-5"><h3 className="mb-3 font-mono text-[9px] uppercase tracking-[.14em] text-zinc-500">{label}</h3>{children}</section>;
+  return <section className="border-t border-white/[.055] px-4 py-4"><h3 className="mb-3 font-mono text-[8px] uppercase tracking-[.15em] text-zinc-500">{label}</h3>{children}</section>;
 }

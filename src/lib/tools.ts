@@ -1,5 +1,13 @@
 export type HashAlgorithm = "SHA-1" | "SHA-256" | "SHA-512";
 
+export function encodeUrl(value: string) {
+  return encodeURIComponent(value);
+}
+
+export function decodeUrl(value: string) {
+  return decodeURIComponent(value);
+}
+
 function bytesToBinary(bytes: Uint8Array) {
   let binary = "";
   for (let offset = 0; offset < bytes.length; offset += 0x8000) {

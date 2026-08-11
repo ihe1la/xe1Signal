@@ -13,7 +13,7 @@ export function AppLayout({ children, showRightSidebar = true, showLeftSidebar =
       {showLeftSidebar && <LeftSidebar />}
       <div className={cn("min-h-screen", showLeftSidebar && "lg:pl-[272px]")}>
         <Header reserveRightSidebar={showRightSidebar} />
-        <div className={cn("mx-auto flex max-w-[1536px]", showRightSidebar && "2xl:pr-[304px]")}>
+        <div className={cn("mx-auto flex max-w-[1536px]", showRightSidebar && "2xl:pr-[248px]")}>
           <main className="min-w-0 flex-1 px-4 pb-24 pt-7 sm:px-7 lg:px-11 lg:pb-12 lg:pt-8">{children}</main>
         </div>
         {showRightSidebar && <RightSidebar />}

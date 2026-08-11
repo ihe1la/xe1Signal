@@ -7,7 +7,7 @@ Short note for `/tools` in xe1Signal. The page keeps the graphite/violet shell a
 ### https://pinqued.top/
 
 - `/` is public but exposes only the Pinqued login entry point.
-- `/tools` returns a `307` redirect to `/login?returnUrl=%2Ftools`.
+- `/tools`, `/recon`, `/terminal`, `/files`, and `/dashboard` each return a `307` redirect to their matching `/login?returnUrl=...` page when checked without a session.
 - `/app` is a public download page for the desktop and Android applications; it is not an in-browser tools catalog.
 - The sampled public/login responses did not expose `X-Frame-Options`, `Content-Security-Policy`, or `frame-ancestors`, but authenticated cross-origin iframe sessions are still not a reliable integration contract. No proxy or policy bypass is used.
 
@@ -57,5 +57,5 @@ The original l30on dashboard is also linked from the Tools workspace:
 ## Not integrated
 
 - Pinqued recon, terminal, files, dashboard, and app backends are private/auth-gated; xe1Signal does not recreate or proxy them.
-- The full l30on dashboard catalog cannot be verified while the source returns 403; the page keeps the reference-grounded local subset and an original link.
+- The full l30on dashboard catalog, including the current contents of “More Tools,” cannot be verified while the source returns 403; the page keeps the reference-grounded local subset and an original link.
 - No credentials, cookies, private API tokens, or server-side scraping are used.
