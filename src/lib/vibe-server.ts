@@ -473,3 +473,13 @@ export async function deleteVibePlaylist(playlistId: string) {
   if (deleted) publishVibeUpdate();
   return deleted ? getVibeSnapshot(room.id) : null;
 }
+
+export async function updateVibePlaylistCover(playlistId: string, cover: string) {
+  const room = await ensureMainVibeRoom();
+  const playlist = await db.vibePlaylist.findFirst({ where: { id: playlistId, roomId: room.id }, select: { id: true } });
+  if (!playlist) return null;
+  await db.vibePlaylist.update({ where: { id: playlist.id }, data: { cover } });
+  await db.vibeRoom.update({ where: { id: room.id }, data: { revision: { increment: 1 } } });
+  publishVibeUpdate();
+  return getVibeSnapshot(room.id);
+}

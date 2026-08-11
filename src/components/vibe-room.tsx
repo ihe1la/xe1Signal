@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Disc3, Headphones, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
+import { ChevronDown, Disc3, Headphones, ImagePlus, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
 
 import { useAudioPlayer } from "@/components/audio-player-provider";
 import type { VibePlaylistPayload, VibeQueuePayload, VibeSnapshot } from "@/lib/vibe-server";
@@ -13,6 +13,7 @@ export function VibeRoom() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [playbackBlocked, setPlaybackBlocked] = React.useState(false);
+  const [openShelfId, setOpenShelfId] = React.useState<string | null>(null);
   const player = useAudioPlayer();
   const playerRef = React.useRef(player);
   const controlRef = React.useRef<(action: VibeAction, itemId?: string) => Promise<void>>(() => Promise.resolve());
@@ -23,6 +24,28 @@ export function VibeRoom() {
   playerRef.current = player;
   nowPlayingRef.current = snapshot?.nowPlaying || null;
   roomPlayingRef.current = snapshot?.room.isPlaying || false;
+
+  React.useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("vibe-open-shelf");
+      if (saved) setOpenShelfId(saved);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  function toggleShelf(id: string) {
+    setOpenShelfId((current) => {
+      const next = current === id ? null : id;
+      try {
+        if (next) window.localStorage.setItem("vibe-open-shelf", next);
+        else window.localStorage.removeItem("vibe-open-shelf");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   const loadSnapshot = React.useCallback(async () => {
     try {
@@ -143,6 +166,15 @@ export function VibeRoom() {
     }
   }
 
+  async function updatePlaylistCover(playlistId: string, file: File) {
+    const body = new FormData();
+    body.append("cover", file);
+    const response = await fetch(`/api/vibe/playlists/${encodeURIComponent(playlistId)}`, { method: "PATCH", body });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(data?.error || "Could not update this cover");
+    setSnapshot(data);
+  }
+
   const nowPlaying = snapshot?.nowPlaying;
   const currentId = snapshot?.room.currentItemId || undefined;
   const groups = React.useMemo(() => groupQueue(snapshot?.playlists || [], snapshot?.queue || []), [snapshot?.playlists, snapshot?.queue]);
@@ -218,10 +250,13 @@ export function VibeRoom() {
                   <PlaylistShelf
                     key={group.id}
                     group={group}
+                    open={openShelfId === group.id}
                     currentId={currentId}
+                    onToggle={() => toggleShelf(group.id)}
                     onSelect={(itemId) => void sendControl("select", itemId).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))}
                     onRemoveItem={(itemId) => void removeItem(itemId)}
                     onRemovePlaylist={group.playlist ? () => void removePlaylist(group.playlist!.id) : undefined}
+                    onCoverChange={group.playlist ? (file) => updatePlaylistCover(group.playlist!.id, file).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not update this cover")) : undefined}
                   />
                 ))}
               </div>
@@ -316,42 +351,37 @@ function groupQueue(playlists: VibePlaylistPayload[], queue: VibeQueuePayload[])
 
 function PlaylistShelf({
   group,
+  open,
   currentId,
+  onToggle,
   onSelect,
   onRemoveItem,
   onRemovePlaylist,
+  onCoverChange,
 }: {
   group: QueueGroup;
+  open: boolean;
   currentId?: string;
+  onToggle: () => void;
   onSelect: (itemId: string) => void;
   onRemoveItem: (itemId: string) => void;
   onRemovePlaylist?: () => void;
+  onCoverChange?: (file: File) => void | Promise<void>;
 }) {
   const playlist = group.playlist;
   const label = playlist?.name || "Singles";
-  const storageKey = `vibe-shelf-open:${group.id}`;
-  const [open, setOpen] = React.useState(true);
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = React.useState(false);
 
-  React.useEffect(() => {
+  async function handleCover(file: File | undefined) {
+    if (!file || !onCoverChange) return;
+    setUploadingCover(true);
     try {
-      const saved = window.localStorage.getItem(storageKey);
-      if (saved === "0") setOpen(false);
-      if (saved === "1") setOpen(true);
-    } catch {
-      /* ignore */
+      await onCoverChange(file);
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
     }
-  }, [storageKey]);
-
-  function toggleOpen() {
-    setOpen((value) => {
-      const next = !value;
-      try {
-        window.localStorage.setItem(storageKey, next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
   }
 
   return (
@@ -360,20 +390,42 @@ function PlaylistShelf({
       className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[.07] bg-gradient-to-b from-violet-500/[.06] to-transparent"
     >
       <div className="flex items-start gap-3 p-3.5">
+        <div className="relative shrink-0">
+          {playlist?.cover ? (
+            <img src={playlist.cover} alt="" className="h-12 w-12 rounded-lg border border-white/10 object-cover shadow-lg shadow-black/30" />
+          ) : (
+            <div className="grid h-12 w-12 place-items-center rounded-lg border border-violet-300/20 bg-violet-400/[.1]">
+              <Disc3 className="h-5 w-5 text-violet-300/80" />
+            </div>
+          )}
+          {onCoverChange ? (
+            <>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                className="hidden"
+                onChange={(event) => void handleCover(event.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                disabled={uploadingCover}
+                className="absolute inset-0 grid place-items-center rounded-lg bg-black/55 text-zinc-100 opacity-0 transition hover:opacity-100 disabled:opacity-70"
+                aria-label={`Change cover for ${label}`}
+              >
+                {uploadingCover ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+              </button>
+            </>
+          ) : null}
+        </div>
         <button
           type="button"
-          onClick={toggleOpen}
+          onClick={onToggle}
           className="flex min-w-0 flex-1 items-start gap-3 text-left transition hover:opacity-90"
           aria-expanded={open}
           aria-controls={`shelf-${group.id}`}
         >
-          {playlist?.cover ? (
-            <img src={playlist.cover} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover shadow-lg shadow-black/30" />
-          ) : (
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-violet-300/20 bg-violet-400/[.1]">
-              <Disc3 className="h-5 w-5 text-violet-300/80" />
-            </div>
-          )}
           <div className="min-w-0 flex-1 pt-0.5">
             <p className="font-mono text-[8px] uppercase tracking-[.16em] text-violet-300/70">
               {playlist ? (playlist.kind === "album" ? "Album" : "Playlist") : "Singles"}
@@ -417,20 +469,19 @@ function PlaylistShelf({
 function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload; active: boolean; onSelect: () => void; onRemove: () => void }) {
   const playable = item.status === "ready" || item.status === "playing";
   return (
-    <li className={`flex items-center gap-2 px-3 py-3 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
+    <li className={`flex items-center gap-2 px-3 py-2.5 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
       <span className="w-4 shrink-0 text-center font-mono text-[8px] text-zinc-700">
         {active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}
       </span>
-      {item.cover ? <img src={item.cover} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" /> : <div className="h-8 w-8 shrink-0 rounded-md bg-white/[.04]" />}
       <button
         type="button"
         onClick={playable ? onSelect : undefined}
         disabled={!playable}
-        className={`min-w-0 flex-1 text-left transition ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-80"}`}
+        className={`min-w-0 flex-1 truncate text-left font-mono text-[10px] transition ${active ? "text-violet-100" : "text-zinc-300"} ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-70"}`}
         aria-label={playable ? `Play ${item.title}` : `${item.title} is not ready yet`}
+        title={item.title}
       >
-        <p className={`truncate font-mono text-[10px] ${active ? "text-violet-100" : "text-zinc-300"}`}>{item.title}</p>
-        <p className="mt-0.5 truncate font-mono text-[8px] text-zinc-600">{item.artists.join(", ") || "Unknown artist"}</p>
+        {item.title}
       </button>
       {playable && !active ? (
         <button type="button" onClick={onSelect} className="rounded-md p-1.5 text-zinc-600 transition hover:bg-white/[.05] hover:text-violet-200" aria-label={`Play ${item.title}`}>
