@@ -70,7 +70,7 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
   return (
     <>
       <header className="sticky top-0 z-30 h-20 border-b border-white/[0.055] bg-[#08090d]/90 backdrop-blur-xl">
-        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[364px]")}>
+        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[340px]")}>
           <button onClick={() => setMobileSearch(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-white/[0.07] text-zinc-400 lg:hidden" aria-label="Open search"><Menu className="h-5 w-5" /></button>
           <form onSubmit={submit} className="relative hidden max-w-[720px] flex-1 md:block">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />

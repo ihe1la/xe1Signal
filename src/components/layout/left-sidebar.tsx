@@ -39,7 +39,7 @@ export function LeftSidebar() {
   const username = summary.profile?.username || session?.user?.username || "user";
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
-      <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-5 font-mono text-[13px] font-medium tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-2.5 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
+      <Link href="/discover" className="flex h-20 items-center justify-center border-b border-white/[0.055] px-5 text-center font-mono text-[13px] font-medium tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-2.5 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
         <nav className="space-y-1">
           {navigation.map(([href, label, Icon]) => { const active = href === "/archive" ? pathname === "/archive" || pathname.startsWith("/frequencies") : pathname === href || pathname.startsWith(`${href}/`); return (
