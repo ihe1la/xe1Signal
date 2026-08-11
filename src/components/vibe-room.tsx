@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Disc3, Headphones, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
+import { ChevronDown, Disc3, Headphones, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
 
 import { useAudioPlayer } from "@/components/audio-player-provider";
 import type { VibePlaylistPayload, VibeQueuePayload, VibeSnapshot } from "@/lib/vibe-server";
@@ -148,7 +148,7 @@ export function VibeRoom() {
   const groups = React.useMemo(() => groupQueue(snapshot?.playlists || [], snapshot?.queue || []), [snapshot?.playlists, snapshot?.queue]);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-6xl">
       <header className="mb-8 flex flex-col gap-4 border-b border-white/[.06] pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-3 font-mono text-[10px] uppercase tracking-[.18em] text-violet-400">Shared room · main</p>
@@ -213,7 +213,7 @@ export function VibeRoom() {
             </div>
 
             {groups.length ? (
-              <div className="divide-y divide-white/[.045]">
+              <div className="grid gap-4 p-4 sm:grid-cols-2">
                 {groups.map((group) => (
                   <PlaylistShelf
                     key={group.id}
@@ -328,54 +328,88 @@ function PlaylistShelf({
   onRemovePlaylist?: () => void;
 }) {
   const playlist = group.playlist;
+  const label = playlist?.name || "Singles";
+  const storageKey = `vibe-shelf-open:${group.id}`;
+  const [open, setOpen] = React.useState(true);
+
+  React.useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (saved === "0") setOpen(false);
+      if (saved === "1") setOpen(true);
+    } catch {
+      /* ignore */
+    }
+  }, [storageKey]);
+
+  function toggleOpen() {
+    setOpen((value) => {
+      const next = !value;
+      try {
+        window.localStorage.setItem(storageKey, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
+
   return (
-    <section aria-label={playlist ? playlist.name : "Singles"}>
-      {playlist ? (
-        <div className="flex items-center gap-4 bg-gradient-to-r from-violet-500/[.08] via-transparent to-transparent px-5 py-4">
-          {playlist.cover ? (
-            <img src={playlist.cover} alt="" className="h-14 w-14 rounded-xl border border-white/10 object-cover shadow-lg shadow-black/30" />
+    <section
+      aria-label={label}
+      className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[.07] bg-gradient-to-b from-violet-500/[.06] to-transparent"
+    >
+      <div className="flex items-start gap-3 p-3.5">
+        <button
+          type="button"
+          onClick={toggleOpen}
+          className="flex min-w-0 flex-1 items-start gap-3 text-left transition hover:opacity-90"
+          aria-expanded={open}
+          aria-controls={`shelf-${group.id}`}
+        >
+          {playlist?.cover ? (
+            <img src={playlist.cover} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-white/10 object-cover shadow-lg shadow-black/30" />
           ) : (
-            <div className="grid h-14 w-14 place-items-center rounded-xl border border-violet-300/20 bg-violet-400/[.1]">
-              <Disc3 className="h-6 w-6 text-violet-300/80" />
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-violet-300/20 bg-violet-400/[.1]">
+              <Disc3 className="h-5 w-5 text-violet-300/80" />
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-[9px] uppercase tracking-[.16em] text-violet-300/70">
-              {playlist.kind === "album" ? "Album" : "Playlist"}
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="font-mono text-[8px] uppercase tracking-[.16em] text-violet-300/70">
+              {playlist ? (playlist.kind === "album" ? "Album" : "Playlist") : "Singles"}
             </p>
-            <h3 className="mt-1 truncate font-sans text-base font-medium tracking-tight text-zinc-100">{playlist.name}</h3>
-            <p className="mt-1 truncate font-mono text-[10px] text-zinc-500">
-              {playlist.owner ? `${playlist.owner} · ` : ""}
-              {playlist.readyCount}/{playlist.trackCount} ready
+            <h3 className="mt-1 truncate font-sans text-sm font-medium tracking-tight text-zinc-100">{label}</h3>
+            <p className="mt-1 truncate font-mono text-[9px] text-zinc-500">
+              {playlist?.owner ? `${playlist.owner} · ` : ""}
+              {playlist ? `${playlist.readyCount}/${playlist.trackCount} ready` : `${group.items.length} track${group.items.length === 1 ? "" : "s"}`}
             </p>
           </div>
-          {onRemovePlaylist ? (
-            <button
-              type="button"
-              onClick={onRemovePlaylist}
-              className="rounded-md p-2 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300"
-              aria-label={`Remove playlist ${playlist.name}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          ) : null}
-        </div>
-      ) : (
-        <div className="px-5 py-3">
-          <p className="font-mono text-[9px] uppercase tracking-[.14em] text-zinc-600">Singles</p>
-        </div>
-      )}
-      <ol className="divide-y divide-white/[.04]">
-        {group.items.map((item) => (
-          <QueueRow
-            key={item.id}
-            item={item}
-            active={item.id === currentId}
-            onSelect={() => onSelect(item.id)}
-            onRemove={() => onRemoveItem(item.id)}
-          />
-        ))}
-      </ol>
+          <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-zinc-600 transition ${open ? "rotate-0" : "-rotate-90"}`} />
+        </button>
+        {onRemovePlaylist ? (
+          <button
+            type="button"
+            onClick={onRemovePlaylist}
+            className="mt-0.5 rounded-md p-2 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300"
+            aria-label={`Remove playlist ${label}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
+      {open ? (
+        <ol id={`shelf-${group.id}`} className="max-h-80 divide-y divide-white/[.04] overflow-y-auto border-t border-white/[.05]">
+          {group.items.map((item) => (
+            <QueueRow
+              key={item.id}
+              item={item}
+              active={item.id === currentId}
+              onSelect={() => onSelect(item.id)}
+              onRemove={() => onRemoveItem(item.id)}
+            />
+          ))}
+        </ol>
+      ) : null}
     </section>
   );
 }
@@ -383,11 +417,11 @@ function PlaylistShelf({
 function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload; active: boolean; onSelect: () => void; onRemove: () => void }) {
   const playable = item.status === "ready" || item.status === "playing";
   return (
-    <li className={`flex items-center gap-3 px-5 py-4 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
-      <span className="w-5 shrink-0 text-center font-mono text-[9px] text-zinc-700">
+    <li className={`flex items-center gap-2 px-3 py-3 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
+      <span className="w-4 shrink-0 text-center font-mono text-[8px] text-zinc-700">
         {active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}
       </span>
-      {item.cover ? <img src={item.cover} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <div className="h-10 w-10 shrink-0 rounded-lg bg-white/[.04]" />}
+      {item.cover ? <img src={item.cover} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" /> : <div className="h-8 w-8 shrink-0 rounded-md bg-white/[.04]" />}
       <button
         type="button"
         onClick={playable ? onSelect : undefined}
@@ -395,19 +429,16 @@ function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload
         className={`min-w-0 flex-1 text-left transition ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-80"}`}
         aria-label={playable ? `Play ${item.title}` : `${item.title} is not ready yet`}
       >
-        <p className={`truncate font-mono text-[11px] ${active ? "text-violet-100" : "text-zinc-300"}`}>{item.title}</p>
-        <p className="mt-1 truncate font-mono text-[9px] text-zinc-600">{item.artists.join(", ") || "Unknown artist"}</p>
+        <p className={`truncate font-mono text-[10px] ${active ? "text-violet-100" : "text-zinc-300"}`}>{item.title}</p>
+        <p className="mt-0.5 truncate font-mono text-[8px] text-zinc-600">{item.artists.join(", ") || "Unknown artist"}</p>
       </button>
-      <span className={`hidden shrink-0 font-mono text-[9px] uppercase tracking-wider sm:block ${item.status === "failed" ? "text-rose-300" : item.status === "ready" || item.status === "playing" ? "text-emerald-300/70" : "text-zinc-600"}`}>
-        {statusLabel(item.status)}
-      </span>
       {playable && !active ? (
-        <button type="button" onClick={onSelect} className="rounded-md p-2 text-zinc-600 transition hover:bg-white/[.05] hover:text-violet-200" aria-label={`Play ${item.title}`}>
-          <Play className="h-3.5 w-3.5 fill-current" />
+        <button type="button" onClick={onSelect} className="rounded-md p-1.5 text-zinc-600 transition hover:bg-white/[.05] hover:text-violet-200" aria-label={`Play ${item.title}`}>
+          <Play className="h-3 w-3 fill-current" />
         </button>
       ) : null}
-      <button type="button" onClick={onRemove} className="rounded-md p-2 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}>
-        <Trash2 className="h-3.5 w-3.5" />
+      <button type="button" onClick={onRemove} className="rounded-md p-1.5 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}>
+        <Trash2 className="h-3 w-3" />
       </button>
     </li>
   );
