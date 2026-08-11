@@ -35,7 +35,7 @@ export default async function StudyPage() {
           <StudyUnavailable reason="This xe1Signal profile is not linked to the tracker profile." />
         ) : workspace ? (
           <>
-            <StudyWorkspace initialWorkspace={workspace} summary={summary} />
+            <StudyWorkspace initialWorkspace={workspace} />
             {summary && <StudySummary summary={summary} />}
           </>
         ) : (

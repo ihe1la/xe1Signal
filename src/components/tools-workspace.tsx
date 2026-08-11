@@ -1,12 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Binary, Braces, ExternalLink, Hash, Link2, Shuffle } from "lucide-react";
+import { Binary, Braces, Hash, Link2, Shuffle } from "lucide-react";
 import { TargetsMindmap } from "@/components/targets-mindmap";
 import { cn } from "@/lib/utils";
-
-const PINQUED = "https://pinqued.top/";
-const L30ON = "https://l30on.top/dashboard/";
 
 type ToolId = "url" | "base64" | "json" | "hash" | "uuid";
 type ToolsTab = "targets" | "utilities";
@@ -17,14 +14,6 @@ const tools: Array<{ id: ToolId; name: string; description: string; icon: typeof
   { id: "json", name: "JSON Formatter", description: "Format and validate JSON", icon: Braces, className: "text-lime-300" },
   { id: "hash", name: "Hash Generator", description: "SHA-1 / SHA-256 / SHA-512", icon: Hash, className: "text-orange-300" },
   { id: "uuid", name: "UUID Generator", description: "Generate random UUIDs", icon: Shuffle, className: "text-cyan-300" },
-];
-
-const pinquedLinks = [
-  { name: "Recon", href: "https://pinqued.top/recon" },
-  { name: "Terminal", href: "https://pinqued.top/terminal" },
-  { name: "Files", href: "https://pinqued.top/files" },
-  { name: "Dashboard", href: "https://pinqued.top/dashboard" },
-  { name: "Apps", href: "https://pinqued.top/app" },
 ];
 
 function hex(buf: ArrayBuffer) {
@@ -85,15 +74,9 @@ export function ToolsWorkspace() {
         <div>
           <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
           <p className="mt-2 font-sans text-sm text-zinc-500">
-            Target mindmaps and lightweight utilities inspired by{" "}
-            <a href={PINQUED} target="_blank" rel="noopener noreferrer" className="text-zinc-400 transition hover:text-violet-300">Pinqued</a>
-            {" · "}
-            <a href={L30ON} target="_blank" rel="noopener noreferrer" className="text-zinc-400 transition hover:text-violet-300">l30on.top/dashboard</a>
+            Local target maps and browser-only utilities for focused investigation notes.
           </p>
         </div>
-        <a href={PINQUED} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-sans text-xs text-zinc-400 transition hover:text-violet-200">
-          Open original <ExternalLink className="h-3 w-3" />
-        </a>
       </header>
 
       <div className="mb-6 flex gap-1 rounded-lg border border-white/[.07] bg-white/[.015] p-1">
@@ -163,24 +146,11 @@ export function ToolsWorkspace() {
             })}
           </div>
 
-          <h2 className="mb-3 mt-8 font-mono text-[10px] uppercase tracking-[.16em] text-zinc-500">More tools · Pinqued</h2>
-          <div className="flex flex-wrap gap-2">
-            {pinquedLinks.map((item) => (
-              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.07] px-3 font-mono text-[10px] text-zinc-400 transition hover:border-violet-300/25 hover:text-violet-200">
-                {item.name} <ExternalLink className="h-3 w-3" />
-              </a>
-            ))}
-            <a href={L30ON} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-dashed border-white/[.09] px-3 font-mono text-[10px] text-zinc-500 transition hover:text-violet-200">
-              l30on dashboard <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
         </>
       )}
 
       <p className="mt-10 border-t border-white/[.06] pt-5 font-mono text-[10px] text-zinc-600">
-        Original tools by <a href={PINQUED} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-violet-300">Pinqued</a>
-        {" · "}
-        <a href={PINQUED} target="_blank" rel="noopener noreferrer" className="hover:text-violet-300">{PINQUED}</a>
+        Utilities run locally in this browser. Your target map is saved only to this device.
       </p>
     </div>
   );

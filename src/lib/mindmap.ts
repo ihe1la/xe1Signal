@@ -1,6 +1,7 @@
 export type MindNode = {
   id: string;
   parentId: string | null;
+  kind?: "branch" | "callout";
   text: string;
   note: string;
   x: number;
@@ -31,10 +32,13 @@ export function createDefaultMindMap(): MindMapDocument {
     title: "Targets",
     updatedAt: new Date().toISOString(),
     nodes: [
-      { id: rootId, parentId: null, text: "Targets", note: "Central topic for this sheet", x: 520, y: 280 },
-      { id: reconId, parentId: rootId, text: "Recon", note: "", x: 220, y: 160 },
-      { id: studyId, parentId: rootId, text: "Study goals", note: "", x: 820, y: 160 },
-      { id: notesId, parentId: rootId, text: "Notes", note: "", x: 820, y: 420 },
+      { id: rootId, parentId: null, text: "Targets", note: "Central topic for this sheet", x: 380, y: 275 },
+      { id: reconId, parentId: rootId, kind: "branch", text: "Recon", note: "Map routes, hosts, tech, and entry points.", x: 44, y: 118 },
+      { id: studyId, parentId: rootId, kind: "branch", text: "Authentication", note: "Sessions, roles, recovery, and trust boundaries.", x: 718, y: 118 },
+      { id: notesId, parentId: rootId, kind: "branch", text: "Inputs", note: "Query, body, headers, files, and client state.", x: 700, y: 430 },
+      { id: createNodeId(), parentId: rootId, kind: "branch", text: "Impact", note: "Data access, actions, and realistic consequences.", x: 44, y: 440 },
+      { id: createNodeId(), parentId: rootId, kind: "callout", text: "Threat model", note: "What can an attacker control, and what changes after the request?", x: 235, y: 62 },
+      { id: createNodeId(), parentId: rootId, kind: "callout", text: "Next proof", note: "Capture the smallest request, response, and browser evidence.", x: 385, y: 585 },
     ],
   };
 }
@@ -105,13 +109,14 @@ export function nextChildPosition(nodes: MindNode[], parentId: string) {
   };
 }
 
-export function addChildNode(document: MindMapDocument, parentId: string, text = "New target"): MindMapDocument {
+export function addChildNode(document: MindMapDocument, parentId: string, text = "New target", kind: MindNode["kind"] = "branch"): MindMapDocument {
   const parent = document.nodes.find((node) => node.id === parentId);
   if (!parent) return document;
   const position = nextChildPosition(document.nodes, parentId);
   const node: MindNode = {
     id: createNodeId(),
     parentId,
+    kind,
     text,
     note: "",
     x: Math.max(24, position.x),
