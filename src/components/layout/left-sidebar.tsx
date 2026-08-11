@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
-import { Archive, CircleUserRound, Compass, Headphones, Plus, Radio, Settings, Users } from "lucide-react";
+import { Archive, CircleUserRound, Compass, Grid2X2, Headphones, Plus, Radio, Settings, Timer, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
 import type { LucideIcon } from "lucide-react";
@@ -19,6 +19,8 @@ const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/frequencies", "Frequencies", Radio],
   ["/archive", "Archive", Archive],
   ["/vibe", "Vibe", Headphones],
+  ["/study", "Study", Timer],
+  ["/tools", "Tools", Grid2X2],
   ["/people", "People", Users],
 ];
 

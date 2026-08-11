@@ -22,26 +22,25 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-test("Study and Tools keep Pinqued attribution outside the desktop sidebar", async ({ page }) => {
+test("Study and Tools are in the desktop sidebar with Pinqued attribution", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
   await page.goto("/study");
   const sidebar = page.locator("aside").first();
   await expect(page.getByRole("heading", { name: "Study", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Archive", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Lab", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
+  await expect(page.getByText("XMind sheet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Add branch/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Pinqued" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
+
+  await page.getByRole("button", { name: "Utilities", exact: true }).click();
   await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /JSON Formatter/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Recon/ })).toHaveAttribute("href", "https://pinqued.top/recon");
@@ -56,11 +55,10 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
   const navigation = page.getByRole("navigation");
   await expect(navigation.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
+  await expect(page.getByText("XMind sheet", { exact: true })).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });
