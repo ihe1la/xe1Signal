@@ -4,6 +4,7 @@ import {
   createDefaultMindMap,
   deleteNode,
   getRootNode,
+  nodeAnchor,
   parseMindMap,
   serializeMindMap,
   updateNode,
@@ -17,6 +18,16 @@ describe("mindmap", () => {
     expect(document.title).toBe("ihe1la Linktree");
     expect(document.nodes.some((node) => node.text === "l30on.top")).toBe(true);
     expect(document.nodes.length).toBeGreaterThan(5);
+  });
+
+  it("anchors connectors on horizontal sides only", () => {
+    const parent = { id: "p", parentId: null, text: "P", note: "", x: 200, y: 100 };
+    const childLeft = { id: "c", parentId: "p", text: "C", note: "", x: 20, y: 40 };
+    const link = nodeAnchor(parent, childLeft, 168, 52);
+    expect(link.x1).toBe(200);
+    expect(link.x2).toBe(20 + 168);
+    expect(link.c1y).toBe(link.y1);
+    expect(link.c2y).toBe(link.y2);
   });
 
   it("round-trips through serialize/parse", () => {
