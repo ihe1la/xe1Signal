@@ -1,15 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Copy, ExternalLink, Network, Pencil, RotateCcw, Search, StickyNote, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
 import { FindingsMap } from "@/components/findings-map";
 import {
   FINDINGS_STORAGE_KEY,
   collectFindingTags,
   createFinding,
-  createLinktreeSeedFindings,
   extractUrls,
-  mergeSeedFindings,
   parseFindings,
   searchFindings,
   serializeFindings,
@@ -75,8 +73,9 @@ export function FindingsWorkspace() {
 
   React.useEffect(() => {
     const existing = parseFindings(window.localStorage.getItem(FINDINGS_STORAGE_KEY));
-    const next = existing.length ? sortFindingsNewestFirst(existing) : createLinktreeSeedFindings();
-    setFindings(next);
+    // Drop legacy Linktree seed notes if they were previously auto-loaded.
+    const cleaned = existing.filter((item) => !item.id.startsWith("seed_lt_"));
+    setFindings(sortFindingsNewestFirst(cleaned));
     setHydrated(true);
   }, []);
 
@@ -136,11 +135,6 @@ export function FindingsWorkspace() {
     }
   }
 
-  function restoreLinktreeSample() {
-    setFindings((current) => mergeSeedFindings(current, createLinktreeSeedFindings()));
-    setQuery("#linktree");
-  }
-
   async function copyFinding(finding: Finding) {
     try {
       await navigator.clipboard.writeText(finding.body);
@@ -155,52 +149,42 @@ export function FindingsWorkspace() {
     <div aria-label="Findings section" className={cn("mx-auto", view === "map" ? "max-w-[1100px]" : "max-w-[860px]")}>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <p className="max-w-xl font-sans text-sm text-zinc-500">
-          Fast recon notes with #tags. Seeded with your Linktree map sample — search, filter, or map notes onto targets.
+          Fast recon notes with #tags — search, filter, or map notes onto targets.
         </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <div
-            role="tablist"
-            aria-label="Findings view"
-            className="inline-flex rounded-lg border border-white/[.08] bg-white/[.02] p-0.5"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === "notes"}
-              onClick={() => setView("notes")}
-              className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
-                view === "notes"
-                  ? "bg-violet-500/20 text-violet-100"
-                  : "text-zinc-500 hover:text-zinc-300",
-              )}
-            >
-              <StickyNote className="h-3.5 w-3.5" />
-              Notes
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === "map"}
-              onClick={() => setView("map")}
-              className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
-                view === "map"
-                  ? "bg-violet-500/20 text-violet-100"
-                  : "text-zinc-500 hover:text-zinc-300",
-              )}
-            >
-              <Network className="h-3.5 w-3.5" />
-              Map
-            </button>
-          </div>
+        <div
+          role="tablist"
+          aria-label="Findings view"
+          className="inline-flex rounded-lg border border-white/[.08] bg-white/[.02] p-0.5"
+        >
           <button
             type="button"
-            onClick={restoreLinktreeSample}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] bg-white/[.03] px-3 font-sans text-xs text-zinc-400 transition hover:border-violet-400/25 hover:text-violet-200"
+            role="tab"
+            aria-selected={view === "notes"}
+            onClick={() => setView("notes")}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
+              view === "notes"
+                ? "bg-violet-500/20 text-violet-100"
+                : "text-zinc-500 hover:text-zinc-300",
+            )}
           >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Restore Linktree sample
+            <StickyNote className="h-3.5 w-3.5" />
+            Notes
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "map"}
+            onClick={() => setView("map")}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
+              view === "map"
+                ? "bg-violet-500/20 text-violet-100"
+                : "text-zinc-500 hover:text-zinc-300",
+            )}
+          >
+            <Network className="h-3.5 w-3.5" />
+            Map
           </button>
         </div>
       </div>
@@ -337,46 +321,27 @@ export function FindingsWorkspace() {
             <div className="rounded-2xl border border-dashed border-white/[.08] px-6 py-16 text-center">
               <p className="font-sans text-sm text-zinc-400">
                 {findings.length === 0
-                  ? "Nothing here yet. Drop a note above, or restore the Linktree sample."
+                  ? "Nothing here yet. Drop a note above to start."
                   : "No findings match that search."}
               </p>
-              {findings.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={restoreLinktreeSample}
-                  className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/15 px-4 font-sans text-xs text-violet-100"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Load Linktree sample
-                </button>
-              ) : null}
             </div>
           ) : (
             <ul className="space-y-3" aria-label="Findings list">
               {visible.map((finding) => {
                 const editing = editingId === finding.id;
                 const urls = extractUrls(finding.body);
-                const isSeed = finding.id.startsWith("seed_lt_");
                 return (
                   <li
                     key={finding.id}
                     className={cn(
                       "rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
                       editing && "border-violet-400/30 bg-violet-500/[.05]",
-                      isSeed && !editing && "border-violet-400/10 bg-gradient-to-br from-violet-500/[.06] to-transparent",
                     )}
                   >
                     <div className="mb-2 flex items-start justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <time className="font-sans text-[11px] text-zinc-600" dateTime={finding.createdAt}>
-                          {formatWhen(finding.createdAt)}
-                        </time>
-                        {isSeed ? (
-                          <span className="rounded-md border border-violet-400/20 bg-violet-500/10 px-1.5 py-0.5 font-sans text-[9px] uppercase tracking-[.12em] text-violet-300/80">
-                            Linktree
-                          </span>
-                        ) : null}
-                      </div>
+                      <time className="font-sans text-[11px] text-zinc-600" dateTime={finding.createdAt}>
+                        {formatWhen(finding.createdAt)}
+                      </time>
                       <div className="flex gap-1">
                         <button
                           type="button"

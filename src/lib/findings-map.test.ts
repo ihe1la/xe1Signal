@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createFinding, createLinktreeSeedFindings } from "@/lib/findings";
+import { createFinding } from "@/lib/findings";
 import {
   buildFindingsMapGraph,
   extractFindingHost,
@@ -15,13 +15,18 @@ describe("findings-map", () => {
     expect(findingTargetKey(finding)).toBe("l30on.top");
   });
 
-  it("builds a rooted target tree from Linktree seeds", () => {
-    const seeds = createLinktreeSeedFindings();
-    const { nodes, edges } = buildFindingsMapGraph(seeds);
+  it("builds a rooted target tree from notes", () => {
+    const notes = [
+      createFinding("Profile hub https://linktr.ee/ihe1la #profile")!,
+      createFinding("Destination https://l30on.top/k/cors #cors")!,
+      createFinding("orphan note without url #recon")!,
+    ];
+    const { nodes, edges } = buildFindingsMapGraph(notes);
     expect(nodes.some((node) => node.id === "root")).toBe(true);
     expect(nodes.some((node) => node.id === "target:linktr.ee")).toBe(true);
+    expect(nodes.some((node) => node.id === "target:l30on.top")).toBe(true);
     expect(nodes.some((node) => node.id.startsWith("note:"))).toBe(true);
-    expect(edges.length).toBeGreaterThan(seeds.length);
+    expect(edges.length).toBeGreaterThan(notes.length);
   });
 
   it("round-trips saved positions", () => {
