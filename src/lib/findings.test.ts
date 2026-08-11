@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  collectFindingTags,
   createFinding,
+  createLinktreeSeedFindings,
   extractTags,
+  extractUrls,
+  mergeSeedFindings,
   parseFindings,
   searchFindings,
   serializeFindings,
@@ -37,5 +41,21 @@ describe("findings", () => {
     const items = [createFinding("note #a")!];
     expect(parseFindings(serializeFindings(items))).toEqual(items);
     expect(parseFindings("{")).toEqual([]);
+  });
+
+  it("seeds Linktree sample findings", () => {
+    const seeds = createLinktreeSeedFindings();
+    expect(seeds.length).toBeGreaterThan(5);
+    expect(seeds.some((item) => item.body.includes("linktr.ee/ihe1la"))).toBe(true);
+    expect(seeds.some((item) => item.body.includes("l30on.top"))).toBe(true);
+    expect(collectFindingTags(seeds).some((item) => item.tag === "linktree")).toBe(true);
+    expect(extractUrls(seeds[0].body)[0]).toContain("https://");
+  });
+
+  it("merges seeds without duplicating ids", () => {
+    const seeds = createLinktreeSeedFindings();
+    const once = mergeSeedFindings([], seeds);
+    const twice = mergeSeedFindings(once, seeds);
+    expect(twice).toHaveLength(once.length);
   });
 });

@@ -42,6 +42,7 @@ test("Study and Tools findings capture and search", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Snippets" })).toBeVisible();
   await expect(page.getByLabel("Findings section")).toBeVisible();
   await expect(page.getByLabel("Capture finding")).toBeVisible();
+  await expect(page.getByLabel("Findings list")).toContainText("linktr.ee/ihe1la");
 
   await page.getByLabel("Capture finding").fill("saw X-Request-Id on api.target.com #header");
   await page.getByRole("button", { name: "Save finding" }).click();
@@ -49,6 +50,9 @@ test("Study and Tools findings capture and search", async ({ page }) => {
 
   await page.getByLabel("Search findings").fill("request-id");
   await expect(page.getByLabel("Findings list")).toContainText("X-Request-Id");
+
+  await page.getByRole("button", { name: "#linktree" }).first().click();
+  await expect(page.getByLabel("Findings list")).toContainText("l30on.top");
 
   expect(issues).toEqual([]);
 });
