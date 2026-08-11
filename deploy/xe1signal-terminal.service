@@ -1,0 +1,23 @@
+[Unit]
+Description=xe1Signal owner root terminal WebSocket
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/home/hela/xe1signal
+EnvironmentFile=-/home/hela/xe1signal/.env.production
+Environment=TERMINAL_WS_HOST=127.0.0.1
+Environment=TERMINAL_WS_PORT=3010
+Environment=TERMINAL_SHELL=/bin/bash
+Environment=TERMINAL_SHELL_ARGS=-l
+ExecStart=/usr/bin/node /home/hela/xe1signal/server/terminal-ws.mjs
+Restart=always
+RestartSec=3
+# Localhost-only PTY bridge for owner web terminal
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

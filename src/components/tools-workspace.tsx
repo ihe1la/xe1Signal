@@ -5,9 +5,10 @@ import { ClaimChainWorkspace } from "@/components/claim-chain-workspace";
 import { DumpNotesWorkspace } from "@/components/dump-notes-workspace";
 import { FindingsWorkspace } from "@/components/findings-workspace";
 import { SnippetsWorkspace } from "@/components/snippets-workspace";
+import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type ToolsTab = "findings" | "dump-notes" | "claim-chain" | "snippets";
+type ToolsTab = "findings" | "dump-notes" | "claim-chain" | "snippets" | "terminal";
 
 export function ToolsWorkspace() {
   const [tab, setTab] = React.useState<ToolsTab>("findings");
@@ -17,7 +18,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-sans text-sm text-zinc-500">
-          Local lab for findings, dump notes, claim spines, and text transforms.
+          Local lab for findings, dump notes, claim spines, transforms, and a root VPS terminal.
         </p>
       </header>
 
@@ -32,6 +33,7 @@ export function ToolsWorkspace() {
             ["dump-notes", "Dump Notes"],
             ["claim-chain", "Claim Chain"],
             ["snippets", "Snippets"],
+            ["terminal", "Terminal"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -54,6 +56,7 @@ export function ToolsWorkspace() {
       {tab === "dump-notes" ? <DumpNotesWorkspace /> : null}
       {tab === "claim-chain" ? <ClaimChainWorkspace /> : null}
       {tab === "snippets" ? <SnippetsWorkspace /> : null}
+      {tab === "terminal" ? <TerminalWorkspace /> : null}
     </div>
   );
 }
