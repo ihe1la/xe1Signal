@@ -178,6 +178,14 @@ export function VibeRoom() {
   const nowPlaying = snapshot?.nowPlaying;
   const currentId = snapshot?.room.currentItemId || undefined;
   const groups = React.useMemo(() => groupQueue(snapshot?.playlists || [], snapshot?.queue || []), [snapshot?.playlists, snapshot?.queue]);
+  const nowPlayingCover = React.useMemo(() => {
+    if (!nowPlaying) return null;
+    if (nowPlaying.playlistId) {
+      const playlistCover = snapshot?.playlists.find((playlist) => playlist.id === nowPlaying.playlistId)?.cover;
+      if (playlistCover) return playlistCover;
+    }
+    return nowPlaying.cover;
+  }, [nowPlaying, snapshot?.playlists]);
 
   return (
     <div className="mx-auto max-w-6xl">
