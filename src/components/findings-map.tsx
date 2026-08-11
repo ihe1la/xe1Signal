@@ -7,7 +7,6 @@ import {
   BaseEdge,
   Controls,
   Handle,
-  MiniMap,
   Panel,
   Position,
   ReactFlow,
@@ -320,20 +319,6 @@ function FindingsMapCanvas({
             <Controls
               showInteractive={false}
               className="!m-3 !overflow-hidden !rounded-xl !border !border-violet-400/20 !bg-[#0d0e14]/95 !shadow-none [&>button]:!h-8 [&>button]:!w-8 [&>button]:!border-white/10 [&>button]:!bg-[#0d0e14] [&>button]:!fill-violet-200"
-            />
-            <MiniMap
-              pannable
-              zoomable
-              className="!m-3 !overflow-hidden !rounded-xl !border !border-violet-400/20 !bg-[#0a0b10]"
-              maskColor="rgba(8,9,13,.6)"
-              nodeStrokeColor="#a78bfa"
-              nodeStrokeWidth={1.5}
-              nodeColor={(node) => {
-                const kind = (node.data as FindingsMapNodeData | undefined)?.kind;
-                if (kind === "root") return "#8b5cf6";
-                if (kind === "target") return "#a78bfa";
-                return "#52525b";
-              }}
             />
             <Panel
               position="top-left"

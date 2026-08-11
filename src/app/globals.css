@@ -303,10 +303,6 @@ a[href^="/inbox/"] > img.grayscale {
   background: #161722 !important;
 }
 
-.findings-map-flow .react-flow__minimap-mask {
-  fill: rgba(8, 9, 13, 0.6);
-}
-
 .findings-map-flow .react-flow__edge-path {
   stroke-linecap: round;
 }
