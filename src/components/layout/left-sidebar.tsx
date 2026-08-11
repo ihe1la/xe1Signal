@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import * as React from "react";
-import { BookOpen, CircleUserRound, Compass, Grid2X2, Headphones, LogOut, Plus, Settings, Timer, Users } from "lucide-react";
+import { BookOpen, CircleUserRound, Compass, Grid2X2, Headphones, Plus, Settings, Timer, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
 import type { LucideIcon } from "lucide-react";
@@ -39,7 +39,7 @@ export function LeftSidebar() {
   const username = summary.profile?.username || session?.user?.username || "user";
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
-      <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-5 font-mono text-[11px] font-medium tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-2.5 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
+      <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-5 font-mono text-[13px] font-medium tracking-[.24em] text-zinc-100">SIGNAL ARCHIVE<span className="ml-2.5 h-1.5 w-1.5 rounded-full bg-violet-400" /></Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
         <nav className="space-y-1">
           {navigation.map(([href, label, Icon]) => { const active = href === "/archive" ? pathname === "/archive" || pathname.startsWith("/frequencies") : pathname === href || pathname.startsWith(`${href}/`); return (
@@ -52,7 +52,7 @@ export function LeftSidebar() {
           <Link href="/archive?tab=collections" className="mt-3 inline-flex px-3 font-mono text-[10px] text-violet-300/80 transition hover:text-violet-200">View all collections →</Link>
         </div>
       </div>
-      <div className="group/profile mx-4 mb-4 rounded-[8px] border border-white/[.055] bg-white/[.018] p-2.5">
+      <div className="mx-4 mb-4 rounded-[8px] border border-white/[.055] bg-white/[.018] p-2.5">
         <div className="flex items-center gap-2.5">
           <Link href={`/profile/${username}`} className="flex min-w-0 flex-1 items-center gap-2.5">
             {summary.profile?.avatarUrl ? <img src={summary.profile.avatarUrl} alt={username} className="h-8 w-8 shrink-0 rounded-[6px] border border-white/[.10] bg-black object-cover" /> : <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px] border border-white/[.10] bg-white/[.035]"><CircleUserRound className="h-4 w-4 text-zinc-500" /></span>}
@@ -61,10 +61,7 @@ export function LeftSidebar() {
               <span className="mt-1 flex"><StrengthBars value={summary.profile?.strength || 0}/></span>
             </span>
           </Link>
-          <div className="relative flex shrink-0 items-center">
-            <button onClick={() => void signOut({ callbackUrl: "/login" })} aria-label="Log out" className="absolute right-8 rounded-md p-1.5 text-zinc-600 opacity-0 transition group-hover/profile:opacity-100 focus:opacity-100 hover:bg-white/5 hover:text-zinc-300"><LogOut className="h-3.5 w-3.5" /></button>
-            <Link href="/settings" aria-label="Settings" className="rounded-md p-1.5 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"><Settings className="h-3.5 w-3.5"/></Link>
-          </div>
+          <Link href="/settings" aria-label="Settings" className="rounded-md p-1.5 text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"><Settings className="h-3.5 w-3.5"/></Link>
         </div>
       </div>
     </aside>
