@@ -28,11 +28,8 @@ describe("vibe metadata helpers", () => {
 });
 
 describe("vibe control schema", () => {
-  it("accepts select with a target item id", () => {
-    expect(vibeControlSchema.parse({ action: "select", itemId: "track-1" })).toEqual({ action: "select", itemId: "track-1" });
-  });
-
-  it("requires itemId for select", () => {
+  it("requires itemId when selecting a queue track", () => {
     expect(vibeControlSchema.safeParse({ action: "select" }).success).toBe(false);
+    expect(vibeControlSchema.safeParse({ action: "select", itemId: "track-1" }).success).toBe(true);
   });
 });

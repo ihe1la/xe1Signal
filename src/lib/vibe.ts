@@ -12,14 +12,16 @@ export type VibeStatus = (typeof VIBE_STATUSES)[number];
 
 export const vibeSourceSchema = z.string().trim().min(1).max(2048).url();
 export const vibeQualitySchema = z.enum(["128", "192", "320", "original"]);
-export const vibeControlSchema = z.object({
-  action: z.enum(["play", "pause", "skip", "clear", "select"]),
-  itemId: z.string().trim().min(1).optional(),
-}).superRefine((value, ctx) => {
-  if (value.action === "select" && !value.itemId) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Select requires itemId", path: ["itemId"] });
-  }
-});
+export const vibeControlSchema = z
+  .object({
+    action: z.enum(["play", "pause", "skip", "clear", "select"]),
+    itemId: z.string().trim().min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.action === "select" && !value.itemId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Select requires itemId", path: ["itemId"] });
+    }
+  });
 
 const VIBE_SOURCE_HOSTS = [
   "youtube.com",
