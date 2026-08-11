@@ -301,6 +301,7 @@ function FindingsMapCanvas({
               gap={22}
               size={1}
               color="rgba(255,255,255,0.06)"
+              bgColor="#000000"
             />
             <Controls
               showInteractive={false}
