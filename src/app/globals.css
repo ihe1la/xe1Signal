@@ -184,12 +184,12 @@ a[href^="/inbox/"] > img.grayscale {
   object-position: center;
 }
 
-/* Findings map — high-contrast dark aesthetic */
+/* Findings map — Signal Archive violet theme */
 .findings-map-flow,
 .findings-map-flow .react-flow,
 .findings-map-flow .react-flow__viewport,
 .findings-map-flow .react-flow__renderer {
-  background: #000 !important;
+  background: #08090d !important;
 }
 
 .findings-map-flow .react-flow__attribution {
@@ -197,13 +197,15 @@ a[href^="/inbox/"] > img.grayscale {
 }
 
 .findings-map-node {
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: linear-gradient(180deg, #1c1c1c 0%, #121212 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(160deg, rgba(139, 92, 246, 0.06), transparent 42%),
+    #0d0e14;
   padding: 13px 14px;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 12px 28px rgba(0, 0, 0, 0.55);
+    0 0 0 1px rgba(139, 92, 246, 0.04),
+    0 14px 36px rgba(0, 0, 0, 0.4);
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -212,30 +214,33 @@ a[href^="/inbox/"] > img.grayscale {
 }
 
 .findings-map-node--root {
-  border-color: rgba(255, 255, 255, 0.38);
-  background: linear-gradient(165deg, #242424 0%, #151515 100%);
+  border-color: rgba(167, 139, 250, 0.35);
+  background:
+    linear-gradient(155deg, rgba(139, 92, 246, 0.2), rgba(13, 14, 20, 0.98) 58%);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 36px rgba(0, 0, 0, 0.6);
+    0 0 0 1px rgba(167, 139, 250, 0.12),
+    0 18px 44px rgba(0, 0, 0, 0.45);
 }
 
 .findings-map-node--target {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: linear-gradient(180deg, #1a1a1a 0%, #101010 100%);
+  border-color: rgba(167, 139, 250, 0.22);
+  background:
+    linear-gradient(165deg, rgba(139, 92, 246, 0.1), #0d0e14 50%);
 }
 
 .findings-map-node--note {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: linear-gradient(180deg, #171717 0%, #0e0e0e 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #0b0c12;
 }
 
 .findings-map-node.is-selected,
 .findings-map-node:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: linear-gradient(180deg, #242424 0%, #171717 100%);
+  border-color: rgba(167, 139, 250, 0.45);
+  background:
+    linear-gradient(160deg, rgba(139, 92, 246, 0.14), #12131a 55%);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 18px 40px rgba(0, 0, 0, 0.65);
+    0 0 0 1px rgba(167, 139, 250, 0.14),
+    0 18px 44px rgba(0, 0, 0, 0.5);
   transform: translateY(-1px);
 }
 
@@ -244,42 +249,42 @@ a[href^="/inbox/"] > img.grayscale {
 }
 
 .findings-map-node__icon {
-  color: #f4f4f5;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.08);
+  color: #ddd6fe;
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  background: rgba(139, 92, 246, 0.14);
 }
 
 .findings-map-node--root .findings-map-node__icon {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.12);
+  color: #ede9fe;
+  border-color: rgba(196, 181, 253, 0.4);
+  background: rgba(139, 92, 246, 0.22);
 }
 
 .findings-map-handle {
   width: 8px !important;
   height: 8px !important;
-  border: 2px solid #000 !important;
-  background: #e4e4e7 !important;
+  border: 2px solid #08090d !important;
+  background: #a78bfa !important;
   opacity: 0.95;
 }
 
 .findings-map-node:hover .findings-map-handle,
 .findings-map-node.is-selected .findings-map-handle {
-  background: #fff !important;
+  background: #c4b5fd !important;
 }
 
 @keyframes findingsNodeFresh {
   0% {
-    border-color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(196, 181, 253, 0.85);
     box-shadow:
-      0 0 0 0 rgba(255, 255, 255, 0.35),
-      0 12px 28px rgba(0, 0, 0, 0.55);
+      0 0 0 0 rgba(139, 92, 246, 0.4),
+      0 14px 36px rgba(0, 0, 0, 0.4);
   }
   100% {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.08);
     box-shadow:
-      0 0 0 12px rgba(255, 255, 255, 0),
-      0 12px 28px rgba(0, 0, 0, 0.55);
+      0 0 0 12px rgba(139, 92, 246, 0),
+      0 14px 36px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -295,11 +300,11 @@ a[href^="/inbox/"] > img.grayscale {
 }
 
 .findings-map-flow .react-flow__controls-button:hover {
-  background: #222 !important;
+  background: #161722 !important;
 }
 
 .findings-map-flow .react-flow__minimap-mask {
-  fill: rgba(0, 0, 0, 0.55);
+  fill: rgba(8, 9, 13, 0.6);
 }
 
 .findings-map-flow .react-flow__edge-path {
