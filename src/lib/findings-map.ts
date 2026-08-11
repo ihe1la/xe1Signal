@@ -2,7 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 
 import { extractUrls, type Finding } from "@/lib/findings";
 
-export const FINDINGS_MAP_STORAGE_KEY = "xe1signal-tools-findings-map-v1";
+export const FINDINGS_MAP_STORAGE_KEY = "xe1signal-tools-findings-map-v2";
 
 export type FindingsMapPositions = Record<string, { x: number; y: number }>;
 
@@ -17,10 +17,24 @@ export type FindingsMapNodeData = {
   detail?: string;
   findingId?: string;
   tags?: string[];
+  host?: string | null;
+  noteCount?: number;
+  fresh?: boolean;
+  [key: string]: unknown;
+};
+
+export type FindingsMapEdgeData = {
+  kind: "spine" | "leaf";
   [key: string]: unknown;
 };
 
 const SKIP_TAGS = new Set(["recon", "threat", "header", "auth", "ihe1la"]);
+
+const TARGET_GAP = 168;
+const NOTE_GAP = 92;
+const COL_ROOT = 48;
+const COL_TARGET = 340;
+const COL_NOTE = 680;
 
 export function extractFindingHost(finding: Finding) {
   for (const url of extractUrls(finding.body)) {
@@ -44,8 +58,8 @@ export function findingTargetKey(finding: Finding) {
 
 export function findingLabel(finding: Finding) {
   const line = finding.body.replace(/\s+/g, " ").trim();
-  if (line.length <= 72) return line;
-  return `${line.slice(0, 69).trimEnd()}…`;
+  if (line.length <= 64) return line;
+  return `${line.slice(0, 61).trimEnd()}…`;
 }
 
 export function parseFindingsMap(raw: string | null): FindingsMapDocument {
@@ -74,16 +88,22 @@ export function serializeFindingsMap(document: FindingsMapDocument) {
   return JSON.stringify(document);
 }
 
-function defaultPosition(kind: FindingsMapNodeData["kind"], index: number, groupIndex = 0) {
-  if (kind === "root") return { x: 40, y: 220 };
-  if (kind === "target") return { x: 320, y: 40 + groupIndex * 140 };
-  return { x: 620, y: 20 + groupIndex * 140 + index * 72 };
+function defaultPosition(kind: FindingsMapNodeData["kind"], index: number, groupIndex = 0, groupSize = 1) {
+  if (kind === "root") {
+    const span = Math.max(groupSize - 1, 0) * TARGET_GAP;
+    return { x: COL_ROOT, y: 40 + span / 2 };
+  }
+  if (kind === "target") return { x: COL_TARGET, y: 40 + groupIndex * TARGET_GAP };
+  const targetY = 40 + groupIndex * TARGET_GAP;
+  const stack = (index - (groupSize - 1) / 2) * NOTE_GAP;
+  return { x: COL_NOTE, y: targetY + stack };
 }
 
 export function buildFindingsMapGraph(
   findings: Finding[],
   positions: FindingsMapPositions = {},
-): { nodes: Node<FindingsMapNodeData>[]; edges: Edge[] } {
+  options: { highlightFindingId?: string | null } = {},
+): { nodes: Node<FindingsMapNodeData>[]; edges: Edge<FindingsMapEdgeData>[] } {
   const groups = new Map<string, Finding[]>();
   for (const finding of findings) {
     const key = findingTargetKey(finding);
@@ -103,28 +123,32 @@ export function buildFindingsMapGraph(
     {
       id: rootId,
       type: "findingsNode",
-      position: positions[rootId] || defaultPosition("root", 0),
+      position: positions[rootId] || defaultPosition("root", 0, 0, targets.length),
       data: {
         kind: "root",
-        label: "Targets",
-        detail: `${findings.length} note${findings.length === 1 ? "" : "s"} · ${targets.length} branch${targets.length === 1 ? "" : "es"}`,
+        label: "Findings",
+        detail: `${findings.length} note${findings.length === 1 ? "" : "s"} · ${targets.length} target${targets.length === 1 ? "" : "s"}`,
+        noteCount: findings.length,
       },
       draggable: true,
     },
   ];
-  const edges: Edge[] = [];
+  const edges: Edge<FindingsMapEdgeData>[] = [];
 
   targets.forEach((target, groupIndex) => {
     const targetId = `target:${target}`;
     const items = groups.get(target) || [];
+    const host = target.startsWith("#") || target === "unsorted" ? null : target;
     nodes.push({
       id: targetId,
       type: "findingsNode",
-      position: positions[targetId] || defaultPosition("target", 0, groupIndex),
+      position: positions[targetId] || defaultPosition("target", 0, groupIndex, items.length),
       data: {
         kind: "target",
         label: target,
         detail: `${items.length} note${items.length === 1 ? "" : "s"}`,
+        host,
+        noteCount: items.length,
       },
       draggable: true,
     });
@@ -132,9 +156,9 @@ export function buildFindingsMapGraph(
       id: `e:${rootId}->${targetId}`,
       source: rootId,
       target: targetId,
-      type: "smoothstep",
-      animated: false,
-      style: { stroke: "rgba(167,139,250,.45)", strokeWidth: 1.5 },
+      type: "findingsEdge",
+      data: { kind: "spine" },
+      markerEnd: "url(#findings-edge-circle)",
     });
 
     items.forEach((finding, index) => {
@@ -142,22 +166,27 @@ export function buildFindingsMapGraph(
       nodes.push({
         id: noteId,
         type: "findingsNode",
-        position: positions[noteId] || defaultPosition("note", index, groupIndex),
+        position: positions[noteId] || defaultPosition("note", index, groupIndex, items.length),
         data: {
           kind: "note",
           label: findingLabel(finding),
           detail: finding.tags.slice(0, 3).map((tag) => `#${tag}`).join(" "),
           findingId: finding.id,
           tags: finding.tags,
+          host: extractFindingHost(finding),
+          fresh: options.highlightFindingId === finding.id,
         },
         draggable: true,
+        className: options.highlightFindingId === finding.id ? "findings-node-fresh" : undefined,
       });
       edges.push({
         id: `e:${targetId}->${noteId}`,
         source: targetId,
         target: noteId,
-        type: "smoothstep",
-        style: { stroke: "rgba(113,113,122,.55)", strokeWidth: 1.25 },
+        type: "findingsEdge",
+        data: { kind: "leaf" },
+        markerEnd: "url(#findings-edge-circle)",
+        animated: options.highlightFindingId === finding.id,
       });
     });
   });
@@ -171,4 +200,11 @@ export function positionsFromNodes(nodes: Node[]) {
     positions[node.id] = { x: node.position.x, y: node.position.y };
   }
   return positions;
+}
+
+export function mergePositions(
+  saved: FindingsMapPositions,
+  live: FindingsMapPositions,
+): FindingsMapPositions {
+  return { ...saved, ...live };
 }

@@ -69,6 +69,7 @@ export function FindingsWorkspace() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editBody, setEditBody] = React.useState("");
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [lastAddedId, setLastAddedId] = React.useState<string | null>(null);
   const captureRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
@@ -96,6 +97,10 @@ export function FindingsWorkspace() {
     if (!next) return;
     setFindings((current) => [next, ...current]);
     setDraft("");
+    setLastAddedId(next.id);
+    window.setTimeout(() => {
+      setLastAddedId((current) => (current === next.id ? null : current));
+    }, 3200);
     captureRef.current?.focus();
   }
 
@@ -248,6 +253,7 @@ export function FindingsWorkspace() {
           {hydrated ? (
             <FindingsMap
               findings={query.trim() ? visible : findings}
+              highlightFindingId={lastAddedId}
               onSelectFinding={() => setView("notes")}
             />
           ) : (
