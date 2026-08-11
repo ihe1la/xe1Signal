@@ -47,7 +47,7 @@ function FindingsFlowNode({ data, selected }: NodeProps<MapNode>) {
   return (
     <div
       className={cn(
-        "findings-map-node group relative min-w-[176px] max-w-[248px]",
+        "findings-map-node group relative min-w-[190px] max-w-[260px]",
         data.kind === "root" && "findings-map-node--root",
         data.kind === "target" && "findings-map-node--target",
         data.kind === "note" && "findings-map-node--note",
@@ -56,24 +56,26 @@ function FindingsFlowNode({ data, selected }: NodeProps<MapNode>) {
       )}
     >
       <Handle type="target" position={Position.Left} className="findings-map-handle" />
-      <div className="flex items-start gap-2.5">
-        <span className="findings-map-node__icon grid h-7 w-7 shrink-0 place-items-center rounded-md">
-          <Icon className="h-3.5 w-3.5" />
+      <div className="flex items-start gap-3">
+        <span className="findings-map-node__icon grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+          <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-sans text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-zinc-400">
             {data.kind === "root" ? "Root" : data.kind === "target" ? "Target" : "Note"}
           </p>
-          <p className="mt-1 font-sans text-[12px] font-medium leading-5 text-zinc-100">{data.label}</p>
+          <p className="mt-1.5 font-sans text-[13px] font-semibold leading-5 tracking-tight text-white">
+            {data.label}
+          </p>
           {data.detail ? (
-            <p className="mt-1 truncate font-mono text-[10px] text-zinc-600">{data.detail}</p>
+            <p className="mt-1.5 truncate font-mono text-[11px] text-zinc-400">{data.detail}</p>
           ) : null}
           {data.kind === "note" && data.tags && data.tags.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-2.5 flex flex-wrap gap-1">
               {data.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded border border-white/[.08] bg-white/[.03] px-1.5 py-0.5 font-sans text-[9px] text-zinc-500"
+                  className="rounded-md border border-white/15 bg-white/[.06] px-1.5 py-0.5 font-sans text-[10px] text-zinc-300"
                 >
                   #{tag}
                 </span>
@@ -82,7 +84,7 @@ function FindingsFlowNode({ data, selected }: NodeProps<MapNode>) {
           ) : null}
         </div>
         {typeof data.noteCount === "number" && data.kind !== "note" ? (
-          <span className="rounded border border-white/[.08] px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+          <span className="rounded-md border border-white/15 bg-white/[.06] px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">
             {data.noteCount}
           </span>
         ) : null}
@@ -115,16 +117,28 @@ function FindingsFlowEdge({
   const spine = data?.kind === "spine";
 
   return (
-    <BaseEdge
-      id={id}
-      path={edgePath}
-      markerEnd={markerEnd}
-      style={{
-        ...style,
-        stroke: spine ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.14)",
-        strokeWidth: spine ? 1.5 : 1.15,
-      }}
-    />
+    <>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={{
+          ...style,
+          stroke: spine ? "rgba(228,228,231,0.72)" : "rgba(161,161,170,0.55)",
+          strokeWidth: spine ? 2.25 : 1.75,
+        }}
+      />
+      {spine ? (
+        <path
+          d={edgePath}
+          fill="none"
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth={2.25}
+          strokeDasharray="4 10"
+          className="findings-edge-dash"
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -233,19 +247,19 @@ function FindingsMapCanvas({
   return (
     <div
       aria-label="Findings map"
-      className="findings-map-shell overflow-hidden rounded-2xl border border-white/[.08] bg-black"
+      className="findings-map-shell overflow-hidden rounded-2xl border border-white/20 bg-black"
     >
-      <div className="flex items-center justify-between gap-3 border-b border-white/[.06] bg-black px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-white/15 bg-[#0a0a0a] px-4 py-3">
         <div>
-          <p className="font-sans text-[11px] uppercase tracking-[.14em] text-zinc-400">Target map</p>
-          <p className="mt-1 font-sans text-[12px] text-zinc-600">
+          <p className="font-sans text-[11px] uppercase tracking-[.16em] text-zinc-300">Target map</p>
+          <p className="mt-1 font-sans text-[12px] text-zinc-500">
             Notes → hosts · updates live · drag to rearrange
           </p>
         </div>
         <button
           type="button"
           onClick={resetLayout}
-          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-white/[.08] px-3 font-sans text-[11px] text-zinc-500 transition hover:border-white/20 hover:text-zinc-200"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/20 bg-white/[.04] px-3 font-sans text-[11px] text-zinc-300 transition hover:border-white/35 hover:bg-white/[.08] hover:text-white"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Reset layout
@@ -253,14 +267,14 @@ function FindingsMapCanvas({
       </div>
       <div className="findings-map-flow relative h-[620px] w-full bg-black">
         {!hydrated ? (
-          <div className="grid h-full place-items-center bg-black font-sans text-sm text-zinc-600">
+          <div className="grid h-full place-items-center bg-black font-sans text-sm text-zinc-400">
             Loading map…
           </div>
         ) : findings.length === 0 ? (
           <div className="grid h-full place-items-center bg-black px-6 text-center">
             <div>
-              <p className="font-sans text-sm text-zinc-400">Canvas is empty</p>
-              <p className="mt-2 font-sans text-[12px] text-zinc-600">
+              <p className="font-sans text-sm text-zinc-300">Canvas is empty</p>
+              <p className="mt-2 font-sans text-[12px] text-zinc-500">
                 Save a finding above — it will appear here under its target.
               </p>
             </div>
@@ -298,34 +312,36 @@ function FindingsMapCanvas({
             <Background
               id="findings-dots"
               variant={BackgroundVariant.Dots}
-              gap={22}
-              size={1}
-              color="rgba(255,255,255,0.06)"
+              gap={20}
+              size={1.35}
+              color="rgba(255,255,255,0.16)"
               bgColor="#000000"
             />
             <Controls
               showInteractive={false}
-              className="!border-white/10 !bg-black !shadow-none [&>button]:!border-white/10 [&>button]:!bg-black [&>button]:!fill-zinc-400"
+              className="!m-3 !overflow-hidden !rounded-xl !border !border-white/25 !bg-[#141414] !shadow-none [&>button]:!h-8 [&>button]:!w-8 [&>button]:!border-white/15 [&>button]:!bg-[#141414] [&>button]:!fill-zinc-200"
             />
             <MiniMap
               pannable
               zoomable
-              className="!border-white/10 !bg-black"
-              maskColor="rgba(0,0,0,.75)"
+              className="!m-3 !overflow-hidden !rounded-xl !border !border-white/25 !bg-[#0a0a0a]"
+              maskColor="rgba(0,0,0,.55)"
+              nodeStrokeColor="#ffffff"
+              nodeStrokeWidth={2}
               nodeColor={(node) => {
                 const kind = (node.data as FindingsMapNodeData | undefined)?.kind;
-                if (kind === "root") return "#e4e4e7";
-                if (kind === "target") return "#a1a1aa";
-                return "#3f3f46";
+                if (kind === "root") return "#fafafa";
+                if (kind === "target") return "#d4d4d8";
+                return "#71717a";
               }}
             />
             <Panel
               position="top-left"
-              className="rounded-md border border-white/[.08] bg-black/90 px-3 py-2 font-sans text-[11px] text-zinc-500"
+              className="rounded-xl border border-white/20 bg-[#121212]/95 px-3 py-2 font-sans text-[11px] text-zinc-400 shadow-lg shadow-black/40"
             >
-              <span className="text-zinc-300">{findings.length}</span> notes ·{" "}
-              <span className="text-zinc-300">{targetCount}</span> targets
-              {highlightFindingId ? <span className="ml-2 text-zinc-400">· live</span> : null}
+              <span className="text-zinc-100">{findings.length}</span> notes ·{" "}
+              <span className="text-zinc-100">{targetCount}</span> targets
+              {highlightFindingId ? <span className="ml-2 text-zinc-300">· live</span> : null}
             </Panel>
             <svg className="pointer-events-none absolute">
               <defs>
@@ -335,11 +351,11 @@ function FindingsMapCanvas({
                   refX="0"
                   refY="0"
                   markerUnits="strokeWidth"
-                  markerWidth="8"
-                  markerHeight="8"
+                  markerWidth="9"
+                  markerHeight="9"
                   orient="auto"
                 >
-                  <circle stroke="rgba(255,255,255,0.45)" strokeOpacity="1" r="2" cx="0" cy="0" fill="none" />
+                  <circle stroke="#e4e4e7" strokeOpacity="0.9" r="2.2" cx="0" cy="0" fill="#000" />
                 </marker>
               </defs>
             </svg>

@@ -45,6 +45,8 @@ export function extractFindingHost(finding: Finding) {
       /* ignore bad urls */
     }
   }
+  const bare = finding.body.match(/\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/i)?.[0];
+  if (bare) return bare.toLowerCase().replace(/^www\./, "");
   return null;
 }
 

@@ -16,6 +16,12 @@ describe("findings-map", () => {
     expect(findingTargetKey(finding)).toBe("l30on.top");
   });
 
+  it("detects bare hostnames without https", () => {
+    const finding = createFinding("linktr.ee is go on tr.eee")!;
+    expect(extractFindingHost(finding)).toBe("linktr.ee");
+    expect(findingTargetKey(finding)).toBe("linktr.ee");
+  });
+
   it("builds a rooted target tree from notes", () => {
     const notes = [
       createFinding("Profile hub https://linktr.ee/ihe1la #profile")!,
