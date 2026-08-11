@@ -3,8 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { Bell, LogOut, Mail, Menu, Plus, Search, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Bell, Mail, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +70,7 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
   return (
     <>
       <header className="sticky top-0 z-30 h-20 border-b border-white/[0.055] bg-[#08090d]/90 backdrop-blur-xl">
-        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[324px]")}>
+        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[348px]")}>
           <button onClick={() => setMobileSearch(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-white/[0.07] text-zinc-400 lg:hidden" aria-label="Open search"><Menu className="h-5 w-5" /></button>
           <form onSubmit={submit} className="relative hidden max-w-[720px] flex-1 md:block">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
@@ -91,7 +91,6 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
                 {unread > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unread > 9 ? "9+" : unread}</span>}
               </Link>
             </Button>
-            <Button onClick={() => signOut({ callbackUrl: "/login" })} variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-200" aria-label="Log out"><LogOut className="h-[18px] w-[18px]" /></Button>
           </div>
         </div>
       </header>
