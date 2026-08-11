@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Bell, LogOut, Mail, Menu, Plus, Search, X } from "lucide-react";
+import { Bell, LogOut, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +14,9 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
   const [query, setQuery] = React.useState("");
   const [mobileSearch, setMobileSearch] = React.useState(false);
   const [unread, setUnread] = React.useState(0);
-  const [unreadMessages, setUnreadMessages] = React.useState(0);
-
   React.useEffect(() => {
     if (status !== "authenticated") {
       setUnread(0);
-      setUnreadMessages(0);
       return;
     }
 
@@ -31,13 +28,6 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
           if (active) {
             setUnread((data?.notifications || []).filter((item: { isRead: boolean }) => !item.isRead).length);
           }
-        })
-        .catch(() => undefined);
-
-      fetch("/api/messages/unread")
-        .then((response) => (response.ok ? response.json() : null))
-        .then((data) => {
-          if (active) setUnreadMessages(Number(data?.unread) || 0);
         })
         .catch(() => undefined);
     };
@@ -70,30 +60,22 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
   return (
     <>
       <header className="sticky top-0 z-30 h-20 border-b border-white/[0.055] bg-[#08090d]/90 backdrop-blur-xl">
-        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[340px]")}>
+        <div className={cn("mx-auto flex h-full max-w-[1536px] items-center gap-4 px-4 sm:px-7 lg:px-11", reserveRightSidebar && "2xl:pr-[364px]")}>
           <button onClick={() => setMobileSearch(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-white/[0.07] text-zinc-400 lg:hidden" aria-label="Open search"><Menu className="h-5 w-5" /></button>
           <form onSubmit={submit} className="relative hidden max-w-[720px] flex-1 md:block">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-600" />
             <input id="global-search" value={query} onChange={(event) => setQuery(event.target.value)} className="h-11 w-full rounded-[10px] border border-white/[0.07] bg-white/[0.025] pl-11 pr-12 font-mono text-[13px] text-zinc-200 outline-none transition focus:border-violet-400/30 focus:bg-white/[0.04]" placeholder="Search signals, frequencies, people..." />
             <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-white/[0.06] bg-white/[0.035] px-2 py-1 font-mono text-[10px] text-zinc-600">/</kbd>
           </form>
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="ml-auto flex items-center gap-2 sm:gap-4">
             <Button asChild className="h-10 rounded-lg bg-violet-400/[0.09] px-4 font-mono text-[13px] text-violet-300 hover:bg-violet-400/[0.15]"><Link href="/signals/new"><Plus className="mr-2 h-4 w-4" />New signal</Link></Button>
-            <div className="flex items-center gap-0.5">
-              <Button asChild variant="ghost" size="icon" className="relative h-10 w-10 text-zinc-400">
-                <Link href="/inbox" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : "Messages"}>
-                  <Mail className="h-[18px] w-[18px]" />
-                  {unreadMessages > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unreadMessages > 9 ? "9+" : unreadMessages}</span>}
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="icon" className="relative h-10 w-10 text-zinc-400">
-                <Link href="/notifications" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
-                  <Bell className="h-[18px] w-[18px]" />
-                  {unread > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unread > 9 ? "9+" : unread}</span>}
-                </Link>
-              </Button>
-              <Button onClick={() => signOut({ callbackUrl: "/login" })} variant="ghost" size="icon" className="h-10 w-10 text-zinc-400 hover:text-zinc-200" aria-label="Log out"><LogOut className="h-[18px] w-[18px]" /></Button>
-            </div>
+            <Button asChild variant="ghost" size="icon" className="relative h-10 w-10 text-zinc-400">
+              <Link href="/notifications" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+                <Bell className="h-[18px] w-[18px]" />
+                {unread > 0 && <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-violet-400 px-1 font-mono text-[8px] text-white">{unread > 9 ? "9+" : unread}</span>}
+              </Link>
+            </Button>
+            <Button onClick={() => signOut({ callbackUrl: "/login" })} variant="ghost" size="icon" className="h-10 w-10 text-zinc-500 hover:text-zinc-200" aria-label="Log out"><LogOut className="h-[18px] w-[18px]" /></Button>
           </div>
         </div>
       </header>

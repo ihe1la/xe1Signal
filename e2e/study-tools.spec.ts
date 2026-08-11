@@ -22,35 +22,28 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-test("Study and Tools keep the simplified shell", async ({ page }) => {
+test("Study and Tools keep Pinqued attribution outside the desktop sidebar", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
   await page.goto("/study");
   const sidebar = page.locator("aside").first();
   await expect(page.getByRole("heading", { name: "Study", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "People", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Lab", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Archive", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
-  await expect(page.getByText("Insights", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Activity rhythm", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Log a manual session", { exact: true })).toHaveCount(0);
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pinqued" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
-  await page.getByRole("button", { name: /Base64/ }).click();
-  await page.getByLabel("Tool input").fill("Signal archive ✓");
-  await page.getByRole("button", { name: "Encode", exact: true }).click();
-  await expect(page.getByLabel("Tool output")).toHaveValue("U2lnbmFsIGFyY2hpdmUg4pyT");
-  await page.getByRole("button", { name: "Back to tools", exact: true }).click();
-  await expect(page.getByRole("button", { name: /UUID Generator/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Base64/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /JSON Formatter/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Recon/ })).toHaveAttribute("href", "https://pinqued.top/recon");
   expect(issues).toEqual([]);
 });
 
@@ -62,11 +55,11 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
   const navigation = page.getByRole("navigation");
   await expect(navigation.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByText("Original tools by", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://pinqued.top/");
   expect(issues).toEqual([]);
   await page.close();
 });

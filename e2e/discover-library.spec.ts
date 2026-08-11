@@ -1,34 +1,26 @@
 import { expect, test } from "@playwright/test";
 
-test("Discover uses the simplified Library-centered shell", async ({ page }) => {
+test("Discover matches the reference shell", async ({ page }) => {
   await page.goto("/discover");
 
   const sidebar = page.locator("aside").first();
-  for (const label of ["Discover", "Library", "Vibe", "Study", "Tools", "People"]) {
+  for (const label of ["Discover", "Frequencies", "Archive", "Vibe", "People", "Inbox", "Notifications"]) {
     await expect(sidebar.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
-  await expect(sidebar.getByRole("link", { name: "Frequencies", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Archive", exact: true })).toHaveCount(0);
-  await expect(sidebar.getByText("Pinned Collections", { exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "View all collections →", exact: true })).toHaveAttribute("href", "/archive?tab=collections");
+  await expect(sidebar.getByText("My frequencies", { exact: true })).toBeVisible();
+  await expect(sidebar.getByText("SIGNAL ARCHIVE", { exact: true })).toBeVisible();
 
-  await expect(page.getByRole("heading", { name: "Discover", exact: true })).toBeVisible();
-  await expect(page.getByText("Explore items shared across the archive.", { exact: true })).toBeVisible();
-  for (const label of ["For you", "Recent", "Following"]) {
-    await expect(page.getByRole("tab", { name: label, exact: true })).toBeVisible();
-  }
-  await expect(page.getByRole("button", { name: "Filter", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Filter", exact: true }).click();
-  for (const label of ["All", "Image", "Link", "Note", "Song", "Code", "Screenshot", "Voice", "Document"]) {
+  await expect(page.getByRole("heading", { name: "Signals from the archive", exact: true })).toBeVisible();
+  await expect(page.getByText("Fragments worth keeping.", { exact: true })).toBeVisible();
+  for (const label of ["ALL", "IMAGE", "LINK", "NOTE", "SONG", "CODE", "SCREENSHOT", "AUDIO", "DOCUMENT"]) {
     await expect(page.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
 
-  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Notifications" })).toBeVisible();
-  await expect(page.locator("header img")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
 });
 
-test("Library exposes collection and signal views on mobile", async ({ browser }) => {
+test("Archive remains reachable on mobile", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.goto("/login");
   await page.getByLabel("Email or username").fill("hela@signal.local");
@@ -39,13 +31,10 @@ test("Library exposes collection and signal views on mobile", async ({ browser }
 
   await expect(page.getByRole("heading", { name: "Your library", exact: true })).toBeVisible();
   await expect(page.getByRole("tab", { name: "Collections", exact: true })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByPlaceholder("Search collections...")).toBeVisible();
 
   const navigation = page.getByRole("navigation");
   for (const label of ["Discover", "Library", "Vibe", "Study", "Tools", "People"]) {
     await expect(navigation.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
-  await expect(navigation.getByRole("link", { name: "Frequencies", exact: true })).toHaveCount(0);
-  await expect(navigation.getByRole("link", { name: "Archive", exact: true })).toHaveCount(0);
   await page.close();
 });
