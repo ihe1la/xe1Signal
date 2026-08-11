@@ -245,7 +245,7 @@ export function VibeRoom() {
             </div>
 
             {groups.length ? (
-              <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 p-4 sm:grid-cols-2">
                 {groups.map((group) => (
                   <PlaylistShelf
                     key={group.id}
@@ -387,7 +387,7 @@ function PlaylistShelf({
   return (
     <section
       aria-label={label}
-      className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[.07] bg-gradient-to-b from-violet-500/[.06] to-transparent"
+      className={`w-full self-start overflow-hidden rounded-xl border border-white/[.07] ${open ? "bg-gradient-to-b from-violet-500/[.06] to-transparent" : "bg-white/[.02]"}`}
     >
       <div className="flex items-start gap-3 p-3.5">
         <div className="relative shrink-0">
