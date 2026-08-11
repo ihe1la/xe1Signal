@@ -22,7 +22,7 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-test("Study and Tools are in the desktop sidebar with local Targets workspace", async ({ page }) => {
+test("Study and Tools are in the desktop sidebar", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
@@ -38,19 +38,11 @@ test("Study and Tools are in the desktop sidebar with local Targets workspace", 
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByText("Local XMind-style target maps with an Obsidian vault for investigation notes.", { exact: true })).toBeVisible();
-  await expect(page.locator('a[href*="pinqued.top"], a[href*="l30on.top"]')).toHaveCount(0);
+  await expect(page.getByText("Target notebook", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Targets mindmap canvas")).toHaveCount(0);
+  await expect(page.getByLabel("Obsidian vault")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Utilities", exact: true })).toHaveCount(0);
-  await expect(page.getByText("Target notebook", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Add branch/ })).toBeVisible();
-  await expect(page.getByLabel("Targets mindmap canvas")).toBeVisible();
-  await expect(page.getByLabel("Obsidian vault")).toBeVisible();
-  await expect(page.getByLabel("Vault files")).toBeVisible();
-  await expect(page.getByRole("link", { name: "linktr.ee/ihe1la" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "ihe1la.md" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "l30on.top.md" })).toBeVisible();
-  await expect(page.getByLabel("Node note")).toBeVisible();
-  await expect(page.getByLabel("Note preview")).toBeVisible();
+  await expect(page.locator('a[href*="pinqued.top"], a[href*="l30on.top"]')).toHaveCount(0);
   expect(issues).toEqual([]);
 });
 
@@ -65,8 +57,7 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByText("Target notebook", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Obsidian vault")).toBeVisible();
+  await expect(page.getByText("Target notebook", { exact: true })).toHaveCount(0);
   expect(issues).toEqual([]);
   await page.close();
 });
