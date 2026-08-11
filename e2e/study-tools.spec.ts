@@ -32,9 +32,10 @@ test("Study and Tools keep Pinqued attribution outside the desktop sidebar", asy
   await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toHaveCount(0);
   await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toHaveCount(0);
   await expect(sidebar.getByRole("link", { name: "Archive", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Lab", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
@@ -55,7 +56,7 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
   const navigation = page.getByRole("navigation");
   await expect(navigation.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();

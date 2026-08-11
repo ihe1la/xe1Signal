@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
-import { Archive, Bell, CircleUserRound, Compass, FlaskConical, Headphones, Mail, Plus, Radio, Settings, Users } from "lucide-react";
+import { Archive, CircleUserRound, Compass, Headphones, Plus, Radio, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
 import type { LucideIcon } from "lucide-react";
@@ -20,15 +20,12 @@ const navigation: ReadonlyArray<readonly [string, string, LucideIcon]> = [
   ["/archive", "Archive", Archive],
   ["/vibe", "Vibe", Headphones],
   ["/people", "People", Users],
-  ["/inbox", "Inbox", Mail],
-  ["/notifications", "Notifications", Bell],
 ];
 
 export function LeftSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [summary, setSummary] = React.useState<SidebarSummary>({ profile: null, frequencies: [] });
-  const [labAllowed, setLabAllowed] = React.useState(false);
 
   React.useEffect(() => {
     if (!session?.user?.id) return;
@@ -39,20 +36,12 @@ export function LeftSidebar() {
         if (active && data) setSummary(data);
       })
       .catch(() => undefined);
-    fetch("/api/internal/lab/access")
-      .then((response) => {
-        if (active) setLabAllowed(response.ok);
-      })
-      .catch(() => undefined);
     return () => {
       active = false;
     };
   }, [session?.user?.id, pathname]);
 
   const username = summary.profile?.username || session?.user?.username || "user";
-  const navItems = navigation.flatMap((item) =>
-    item[0] === "/inbox" && labAllowed ? [["/internal/lab", "Lab", FlaskConical] as const, item] : [item],
-  );
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
@@ -61,7 +50,7 @@ export function LeftSidebar() {
       </Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
         <nav className="space-y-1">
-          {navItems.map(([href, label, Icon]) => {
+          {navigation.map(([href, label, Icon]) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link

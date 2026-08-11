@@ -4,9 +4,12 @@ test("Discover matches the reference shell", async ({ page }) => {
   await page.goto("/discover");
 
   const sidebar = page.locator("aside").first();
-  for (const label of ["Discover", "Frequencies", "Archive", "Vibe", "People", "Inbox", "Notifications"]) {
+  for (const label of ["Discover", "Frequencies", "Archive", "Vibe", "People"]) {
     await expect(sidebar.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
+  await expect(sidebar.getByRole("link", { name: "Inbox", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Notifications", exact: true })).toHaveCount(0);
+  await expect(sidebar.getByRole("link", { name: "Lab", exact: true })).toHaveCount(0);
   await expect(sidebar.getByText("My frequencies", { exact: true })).toBeVisible();
   await expect(sidebar.getByText("SIGNAL ARCHIVE", { exact: true })).toBeVisible();
 
@@ -16,8 +19,8 @@ test("Discover matches the reference shell", async ({ page }) => {
     await expect(page.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
 
+  await expect(page.getByRole("link", { name: "Messages" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Notifications" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Messages" })).toHaveCount(0);
 });
 
 test("Archive remains reachable on mobile", async ({ browser }) => {
