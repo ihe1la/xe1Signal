@@ -22,27 +22,34 @@ function collectLocalIssues(page: import("@playwright/test").Page) {
   return issues;
 }
 
-test("Study and Tools are in the desktop sidebar", async ({ page }) => {
+test("Study and Tools findings capture and search", async ({ page }) => {
   test.setTimeout(60_000);
   const issues = collectLocalIssues(page);
 
   await page.goto("/study");
   const sidebar = page.locator("aside").first();
   await expect(page.getByRole("heading", { name: "Study", exact: true })).toBeVisible();
-  await expect(page.getByText("Insights", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Activity rhythm", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Log a manual session", exact: true })).toHaveCount(0);
   await expect(sidebar.getByRole("link", { name: "Study", exact: true })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open original/ })).toHaveAttribute("href", "https://tracker.l30on.top/");
 
   await page.goto("/tools");
+  await page.evaluate(() => window.localStorage.removeItem("xe1signal-tools-findings-v1"));
+  await page.reload();
+
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByText("Target notebook", { exact: true })).toHaveCount(0);
-  await expect(page.getByLabel("Targets mindmap canvas")).toHaveCount(0);
-  await expect(page.getByLabel("Obsidian vault")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Utilities", exact: true })).toHaveCount(0);
-  await expect(page.locator('a[href*="pinqued.top"], a[href*="l30on.top"]')).toHaveCount(0);
+  await expect(page.getByLabel("Findings section")).toBeVisible();
+  await expect(page.getByLabel("Capture finding")).toBeVisible();
+  await expect(page.getByLabel("Search findings")).toBeVisible();
+
+  await page.getByLabel("Capture finding").fill("saw X-Request-Id on api.target.com #header");
+  await page.getByRole("button", { name: "Save finding" }).click();
+  await expect(page.getByLabel("Findings list")).toContainText("saw X-Request-Id on api.target.com #header");
+
+  await page.getByLabel("Search findings").fill("request-id");
+  await expect(page.getByLabel("Findings list")).toContainText("X-Request-Id");
+  await page.getByLabel("Search findings").fill("#missing");
+  await expect(page.getByText("No findings match that search.")).toBeVisible();
+
   expect(issues).toEqual([]);
 });
 
@@ -57,7 +64,7 @@ test("Study and Tools remain available through mobile navigation", async ({ brow
 
   await page.goto("/tools");
   await expect(page.getByRole("heading", { name: "Tools", exact: true })).toBeVisible();
-  await expect(page.getByText("Target notebook", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Capture finding")).toBeVisible();
   expect(issues).toEqual([]);
   await page.close();
 });
