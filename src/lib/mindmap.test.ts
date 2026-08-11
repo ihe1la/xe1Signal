@@ -10,11 +10,13 @@ import {
 } from "@/lib/mindmap";
 
 describe("mindmap", () => {
-  it("creates a rooted default sheet", () => {
+  it("creates a rooted Linktree sample sheet", () => {
     const document = createDefaultMindMap();
     const root = getRootNode(document.nodes);
-    expect(root?.text).toBe("Targets");
-    expect(document.nodes.length).toBeGreaterThan(1);
+    expect(root?.text).toBe("ihe1la");
+    expect(document.title).toBe("ihe1la Linktree");
+    expect(document.nodes.some((node) => node.text === "l30on.top")).toBe(true);
+    expect(document.nodes.length).toBeGreaterThan(5);
   });
 
   it("round-trips through serialize/parse", () => {

@@ -10,6 +10,7 @@ import {
   createDefaultMindMap,
   deleteNode,
   getRootNode,
+  nodeAnchor,
   parseMindMap,
   serializeMindMap,
   updateNode,
@@ -20,9 +21,9 @@ import { noteFileName, renderSimpleMarkdown } from "@/lib/simple-markdown";
 import { cn } from "@/lib/utils";
 
 const CANVAS_WIDTH = 1600;
-const CANVAS_HEIGHT = 1100;
-const NODE_WIDTH = 188;
-const NODE_HEIGHT = 86;
+const CANVAS_HEIGHT = 900;
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 72;
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 1.6;
 
@@ -32,18 +33,14 @@ function loadDocument(): MindMapDocument {
 }
 
 function Connector({ from, to, color }: { from: MindNode; to: MindNode; color: string }) {
-  const x1 = from.x + NODE_WIDTH / 2;
-  const y1 = from.y + NODE_HEIGHT / 2;
-  const x2 = to.x + NODE_WIDTH / 2;
-  const y2 = to.y + NODE_HEIGHT / 2;
-  const dx = Math.abs(x2 - x1) * 0.45;
+  const { x1, y1, x2, y2, c1x, c1y, c2x, c2y } = nodeAnchor(from, to, NODE_WIDTH, NODE_HEIGHT);
   return (
     <path
-      d={`M ${x1} ${y1} C ${x1 + (x2 > x1 ? dx : -dx)} ${y1}, ${x2 + (x2 > x1 ? -dx : dx)} ${y2}, ${x2} ${y2}`}
+      d={`M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`}
       fill="none"
       stroke={color}
-      strokeOpacity={0.55}
-      strokeWidth={2.5}
+      strokeOpacity={0.7}
+      strokeWidth={2}
       strokeLinecap="round"
     />
   );
@@ -53,11 +50,10 @@ export function TargetsMindmap() {
   const [document, setDocument] = React.useState<MindMapDocument>(createDefaultMindMap);
   const [hydrated, setHydrated] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [zoom, setZoom] = React.useState(0.85);
-  const [pan, setPan] = React.useState({ x: 40, y: 24 });
+  const [zoom, setZoom] = React.useState(0.9);
+  const [pan, setPan] = React.useState({ x: 20, y: 16 });
   const [saved, setSaved] = React.useState(true);
   const [draggingNode, setDraggingNode] = React.useState(false);
-  const viewportRef = React.useRef<HTMLDivElement>(null);
   const panRef = React.useRef<{ active: boolean; startX: number; startY: number; originX: number; originY: number } | null>(null);
 
   React.useEffect(() => {
@@ -108,7 +104,7 @@ export function TargetsMindmap() {
 
   function addCallout() {
     if (!selected) return;
-    const next = addChildNode(document, selected.id, "Threat model", "callout");
+    const next = addChildNode(document, selected.id, "Note", "callout");
     const created = next.nodes[next.nodes.length - 1];
     commit(next, created?.id ?? selected.id);
   }
@@ -174,19 +170,21 @@ export function TargetsMindmap() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-rose-300 shadow-[0_0_14px_rgba(253,164,175,.65)]" />
-            <p className="font-mono text-[10px] uppercase tracking-[.16em] text-rose-200/70">Target notebook</p>
-          </div>
+          <p className="text-[11px] font-medium tracking-wide text-violet-300/80">Target notebook</p>
           <input
             aria-label="Mind map title"
             value={document.title}
             onChange={(event) => commit({ ...document, title: event.target.value, updatedAt: new Date().toISOString() })}
-            className="mt-1 w-full max-w-md bg-transparent font-sans text-xl font-medium tracking-tight text-zinc-100 outline-none placeholder:text-zinc-600 sm:text-2xl"
+            className="mt-1 w-full max-w-lg bg-transparent font-sans text-2xl font-semibold tracking-tight text-zinc-100 outline-none placeholder:text-zinc-600"
             placeholder="Targets"
           />
-          <p className="mt-1 font-sans text-xs text-zinc-500">
-            XMind-style map on top · Obsidian vault below. {saved ? "Saved in this browser." : "Saving…"}
+          <p className="mt-1.5 font-sans text-sm text-zinc-500">
+            Sample:{" "}
+            <a href="https://linktr.ee/ihe1la" target="_blank" rel="noreferrer" className="text-violet-300 hover:text-violet-200">
+              linktr.ee/ihe1la
+            </a>
+            {" · "}
+            {saved ? "Saved locally" : "Saving…"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -194,7 +192,7 @@ export function TargetsMindmap() {
             type="button"
             onClick={addBranch}
             disabled={!selected}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-violet-300/25 bg-violet-400/[.1] px-3 font-mono text-[10px] text-violet-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 text-xs font-medium text-violet-100 transition hover:border-violet-300/50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <GitBranchPlus className="h-3.5 w-3.5" />
             Add branch
@@ -203,16 +201,15 @@ export function TargetsMindmap() {
             type="button"
             onClick={addCallout}
             disabled={!selected}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-orange-300/30 bg-orange-400/[.08] px-3 font-mono text-[10px] text-orange-200 transition hover:border-orange-200/50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.1] bg-white/[.03] px-3 text-xs font-medium text-zinc-300 transition hover:border-violet-300/30 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <span className="h-2.5 w-2.5 rounded-[2px] border border-dashed border-orange-300" />
-            Add callout
+            Add note
           </button>
           <button
             type="button"
             onClick={removeSelected}
             disabled={!selected || selected.id === root?.id}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.08] px-3 font-mono text-[10px] text-zinc-400 transition hover:border-white/[.14] hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.1] px-3 text-xs font-medium text-zinc-400 transition hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
@@ -220,35 +217,30 @@ export function TargetsMindmap() {
           <button
             type="button"
             onClick={resetSheet}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.08] px-3 font-mono text-[10px] text-zinc-400 transition hover:border-white/[.14] hover:text-zinc-200"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.1] px-3 text-xs font-medium text-zinc-400 transition hover:text-zinc-200"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
+            Reset sample
           </button>
         </div>
       </div>
 
       <div
-        ref={viewportRef}
         aria-label="Targets mindmap canvas"
         onWheel={onViewportWheel}
         onPointerDown={startPan}
         onPointerMove={movePan}
         onPointerUp={endPan}
         onPointerCancel={endPan}
-        className="relative h-[62vh] min-h-[520px] cursor-grab overflow-hidden rounded-2xl border border-rose-200/[.14] bg-[#14080c] shadow-[inset_0_0_90px_rgba(244,63,94,.07),0_18px_70px_rgba(0,0,0,.28)] active:cursor-grabbing [background-image:radial-gradient(rgba(255,210,210,.11)_1px,transparent_1px)] [background-size:22px_22px]"
+        className="relative h-[58vh] min-h-[480px] cursor-grab overflow-hidden rounded-2xl border border-violet-400/15 bg-[#0a0b12] shadow-[inset_0_0_80px_rgba(139,108,255,.06)] active:cursor-grabbing [background-image:radial-gradient(rgba(139,108,255,.12)_1px,transparent_1px)] [background-size:22px_22px]"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-rose-300/[.07] to-transparent" />
-        <div className="pointer-events-none absolute left-5 top-5 z-20 rounded-lg border border-white/[.08] bg-[#1b0d12]/85 px-3 py-2 backdrop-blur">
-          <p className="font-mono text-[9px] uppercase tracking-[.14em] text-zinc-500">XMind canvas</p>
-          <p className="mt-1 font-sans text-[11px] text-zinc-300">Drag map · Ctrl+wheel zoom · drag topics</p>
-        </div>
-        <div className="absolute right-4 top-4 z-30 flex overflow-hidden rounded-lg border border-white/[.08] bg-[#0d0e13]/90 backdrop-blur">
-          <button type="button" aria-label="Zoom out" onClick={() => setZoom((value) => clampZoom(value - 0.1))} className="grid h-9 w-9 place-items-center text-zinc-400 hover:text-zinc-200">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-violet-500/[.07] to-transparent" />
+        <div className="absolute right-4 top-4 z-30 flex overflow-hidden rounded-lg border border-white/[.08] bg-[#0d0e14]/92 backdrop-blur">
+          <button type="button" aria-label="Zoom out" onClick={() => setZoom((value) => clampZoom(value - 0.1))} className="grid h-9 w-9 place-items-center text-zinc-400 hover:text-zinc-100">
             <Minus className="h-3.5 w-3.5" />
           </button>
-          <span className="grid w-12 place-items-center border-x border-white/[.06] font-mono text-[9px] text-zinc-500">{Math.round(zoom * 100)}%</span>
-          <button type="button" aria-label="Zoom in" onClick={() => setZoom((value) => clampZoom(value + 0.1))} className="grid h-9 w-9 place-items-center text-zinc-400 hover:text-zinc-200">
+          <span className="grid w-12 place-items-center border-x border-white/[.06] font-sans text-[11px] text-zinc-500">{Math.round(zoom * 100)}%</span>
+          <button type="button" aria-label="Zoom in" onClick={() => setZoom((value) => clampZoom(value + 0.1))} className="grid h-9 w-9 place-items-center text-zinc-400 hover:text-zinc-100">
             <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -283,7 +275,6 @@ export function TargetsMindmap() {
                 size={{ width: NODE_WIDTH, height: NODE_HEIGHT }}
                 bounds="parent"
                 enableResizing={false}
-                disableDragging={false}
                 onDragStart={() => {
                   setDraggingNode(true);
                   setSelectedId(node.id);
@@ -297,31 +288,29 @@ export function TargetsMindmap() {
                   data-mind-node
                   onClick={() => setSelectedId(node.id)}
                   className={cn(
-                    "flex h-full cursor-grab flex-col border px-3 py-2.5 shadow-[0_14px_36px_rgba(0,0,0,.45)] active:cursor-grabbing",
-                    isCallout ? "rounded-md border-dashed border-orange-400/55 bg-[#3a1b1c]/92" : "rounded-full bg-[#241318]/96",
-                    isSelected ? "border-violet-300/45 ring-2 ring-violet-300/25" : "border-white/[.1]",
-                    isRoot && "rounded-[22px] bg-gradient-to-br from-rose-300/25 to-[#2a1218] font-semibold",
+                    "flex h-full cursor-grab flex-col justify-center rounded-xl border px-3.5 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,.35)] active:cursor-grabbing",
+                    isCallout ? "border-dashed bg-[#14121c]/95" : "bg-[#12131a]/96",
+                    isSelected ? "border-violet-400/60 ring-2 ring-violet-400/25" : "border-white/[.08]",
+                    isRoot && "bg-violet-500/15",
                   )}
-                  style={{ borderColor: isSelected ? undefined : `${color}55`, boxShadow: isRoot ? `0 0 0 1px ${color}44, 0 16px 40px rgba(0,0,0,.45)` : undefined }}
+                  style={{ borderColor: isSelected ? undefined : `${color}66` }}
                 >
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="truncate font-mono text-[8px] uppercase tracking-[.12em] text-zinc-500">
-                      {isRoot ? "Central topic" : isCallout ? "Callout" : "Topic"}
-                    </span>
-                  </div>
                   <input
                     aria-label={isRoot ? "Central topic" : "Target title"}
                     value={node.text}
                     onFocus={() => setSelectedId(node.id)}
                     onChange={(event) => commit(updateNode(document, node.id, { text: event.target.value }))}
                     className={cn(
-                      "w-full bg-transparent font-sans text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600",
+                      "w-full bg-transparent font-sans text-[13px] leading-5 text-zinc-100 outline-none placeholder:text-zinc-600",
                       isRoot && "text-sm font-semibold",
                     )}
                     placeholder="Untitled"
                   />
-                  {node.note ? <p className="mt-1 line-clamp-1 font-sans text-[10px] leading-4 text-zinc-500">{node.note}</p> : null}
+                  {node.note ? (
+                    <p className="mt-1 line-clamp-1 font-sans text-[11px] leading-4 text-zinc-500">
+                      {node.note.replace(/^#+\s*/, "").split("\n").find((line) => line.trim()) ?? ""}
+                    </p>
+                  ) : null}
                 </article>
               </Rnd>
             );
@@ -329,28 +318,22 @@ export function TargetsMindmap() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 px-1 font-mono text-[9px] uppercase tracking-[.12em] text-zinc-600">
-        <span className="inline-flex items-center gap-2"><i className="h-2 w-2 rounded-full bg-violet-300" />Branch = attack path</span>
-        <span className="inline-flex items-center gap-2"><i className="h-2 w-2 rounded-[2px] border border-dashed border-orange-300" />Callout = threat / proof</span>
-        <span className="ml-auto">Local only</span>
-      </div>
-
       <section
         aria-label="Obsidian vault"
-        className="overflow-hidden rounded-xl border border-[#3d3d3d] bg-[#1e1e1e] shadow-[0_18px_50px_rgba(0,0,0,.35)]"
+        className="overflow-hidden rounded-xl border border-violet-400/15 bg-[#111218] shadow-[0_18px_50px_rgba(0,0,0,.35)]"
       >
-        <div className="flex items-center justify-between border-b border-[#333] bg-[#262626] px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-white/[.06] bg-[#161822] px-4 py-2.5">
           <div className="flex items-center gap-2">
-            <FileText className="h-3.5 w-3.5 text-[#a882ff]" />
-            <p className="font-mono text-[10px] uppercase tracking-[.14em] text-[#b0b0b0]">Obsidian vault</p>
+            <FileText className="h-3.5 w-3.5 text-violet-300" />
+            <p className="font-sans text-xs font-medium text-zinc-300">Obsidian vault</p>
           </div>
-          <p className="font-mono text-[10px] text-[#777]">Synced to map nodes · markdown</p>
+          <p className="font-sans text-[11px] text-zinc-500">Synced to map nodes</p>
         </div>
 
-        <div className="grid min-h-[320px] lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
-          <aside className="border-b border-[#333] bg-[#1a1a1a] lg:border-b-0 lg:border-r" aria-label="Vault files">
-            <p className="px-3 py-2 font-mono text-[9px] uppercase tracking-[.12em] text-[#666]">Notes</p>
-            <ul className="max-h-[280px] overflow-y-auto pb-2 lg:max-h-[420px]">
+        <div className="grid min-h-[300px] lg:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)]">
+          <aside className="border-b border-white/[.06] bg-[#0e0f16] lg:border-b-0 lg:border-r lg:border-white/[.06]" aria-label="Vault files">
+            <p className="px-3 py-2 font-sans text-[11px] font-medium text-zinc-500">Notes</p>
+            <ul className="max-h-[260px] overflow-y-auto pb-2 lg:max-h-[400px]">
               {fileNodes.map((node) => {
                 const active = selected?.id === node.id;
                 return (
@@ -359,8 +342,8 @@ export function TargetsMindmap() {
                       type="button"
                       onClick={() => setSelectedId(node.id)}
                       className={cn(
-                        "flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-[11px] transition",
-                        active ? "bg-[#363636] text-[#e6e6e6]" : "text-[#9a9a9a] hover:bg-[#2a2a2a] hover:text-[#d0d0d0]",
+                        "flex w-full items-center gap-2 px-3 py-1.5 text-left font-sans text-[12px] transition",
+                        active ? "bg-violet-500/15 text-zinc-100" : "text-zinc-500 hover:bg-white/[.04] hover:text-zinc-300",
                       )}
                     >
                       <FileText className="h-3 w-3 shrink-0 opacity-70" />
@@ -374,8 +357,8 @@ export function TargetsMindmap() {
 
           {selected ? (
             <>
-              <div className="flex min-h-[280px] flex-col border-b border-[#333] lg:border-b-0 lg:border-r">
-                <div className="border-b border-[#333] px-3 py-2 font-mono text-[10px] text-[#888]">
+              <div className="flex min-h-[260px] flex-col border-b border-white/[.06] lg:border-b-0 lg:border-r lg:border-white/[.06]">
+                <div className="border-b border-white/[.06] px-3 py-2 font-sans text-[11px] text-zinc-500">
                   Source · {noteFileName(selected.text)}
                 </div>
                 <textarea
@@ -383,21 +366,21 @@ export function TargetsMindmap() {
                   value={selected.note}
                   onChange={(event) => commit(updateNode(document, selected.id, { note: event.target.value }))}
                   placeholder={"# Notes\n\n- Findings\n- Evidence\n- Next steps"}
-                  className="min-h-[260px] flex-1 resize-none bg-[#1e1e1e] px-4 py-3 font-mono text-[12px] leading-6 text-[#d4d4d4] outline-none placeholder:text-[#555] lg:min-h-[380px]"
+                  className="min-h-[240px] flex-1 resize-none bg-[#111218] px-4 py-3 font-sans text-[13px] leading-6 text-zinc-300 outline-none placeholder:text-zinc-600 lg:min-h-[360px]"
                 />
               </div>
-              <div className="flex min-h-[240px] flex-col bg-[#202020]">
-                <div className="border-b border-[#333] px-3 py-2 font-mono text-[10px] text-[#888]">Preview</div>
+              <div className="flex min-h-[220px] flex-col bg-[#0e0f16]">
+                <div className="border-b border-white/[.06] px-3 py-2 font-sans text-[11px] text-zinc-500">Preview</div>
                 <div
                   aria-label="Note preview"
-                  className="prose-invert min-h-[220px] flex-1 overflow-y-auto px-4 py-3 text-[13px] leading-6 text-[#c8c8c8] [&_.md-h1]:mb-2 [&_.md-h1]:text-xl [&_.md-h1]:font-semibold [&_.md-h1]:text-[#f0f0f0] [&_.md-h2]:mb-2 [&_.md-h2]:text-lg [&_.md-h2]:font-semibold [&_.md-h2]:text-[#ececec] [&_.md-h3]:mb-1.5 [&_.md-h3]:text-base [&_.md-h3]:font-medium [&_.md-h3]:text-[#e0e0e0] [&_.md-p]:mb-2 [&_.md-ul]:mb-2 [&_.md-ul]:list-disc [&_.md-ul]:pl-5 [&_.md-ol]:mb-2 [&_.md-ol]:list-decimal [&_.md-ol]:pl-5 [&_.md-code]:rounded [&_.md-code]:bg-[#2d2d2d] [&_.md-code]:px-1 [&_.md-code]:py-0.5 [&_.md-code]:font-mono [&_.md-code]:text-[11px] [&_.md-pre]:mb-3 [&_.md-pre]:overflow-x-auto [&_.md-pre]:rounded-md [&_.md-pre]:bg-[#141414] [&_.md-pre]:p-3 [&_.md-pre]:font-mono [&_.md-pre]:text-[11px] [&_.md-a]:text-[#a882ff] [&_.md-a]:underline"
+                  className="min-h-[200px] flex-1 overflow-y-auto px-4 py-3 font-sans text-[13px] leading-6 text-zinc-400 [&_.md-h1]:mb-2 [&_.md-h1]:text-xl [&_.md-h1]:font-semibold [&_.md-h1]:text-zinc-100 [&_.md-h2]:mb-2 [&_.md-h2]:text-lg [&_.md-h2]:font-semibold [&_.md-h2]:text-zinc-100 [&_.md-h3]:mb-1.5 [&_.md-h3]:text-base [&_.md-h3]:font-medium [&_.md-h3]:text-zinc-200 [&_.md-p]:mb-2 [&_.md-ul]:mb-2 [&_.md-ul]:list-disc [&_.md-ul]:pl-5 [&_.md-ol]:mb-2 [&_.md-ol]:list-decimal [&_.md-ol]:pl-5 [&_.md-code]:rounded [&_.md-code]:bg-violet-500/10 [&_.md-code]:px-1 [&_.md-code]:py-0.5 [&_.md-code]:font-mono [&_.md-code]:text-[11px] [&_.md-code]:text-violet-200 [&_.md-pre]:mb-3 [&_.md-pre]:overflow-x-auto [&_.md-pre]:rounded-md [&_.md-pre]:bg-[#0a0b12] [&_.md-pre]:p-3 [&_.md-pre]:font-mono [&_.md-pre]:text-[11px] [&_.md-a]:text-violet-300 [&_.md-a]:underline"
                   dangerouslySetInnerHTML={{ __html: previewHtml }}
                 />
               </div>
             </>
           ) : (
             <div className="col-span-2 grid place-items-center px-6 py-16 text-center">
-              <p className="font-sans text-sm text-[#888]">Select a topic on the map or a file in the vault.</p>
+              <p className="font-sans text-sm text-zinc-500">Select a topic on the map or a file in the vault.</p>
             </div>
           )}
         </div>

@@ -46,7 +46,9 @@ test("Study and Tools are in the desktop sidebar with local Targets workspace", 
   await expect(page.getByLabel("Targets mindmap canvas")).toBeVisible();
   await expect(page.getByLabel("Obsidian vault")).toBeVisible();
   await expect(page.getByLabel("Vault files")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Targets.md" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "linktr.ee/ihe1la" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "ihe1la.md" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "l30on.top.md" })).toBeVisible();
   await expect(page.getByLabel("Node note")).toBeVisible();
   await expect(page.getByLabel("Note preview")).toBeVisible();
   expect(issues).toEqual([]);
