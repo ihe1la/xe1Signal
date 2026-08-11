@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Copy, ExternalLink, Pencil, RotateCcw, Search, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Network, Pencil, RotateCcw, Search, StickyNote, Trash2 } from "lucide-react";
+import { FindingsMap } from "@/components/findings-map";
 import {
   FINDINGS_STORAGE_KEY,
   collectFindingTags,
@@ -17,6 +18,8 @@ import {
   type Finding,
 } from "@/lib/findings";
 import { cn } from "@/lib/utils";
+
+type FindingsView = "notes" | "map";
 
 function formatWhen(iso: string) {
   const date = new Date(iso);
@@ -62,6 +65,7 @@ function FindingBody({ body }: { body: string }) {
 export function FindingsWorkspace() {
   const [findings, setFindings] = React.useState<Finding[]>([]);
   const [hydrated, setHydrated] = React.useState(false);
+  const [view, setView] = React.useState<FindingsView>("notes");
   const [draft, setDraft] = React.useState("");
   const [query, setQuery] = React.useState("");
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -148,19 +152,57 @@ export function FindingsWorkspace() {
   }
 
   return (
-    <div aria-label="Findings section" className="mx-auto max-w-[860px]">
+    <div aria-label="Findings section" className={cn("mx-auto", view === "map" ? "max-w-[1100px]" : "max-w-[860px]")}>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <p className="max-w-xl font-sans text-sm text-zinc-500">
-          Fast recon notes with #tags. Seeded with your Linktree map sample — search, filter, copy, keep going.
+          Fast recon notes with #tags. Seeded with your Linktree map sample — search, filter, or map notes onto targets.
         </p>
-        <button
-          type="button"
-          onClick={restoreLinktreeSample}
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] bg-white/[.03] px-3 font-sans text-xs text-zinc-400 transition hover:border-violet-400/25 hover:text-violet-200"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Restore Linktree sample
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            role="tablist"
+            aria-label="Findings view"
+            className="inline-flex rounded-lg border border-white/[.08] bg-white/[.02] p-0.5"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "notes"}
+              onClick={() => setView("notes")}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
+                view === "notes"
+                  ? "bg-violet-500/20 text-violet-100"
+                  : "text-zinc-500 hover:text-zinc-300",
+              )}
+            >
+              <StickyNote className="h-3.5 w-3.5" />
+              Notes
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={view === "map"}
+              onClick={() => setView("map")}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-sans text-[11px] transition",
+                view === "map"
+                  ? "bg-violet-500/20 text-violet-100"
+                  : "text-zinc-500 hover:text-zinc-300",
+              )}
+            >
+              <Network className="h-3.5 w-3.5" />
+              Map
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={restoreLinktreeSample}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] bg-white/[.03] px-3 font-sans text-xs text-zinc-400 transition hover:border-violet-400/25 hover:text-violet-200"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Restore Linktree sample
+          </button>
+        </div>
       </div>
 
       <section className="sticky top-4 z-20 mb-5 rounded-2xl border border-violet-400/20 bg-[#0d0e14]/92 p-3 shadow-[0_18px_50px_rgba(0,0,0,.45)] backdrop-blur-md sm:p-4">
@@ -192,198 +234,238 @@ export function FindingsWorkspace() {
         </div>
       </section>
 
-      <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/[.08] bg-white/[.02] px-3 py-2.5">
-        <Search className="h-4 w-4 shrink-0 text-zinc-500" />
-        <label htmlFor="finding-search" className="sr-only">
-          Search findings
-        </label>
-        <input
-          id="finding-search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search hosts, URLs, #tags…"
-          className="w-full bg-transparent font-sans text-sm text-zinc-200 outline-none placeholder:text-zinc-600"
-        />
-        {query ? (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className="shrink-0 font-sans text-[11px] text-zinc-500 hover:text-zinc-300"
-          >
-            Clear
-          </button>
-        ) : null}
-        <span className="shrink-0 font-sans text-[11px] text-zinc-600">
-          {visible.length}/{findings.length}
-        </span>
-      </div>
-
-      {tagStats.length > 0 ? (
-        <div className="mb-5 flex flex-wrap gap-1.5" aria-label="Finding tags">
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            className={cn(
-              "rounded-md border px-2.5 py-1 font-sans text-[11px] transition",
-              !activeTag
-                ? "border-violet-400/30 bg-violet-500/15 text-violet-100"
-                : "border-white/[.08] bg-white/[.02] text-zinc-500 hover:text-zinc-300",
-            )}
-          >
-            All
-          </button>
-          {tagStats.map(({ tag, count }) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => setQuery(activeTag === tag ? "" : `#${tag}`)}
-              className={cn(
-                "rounded-md border px-2.5 py-1 font-sans text-[11px] transition",
-                activeTag === tag
-                  ? "border-violet-400/30 bg-violet-500/15 text-violet-100"
-                  : "border-white/[.08] bg-white/[.02] text-zinc-500 hover:border-violet-400/20 hover:text-violet-200",
-              )}
-            >
-              #{tag}
-              <span className="ml-1.5 text-zinc-600">{count}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {!hydrated ? (
-        <p className="py-16 text-center font-sans text-sm text-zinc-600">Loading findings…</p>
-      ) : visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[.08] px-6 py-16 text-center">
-          <p className="font-sans text-sm text-zinc-400">
-            {findings.length === 0
-              ? "Nothing here yet. Drop a note above, or restore the Linktree sample."
-              : "No findings match that search."}
-          </p>
-          {findings.length === 0 ? (
-            <button
-              type="button"
-              onClick={restoreLinktreeSample}
-              className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/15 px-4 font-sans text-xs text-violet-100"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Load Linktree sample
-            </button>
-          ) : null}
-        </div>
+      {view === "map" ? (
+        <>
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/[.08] bg-white/[.02] px-3 py-2.5">
+            <Search className="h-4 w-4 shrink-0 text-zinc-500" />
+            <label htmlFor="finding-map-search" className="sr-only">
+              Filter map findings
+            </label>
+            <input
+              id="finding-map-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter map by host, URL, #tag…"
+              className="w-full bg-transparent font-sans text-sm text-zinc-200 outline-none placeholder:text-zinc-600"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="shrink-0 font-sans text-[11px] text-zinc-500 hover:text-zinc-300"
+              >
+                Clear
+              </button>
+            ) : null}
+            <span className="shrink-0 font-sans text-[11px] text-zinc-600">
+              {visible.length}/{findings.length}
+            </span>
+          </div>
+          {hydrated ? (
+            <FindingsMap
+              findings={query.trim() ? visible : findings}
+              onSelectFinding={() => setView("notes")}
+            />
+          ) : (
+            <p className="py-16 text-center font-sans text-sm text-zinc-600">Loading map…</p>
+          )}
+        </>
       ) : (
-        <ul className="space-y-3" aria-label="Findings list">
-          {visible.map((finding) => {
-            const editing = editingId === finding.id;
-            const urls = extractUrls(finding.body);
-            const isSeed = finding.id.startsWith("seed_lt_");
-            return (
-              <li
-                key={finding.id}
+        <>
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/[.08] bg-white/[.02] px-3 py-2.5">
+            <Search className="h-4 w-4 shrink-0 text-zinc-500" />
+            <label htmlFor="finding-search" className="sr-only">
+              Search findings
+            </label>
+            <input
+              id="finding-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search hosts, URLs, #tags…"
+              className="w-full bg-transparent font-sans text-sm text-zinc-200 outline-none placeholder:text-zinc-600"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="shrink-0 font-sans text-[11px] text-zinc-500 hover:text-zinc-300"
+              >
+                Clear
+              </button>
+            ) : null}
+            <span className="shrink-0 font-sans text-[11px] text-zinc-600">
+              {visible.length}/{findings.length}
+            </span>
+          </div>
+
+          {tagStats.length > 0 ? (
+            <div className="mb-5 flex flex-wrap gap-1.5" aria-label="Finding tags">
+              <button
+                type="button"
+                onClick={() => setQuery("")}
                 className={cn(
-                  "rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
-                  editing && "border-violet-400/30 bg-violet-500/[.05]",
-                  isSeed && !editing && "border-violet-400/10 bg-gradient-to-br from-violet-500/[.06] to-transparent",
+                  "rounded-md border px-2.5 py-1 font-sans text-[11px] transition",
+                  !activeTag
+                    ? "border-violet-400/30 bg-violet-500/15 text-violet-100"
+                    : "border-white/[.08] bg-white/[.02] text-zinc-500 hover:text-zinc-300",
                 )}
               >
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <time className="font-sans text-[11px] text-zinc-600" dateTime={finding.createdAt}>
-                      {formatWhen(finding.createdAt)}
-                    </time>
-                    {isSeed ? (
-                      <span className="rounded-md border border-violet-400/20 bg-violet-500/10 px-1.5 py-0.5 font-sans text-[9px] uppercase tracking-[.12em] text-violet-300/80">
-                        Linktree
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      aria-label="Copy finding"
-                      onClick={() => void copyFinding(finding)}
-                      className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-zinc-200"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Edit finding"
-                      onClick={() => (editing ? saveEdit() : startEdit(finding))}
-                      className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-zinc-200"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Delete finding"
-                      onClick={() => removeFinding(finding.id)}
-                      className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-rose-300"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
+                All
+              </button>
+              {tagStats.map(({ tag, count }) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setQuery(activeTag === tag ? "" : `#${tag}`)}
+                  className={cn(
+                    "rounded-md border px-2.5 py-1 font-sans text-[11px] transition",
+                    activeTag === tag
+                      ? "border-violet-400/30 bg-violet-500/15 text-violet-100"
+                      : "border-white/[.08] bg-white/[.02] text-zinc-500 hover:border-violet-400/20 hover:text-violet-200",
+                  )}
+                >
+                  #{tag}
+                  <span className="ml-1.5 text-zinc-600">{count}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
 
-                {copiedId === finding.id ? (
-                  <p className="mb-2 font-sans text-[10px] text-emerald-300/80">Copied</p>
-                ) : null}
-
-                {editing ? (
-                  <div className="space-y-3">
-                    <textarea
-                      aria-label="Edit finding body"
-                      value={editBody}
-                      onChange={(event) => setEditBody(event.target.value)}
-                      rows={4}
-                      className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditBody("");
-                        }}
-                        className="h-8 rounded-lg px-3 font-sans text-xs text-zinc-500 hover:text-zinc-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={saveEdit}
-                        className="h-8 rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 font-sans text-xs text-violet-100"
-                      >
-                        Update
-                      </button>
+          {!hydrated ? (
+            <p className="py-16 text-center font-sans text-sm text-zinc-600">Loading findings…</p>
+          ) : visible.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/[.08] px-6 py-16 text-center">
+              <p className="font-sans text-sm text-zinc-400">
+                {findings.length === 0
+                  ? "Nothing here yet. Drop a note above, or restore the Linktree sample."
+                  : "No findings match that search."}
+              </p>
+              {findings.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={restoreLinktreeSample}
+                  className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/30 bg-violet-500/15 px-4 font-sans text-xs text-violet-100"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Load Linktree sample
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <ul className="space-y-3" aria-label="Findings list">
+              {visible.map((finding) => {
+                const editing = editingId === finding.id;
+                const urls = extractUrls(finding.body);
+                const isSeed = finding.id.startsWith("seed_lt_");
+                return (
+                  <li
+                    key={finding.id}
+                    className={cn(
+                      "rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
+                      editing && "border-violet-400/30 bg-violet-500/[.05]",
+                      isSeed && !editing && "border-violet-400/10 bg-gradient-to-br from-violet-500/[.06] to-transparent",
+                    )}
+                  >
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <time className="font-sans text-[11px] text-zinc-600" dateTime={finding.createdAt}>
+                          {formatWhen(finding.createdAt)}
+                        </time>
+                        {isSeed ? (
+                          <span className="rounded-md border border-violet-400/20 bg-violet-500/10 px-1.5 py-0.5 font-sans text-[9px] uppercase tracking-[.12em] text-violet-300/80">
+                            Linktree
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          aria-label="Copy finding"
+                          onClick={() => void copyFinding(finding)}
+                          className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-zinc-200"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Edit finding"
+                          onClick={() => (editing ? saveEdit() : startEdit(finding))}
+                          className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-zinc-200"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Delete finding"
+                          onClick={() => removeFinding(finding.id)}
+                          className="grid h-8 w-8 place-items-center rounded-md text-zinc-500 transition hover:bg-white/[.04] hover:text-rose-300"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <FindingBody body={finding.body} />
-                )}
 
-                {finding.tags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {finding.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => setQuery(`#${tag}`)}
-                        className="rounded-md border border-violet-400/15 bg-violet-500/10 px-2 py-0.5 font-sans text-[11px] text-violet-200/90 transition hover:border-violet-300/30"
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
+                    {copiedId === finding.id ? (
+                      <p className="mb-2 font-sans text-[10px] text-emerald-300/80">Copied</p>
+                    ) : null}
 
-                {urls.length > 1 ? (
-                  <p className="mt-2 font-sans text-[10px] text-zinc-600">{urls.length} links in this note</p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+                    {editing ? (
+                      <div className="space-y-3">
+                        <textarea
+                          aria-label="Edit finding body"
+                          value={editBody}
+                          onChange={(event) => setEditBody(event.target.value)}
+                          rows={4}
+                          className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditBody("");
+                            }}
+                            className="h-8 rounded-lg px-3 font-sans text-xs text-zinc-500 hover:text-zinc-300"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={saveEdit}
+                            className="h-8 rounded-lg border border-violet-400/30 bg-violet-500/15 px-3 font-sans text-xs text-violet-100"
+                          >
+                            Update
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <FindingBody body={finding.body} />
+                    )}
+
+                    {finding.tags.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {finding.tags.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setQuery(`#${tag}`)}
+                            className="rounded-md border border-violet-400/15 bg-violet-500/10 px-2 py-0.5 font-sans text-[11px] text-violet-200/90 transition hover:border-violet-300/30"
+                          >
+                            #{tag}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {urls.length > 1 ? (
+                      <p className="mt-2 font-sans text-[10px] text-zinc-600">{urls.length} links in this note</p>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
