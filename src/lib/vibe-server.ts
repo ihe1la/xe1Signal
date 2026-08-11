@@ -143,6 +143,14 @@ export async function getVibeSnapshot(roomId?: string): Promise<VibeSnapshot> {
     }),
   ]);
   const serialized = queue.map(serializeQueueItem);
+  const playlistCovers = new Map(playlists.map((playlist) => [playlist.id, playlist.cover]));
+  const current = serialized.find((item) => item.id === room.currentItemId) || null;
+  const nowPlaying = current
+    ? {
+        ...current,
+        cover: (current.playlistId && playlistCovers.get(current.playlistId)) || current.cover,
+      }
+    : null;
   return {
     room: {
       id: room.id,
@@ -151,7 +159,7 @@ export async function getVibeSnapshot(roomId?: string): Promise<VibeSnapshot> {
       isPlaying: room.isPlaying,
       revision: room.revision,
     },
-    nowPlaying: serialized.find((item) => item.id === room.currentItemId) || null,
+    nowPlaying,
     playlists: playlists.map((playlist) => ({
       id: playlist.id,
       name: playlist.name,

@@ -178,14 +178,11 @@ export function VibeRoom() {
   const nowPlaying = snapshot?.nowPlaying;
   const currentId = snapshot?.room.currentItemId || undefined;
   const groups = React.useMemo(() => groupQueue(snapshot?.playlists || [], snapshot?.queue || []), [snapshot?.playlists, snapshot?.queue]);
-  const nowPlayingCover = React.useMemo(() => {
-    if (!nowPlaying) return null;
-    if (nowPlaying.playlistId) {
-      const playlistCover = snapshot?.playlists.find((playlist) => playlist.id === nowPlaying.playlistId)?.cover;
-      if (playlistCover) return playlistCover;
-    }
-    return nowPlaying.cover;
-  }, [nowPlaying, snapshot?.playlists]);
+  const nowPlayingCover =
+    (nowPlaying && groups.find((group) => group.items.some((item) => item.id === nowPlaying.id))?.playlist?.cover) ||
+    (nowPlaying?.playlistId && snapshot?.playlists.find((playlist) => playlist.id === nowPlaying.playlistId)?.cover) ||
+    nowPlaying?.cover ||
+    null;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -285,8 +282,8 @@ export function VibeRoom() {
             {nowPlaying ? (
               <>
                 <div className="flex gap-4">
-                  {nowPlaying.cover ? (
-                    <img src={nowPlaying.cover} alt="" className="h-20 w-20 rounded-xl border border-white/10 object-cover" />
+                  {nowPlayingCover ? (
+                    <img src={nowPlayingCover} alt="" className="h-20 w-20 rounded-xl border border-white/10 object-cover" />
                   ) : (
                     <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[.04]">
                       <Headphones className="h-6 w-6 text-zinc-600" />
