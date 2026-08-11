@@ -610,13 +610,33 @@ model VibeRoom {
   updatedAt     DateTime         @updatedAt
 
   queue         VibeQueueItem[]
+  playlists     VibePlaylist[]
 
   @@index([slug])
+}
+
+model VibePlaylist {
+  id        String   @id @default(cuid())
+  roomId    String
+  name      String
+  kind      String   @default("playlist")
+  sourceUrl String
+  cover     String?
+  owner     String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room  VibeRoom        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  items VibeQueueItem[]
+
+  @@index([roomId, position])
 }
 
 model VibeQueueItem {
   id              String    @id @default(cuid())
   roomId          String
+  playlistId      String?
   addedById       String
   position        Int
   unstreamJobId   String?
@@ -630,10 +650,12 @@ model VibeQueueItem {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  room    VibeRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  addedBy User      @relation(fields: [addedById], references: [id], onDelete: Cascade)
+  room     VibeRoom      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  playlist VibePlaylist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
+  addedBy  User          @relation(fields: [addedById], references: [id], onDelete: Cascade)
 
   @@index([roomId, position])
   @@index([roomId, status])
+  @@index([playlistId])
   @@index([unstreamJobId])
 }

@@ -13,6 +13,7 @@ export type AudioTrack = {
   src: string;
   href?: string;
   onToggle?: () => void;
+  onClose?: () => void;
 };
 
 type AudioPlayerValue = {
@@ -56,6 +57,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const player = audio.current;
     if (!player) return;
     if (current?.src === track.src) {
+      setCurrent(track);
       if (autoplay) {
         if (player.paused) { await player.play(); setPlaying(true); }
         else setPlaying(true);
@@ -86,10 +88,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }
 
   function close() {
+    const closing = current;
     const player = audio.current;
     if (player) { player.pause(); player.removeAttribute("src"); player.load(); }
     onEndedRef.current = undefined;
     setCurrent(null); setPlaying(false); setProgress(0); setDuration(0);
+    closing?.onClose?.();
   }
 
   async function shareNowPlaying(){if(!current)return;const recipient=session?.user?.username==="hela"?"test":"hela";const href=current.href||`${window.location.origin}${current.signalId?`/signals/${current.signalId}`:"/vibe"}`;const response=await fetch("/api/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({username:recipient,content:`🎧 Now playing: ${current.title}${current.artist?` — ${current.artist}`:""}\n${href}`})});if(response.ok){setSharing(false);setShared(true);window.setTimeout(()=>setShared(false),1800)}}

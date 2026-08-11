@@ -21,6 +21,7 @@ type VibeListener = () => void;
 
 export type VibeQueuePayload = {
   id: string;
+  playlistId: string | null;
   position: number;
   unstreamJobId: string | null;
   unstreamTrackId: string | null;
@@ -39,6 +40,19 @@ export type VibeQueuePayload = {
   fileUrl: string | null;
 };
 
+export type VibePlaylistPayload = {
+  id: string;
+  name: string;
+  kind: string;
+  sourceUrl: string;
+  cover: string | null;
+  owner: string | null;
+  position: number;
+  trackCount: number;
+  readyCount: number;
+  createdAt: string;
+};
+
 export type VibeSnapshot = {
   room: {
     id: string;
@@ -48,6 +62,7 @@ export type VibeSnapshot = {
     revision: number;
   };
   nowPlaying: VibeQueuePayload | null;
+  playlists: VibePlaylistPayload[];
   queue: VibeQueuePayload[];
 };
 
@@ -73,6 +88,7 @@ export async function ensureMainVibeRoom() {
 
 function serializeQueueItem(item: {
   id: string;
+  playlistId: string | null;
   position: number;
   unstreamJobId: string | null;
   unstreamTrackId: string | null;
@@ -89,6 +105,7 @@ function serializeQueueItem(item: {
   const playable = isVibePlayableStatus(item.status) && Boolean(item.unstreamJobId && item.unstreamTrackId);
   return {
     id: item.id,
+    playlistId: item.playlistId,
     position: item.position,
     unstreamJobId: item.unstreamJobId,
     unstreamTrackId: item.unstreamTrackId,
@@ -113,11 +130,18 @@ export async function getVibeSnapshot(roomId?: string): Promise<VibeSnapshot> {
     ? await db.vibeRoom.findUnique({ where: { id: roomId } })
     : await ensureMainVibeRoom();
   if (!room) throw new Error("Vibe room not found");
-  const queue = await db.vibeQueueItem.findMany({
-    where: { roomId: room.id },
-    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-    include: { addedBy: { select: { username: true, name: true, displayName: true } } },
-  });
+  const [queue, playlists] = await Promise.all([
+    db.vibeQueueItem.findMany({
+      where: { roomId: room.id },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: { addedBy: { select: { username: true, name: true, displayName: true } } },
+    }),
+    db.vibePlaylist.findMany({
+      where: { roomId: room.id },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: { _count: { select: { items: true } }, items: { select: { status: true } } },
+    }),
+  ]);
   const serialized = queue.map(serializeQueueItem);
   return {
     room: {
@@ -128,6 +152,18 @@ export async function getVibeSnapshot(roomId?: string): Promise<VibeSnapshot> {
       revision: room.revision,
     },
     nowPlaying: serialized.find((item) => item.id === room.currentItemId) || null,
+    playlists: playlists.map((playlist) => ({
+      id: playlist.id,
+      name: playlist.name,
+      kind: playlist.kind,
+      sourceUrl: playlist.sourceUrl,
+      cover: playlist.cover,
+      owner: playlist.owner,
+      position: playlist.position,
+      trackCount: playlist._count.items,
+      readyCount: playlist.items.filter((item) => isVibePlayableStatus(item.status)).length,
+      createdAt: playlist.createdAt.toISOString(),
+    })),
     queue: serialized,
   };
 }
@@ -135,6 +171,14 @@ export async function getVibeSnapshot(roomId?: string): Promise<VibeSnapshot> {
 function vibeErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
   return "Vibe audio could not be prepared";
+}
+
+function aestheticPlaylistName(kind: string, name: string, owner: string) {
+  const cleaned = name.trim() || (kind === "album" ? "Untitled album" : "Untitled playlist");
+  if (owner.trim() && !cleaned.toLowerCase().includes(owner.trim().toLowerCase())) {
+    return `${cleaned}`;
+  }
+  return cleaned;
 }
 
 async function reconcileVibeRoom(tx: Prisma.TransactionClient, roomId: string, forceRevision = false) {
@@ -200,18 +244,44 @@ export async function enqueueVibeUrl({
   const trackIds = collection.tracks.map((track) => track.id);
   if (!trackIds.length) throw new Error("Unstream returned no playable tracks");
 
-  const lastItem = await db.vibeQueueItem.findFirst({
-    where: { roomId },
-    orderBy: [{ position: "desc" }, { createdAt: "desc" }],
-    select: { position: true },
-  });
+  const [lastItem, lastPlaylist] = await Promise.all([
+    db.vibeQueueItem.findFirst({
+      where: { roomId },
+      orderBy: [{ position: "desc" }, { createdAt: "desc" }],
+      select: { position: true },
+    }),
+    db.vibePlaylist.findFirst({
+      where: { roomId },
+      orderBy: [{ position: "desc" }, { createdAt: "desc" }],
+      select: { position: true },
+    }),
+  ]);
   const startPosition = (lastItem?.position ?? -1) + 1;
+  const playlistPosition = (lastPlaylist?.position ?? -1) + 1;
+  const isCollection = collection.kind === "playlist" || collection.kind === "album" || collection.tracks.length > 1;
+  const playlistName = aestheticPlaylistName(collection.kind, collection.name, collection.owner);
+
   const createdItems = await db.$transaction(async (tx) => {
+    const playlist = isCollection
+      ? await tx.vibePlaylist.create({
+          data: {
+            roomId,
+            name: playlistName,
+            kind: collection.kind === "album" ? "album" : "playlist",
+            sourceUrl,
+            cover: collection.cover_url,
+            owner: collection.owner || null,
+            position: playlistPosition,
+          },
+        })
+      : null;
+
     const items = [];
     for (const [index, track] of collection.tracks.entries()) {
       items.push(await tx.vibeQueueItem.create({
         data: {
           roomId,
+          playlistId: playlist?.id ?? null,
           addedById: userId,
           position: startPosition + index,
           unstreamTrackId: track.id,
@@ -346,6 +416,7 @@ export async function applyVibeControl(action: "play" | "pause" | "skip" | "clea
     if (expectedItemId && currentRoom.currentItemId !== expectedItemId) return;
     if (action === "clear") {
       await tx.vibeQueueItem.deleteMany({ where: { roomId: room.id } });
+      await tx.vibePlaylist.deleteMany({ where: { roomId: room.id } });
       await tx.vibeRoom.update({ where: { id: room.id }, data: { currentItemId: null, isPlaying: false, revision: { increment: 1 } } });
       return;
     }
@@ -376,7 +447,26 @@ export async function deleteVibeQueueItem(itemId: string) {
   const deleted = await db.$transaction(async (tx) => {
     const item = await tx.vibeQueueItem.findFirst({ where: { id: itemId, roomId: room.id } });
     if (!item) return false;
+    const playlistId = item.playlistId;
     await tx.vibeQueueItem.delete({ where: { id: item.id } });
+    if (playlistId) {
+      const remaining = await tx.vibeQueueItem.count({ where: { playlistId } });
+      if (!remaining) await tx.vibePlaylist.delete({ where: { id: playlistId } }).catch(() => undefined);
+    }
+    await reconcileVibeRoom(tx, room.id, true);
+    return true;
+  });
+  if (deleted) publishVibeUpdate();
+  return deleted ? getVibeSnapshot(room.id) : null;
+}
+
+export async function deleteVibePlaylist(playlistId: string) {
+  const room = await ensureMainVibeRoom();
+  const deleted = await db.$transaction(async (tx) => {
+    const playlist = await tx.vibePlaylist.findFirst({ where: { id: playlistId, roomId: room.id } });
+    if (!playlist) return false;
+    await tx.vibeQueueItem.deleteMany({ where: { playlistId: playlist.id } });
+    await tx.vibePlaylist.delete({ where: { id: playlist.id } });
     await reconcileVibeRoom(tx, room.id, true);
     return true;
   });
