@@ -94,16 +94,10 @@ export function FindingsWorkspace() {
   }
 
   return (
-    <div className="mx-auto max-w-[820px]">
-      <header className="mb-8">
-        <p aria-label="Findings section" className="mb-2 font-sans text-[11px] font-medium tracking-[0.14em] text-violet-300/80 uppercase">
-          Findings
-        </p>
-        <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
-        <p className="mt-2 max-w-xl font-sans text-sm leading-6 text-zinc-500">
-          Dump messy recon notes fast. Search them later. Saved in this browser on he1l.me.
-        </p>
-      </header>
+    <div aria-label="Findings section" className="mx-auto max-w-[820px]">
+      <p className="mb-4 font-sans text-sm text-zinc-500">
+        Dump messy recon notes fast. Search them later. Saved in this browser.
+      </p>
 
       <section className="sticky top-4 z-20 mb-6 rounded-2xl border border-violet-400/20 bg-[#0d0e14]/92 p-3 shadow-[0_18px_50px_rgba(0,0,0,.45)] backdrop-blur-md sm:p-4">
         <label htmlFor="finding-capture" className="sr-only">
