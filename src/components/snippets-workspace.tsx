@@ -13,8 +13,10 @@ import {
   formatDiff,
   formatJson,
   formatJwt,
+  formatJsEndpoints,
   generateLorem,
   hashAll,
+  jsEndpointBookmarklet,
   parseUrl,
 } from "@/lib/tools";
 import { cn } from "@/lib/utils";
@@ -33,7 +35,9 @@ type SnippetId =
   | "timestamp"
   | "uuid"
   | "diff"
-  | "lorem";
+  | "lorem"
+  | "js-endpoints"
+  | "js-endpoint-bookmarklet";
 
 type Snippet = {
   id: SnippetId;
@@ -41,6 +45,10 @@ type Snippet = {
   hint: string;
   dual?: boolean;
   needsInput?: boolean;
+  primaryLabel?: string;
+  secondaryLabel?: string;
+  primaryPlaceholder?: string;
+  secondaryPlaceholder?: string;
 };
 
 const SNIPPETS: Snippet[] = [
@@ -57,6 +65,23 @@ const SNIPPETS: Snippet[] = [
   { id: "timestamp", name: "Timestamp", hint: "Unix ↔ date", needsInput: true },
   { id: "uuid", name: "UUID", hint: "Generate 5 UUIDs", needsInput: false },
   { id: "diff", name: "Text Diff", hint: "Before / after lines", dual: true, needsInput: true },
+  {
+    id: "js-endpoints",
+    name: "JS Endpoints",
+    hint: "LinkFinder from HTML/JS paste",
+    dual: true,
+    needsInput: true,
+    primaryLabel: "HTML / JS",
+    secondaryLabel: "Base URL (optional)",
+    primaryPlaceholder: "Paste page HTML or JS…",
+    secondaryPlaceholder: "https://target.example",
+  },
+  {
+    id: "js-endpoint-bookmarklet",
+    name: "Endpoint Bookmarklet",
+    hint: "Fixed jhaddix LinkFinder — drag to bookmarks",
+    needsInput: false,
+  },
   { id: "lorem", name: "Lorem", hint: "Placeholder paragraphs", needsInput: false },
 ];
 
@@ -92,6 +117,10 @@ async function runSnippet(id: SnippetId, input: string, secondary: string) {
       return generateUuids();
     case "diff":
       return formatDiff(input, secondary);
+    case "js-endpoints":
+      return formatJsEndpoints(input, secondary);
+    case "js-endpoint-bookmarklet":
+      return jsEndpointBookmarklet();
     case "lorem":
       return generateLorem(3, 3);
     default:
@@ -239,27 +268,27 @@ export function SnippetsWorkspace() {
             <div className="mb-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <label htmlFor="snippet-input" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-                  Before
+                  {active.primaryLabel ?? "Before"}
                 </label>
                 <textarea
                   id="snippet-input"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   rows={8}
-                  placeholder="Before…"
+                  placeholder={active.primaryPlaceholder ?? "Before…"}
                   className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-200 outline-none focus:border-violet-400/30"
                 />
               </div>
               <div>
                 <label htmlFor="snippet-secondary" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-                  After
+                  {active.secondaryLabel ?? "After"}
                 </label>
                 <textarea
                   id="snippet-secondary"
                   value={secondary}
                   onChange={(event) => setSecondary(event.target.value)}
                   rows={8}
-                  placeholder="After…"
+                  placeholder={active.secondaryPlaceholder ?? "After…"}
                   className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-200 outline-none focus:border-violet-400/30"
                 />
               </div>

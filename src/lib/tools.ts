@@ -282,3 +282,120 @@ export async function hashAll(value: string) {
   ]);
   return `MD5\n${md5Hash}\n\nSHA-1\n${sha1}\n\nSHA-256\n${sha256}\n\nSHA-512\n${sha512}`;
 }
+
+/** Quoted relative paths like "/api/v1/users?id=1" (jhaddix-style LinkFinder). */
+const ENDPOINT_PATH_RE =
+  /(["'`])(\/(?:[A-Za-z0-9_?&=/\-#.%]|%(?:27|60))+)\1/g;
+
+/** Quoted absolute or root-relative .js URLs. */
+const JS_FILE_RE =
+  /(["'`])((?:https?:)?\/\/[^"'`\s]+\.js(?:\?[^"'`]*)?|\/[^"'`\s]+\.js(?:\?[^"'`]*)?)\1/gi;
+
+function rememberParams(endpoint: string, source: string, paramMap: Map<string, Set<string>>) {
+  const query = endpoint.split("?")[1];
+  if (!query) return;
+  for (const part of query.split("&")) {
+    const key = part.split("=")[0]?.trim();
+    if (!key) continue;
+    const sources = paramMap.get(key) ?? new Set<string>();
+    sources.add(source);
+    paramMap.set(key, sources);
+  }
+}
+
+function resolveAgainstBase(value: string, baseUrl: string) {
+  if (!baseUrl || value.startsWith("http://") || value.startsWith("https://") || value.startsWith("//")) {
+    return value;
+  }
+  try {
+    return new URL(value, baseUrl).href;
+  } catch {
+    return value;
+  }
+}
+
+export type JsEndpointScan = {
+  endpoints: string[];
+  jsFiles: string[];
+  parameters: Array<{ name: string; sources: string[] }>;
+};
+
+export function scanJsEndpoints(source: string, label = "paste"): JsEndpointScan {
+  const endpoints = new Set<string>();
+  const jsFiles = new Set<string>();
+  const paramMap = new Map<string, Set<string>>();
+
+  for (const match of source.matchAll(ENDPOINT_PATH_RE)) {
+    const endpoint = match[2];
+    if (!endpoint || endpoint.length < 2) continue;
+    endpoints.add(endpoint);
+    rememberParams(endpoint, label, paramMap);
+  }
+
+  for (const match of source.matchAll(JS_FILE_RE)) {
+    const file = match[2];
+    if (file) jsFiles.add(file);
+  }
+
+  // Common attribute / call sites without relying only on quote lookarounds
+  for (const match of source.matchAll(
+    /\b(?:src|href|action|data-url|data-src)\s*=\s*["']([^"']+)["']/gi,
+  )) {
+    const value = match[1]?.trim();
+    if (!value) continue;
+    if (/\.js(?:$|\?)/i.test(value)) jsFiles.add(value);
+    if (value.startsWith("/") && !value.startsWith("//")) {
+      endpoints.add(value.split("#")[0]);
+      rememberParams(value, label, paramMap);
+    }
+  }
+
+  return {
+    endpoints: Array.from(endpoints).sort(),
+    jsFiles: Array.from(jsFiles).sort(),
+    parameters: Array.from(paramMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, sources]) => ({ name, sources: Array.from(sources).sort() })),
+  };
+}
+
+export function formatJsEndpoints(source: string, baseUrl = "") {
+  const trimmed = source.trim();
+  if (!trimmed) throw new Error("Paste page HTML or JavaScript source.");
+
+  const origin = baseUrl.trim();
+  if (origin) {
+    try {
+      // Validate base URL early so bad input fails clearly
+      new URL(origin);
+    } catch {
+      throw new Error("Base URL must be absolute, e.g. https://target.example");
+    }
+  }
+
+  const scan = scanJsEndpoints(trimmed);
+  const lines: string[] = [
+    `Endpoints (${scan.endpoints.length})`,
+    ...scan.endpoints.map((endpoint) => {
+      const resolved = resolveAgainstBase(endpoint, origin);
+      return resolved === endpoint ? endpoint : `${endpoint}\n  → ${resolved}`;
+    }),
+    "",
+    `Parameters (${scan.parameters.length})`,
+    ...(scan.parameters.length
+      ? scan.parameters.map((parameter) => `${parameter.name}  ← ${parameter.sources.join(", ")}`)
+      : ["(none)"]),
+    "",
+    `JS files (${scan.jsFiles.length})`,
+    ...(scan.jsFiles.length
+      ? scan.jsFiles.map((file) => {
+          const resolved = resolveAgainstBase(file, origin);
+          return resolved === file ? file : `${file}\n  → ${resolved}`;
+        })
+      : ["(none)"]),
+  ];
+
+  return lines.join("\n");
+}
+
+export { jsEndpointBookmarklet } from "@/lib/js-endpoint-bookmarklet";

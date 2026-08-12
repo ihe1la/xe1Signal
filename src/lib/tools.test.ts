@@ -12,9 +12,12 @@ import {
   encodeUrl,
   formatDiff,
   formatJson,
+  formatJsEndpoints,
   generateLorem,
   hashText,
+  jsEndpointBookmarklet,
   parseUrl,
+  scanJsEndpoints,
 } from "@/lib/tools";
 
 describe("local tools", () => {
@@ -67,5 +70,29 @@ describe("local tools", () => {
   it("supports MD5 and Web Crypto SHA hashes", async () => {
     expect(await hashText("hello", "MD5")).toBe("5d41402abc4b2a76b9719d911017c592");
     expect(await hashText("hello", "SHA-256")).toBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+  });
+
+  it("extracts JS endpoints, params, and script URLs from paste", () => {
+    const source = `
+      <script src="/static/app.js"></script>
+      const path = "/api/v1/users?id=1&sort=asc";
+      fetch('/graphql');
+      href="/login"
+    `;
+    const scan = scanJsEndpoints(source);
+    expect(scan.endpoints).toEqual(expect.arrayContaining(["/api/v1/users?id=1&sort=asc", "/graphql", "/login", "/static/app.js"]));
+    expect(scan.parameters.map((parameter) => parameter.name).sort()).toEqual(["id", "sort"]);
+    expect(scan.jsFiles).toEqual(expect.arrayContaining(["/static/app.js"]));
+
+    const formatted = formatJsEndpoints(source, "https://target.example");
+    expect(formatted).toContain("→ https://target.example/graphql");
+    expect(formatted).toContain("id  ← paste");
+  });
+
+  it("exports a fixed endpoint bookmarklet", () => {
+    const bookmarklet = jsEndpointBookmarklet();
+    expect(bookmarklet.startsWith("javascript:")).toBe(true);
+    expect(bookmarklet).toContain("Promise.allSettled");
+    expect(bookmarklet).toContain("Endpoints");
   });
 });
