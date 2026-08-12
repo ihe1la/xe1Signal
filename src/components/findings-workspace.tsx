@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Copy, ExternalLink, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
+import { Copy, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
 import { FindingsMap } from "@/components/findings-map";
+import { MessyNoteBody } from "@/components/messy-note-body";
 import {
   FINDINGS_STORAGE_KEY,
   collectFindingTags,
@@ -28,36 +29,6 @@ function formatWhen(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-}
-
-function FindingBody({ body }: { body: string }) {
-  const parts = body.split(/(https?:\/\/[^\s<>"']+)/g);
-  return (
-    <p className="whitespace-pre-wrap font-sans text-[15px] leading-6 text-zinc-200">
-      {parts.map((part, index) => {
-        const isUrl = part.startsWith("http://") || part.startsWith("https://");
-        if (isUrl) {
-          const href = part.replace(/[),.;]+$/g, "");
-          const trailing = part.slice(href.length);
-          return (
-            <React.Fragment key={`${href}-${index}`}>
-              <a
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 break-all text-violet-300 underline decoration-violet-400/30 underline-offset-2 transition hover:text-violet-200"
-              >
-                {href}
-                <ExternalLink className="inline h-3 w-3 shrink-0 opacity-70" />
-              </a>
-              {trailing}
-            </React.Fragment>
-          );
-        }
-        return <React.Fragment key={`t-${index}`}>{part}</React.Fragment>;
-      })}
-    </p>
-  );
 }
 
 export function FindingsWorkspace() {
@@ -340,7 +311,7 @@ export function FindingsWorkspace() {
                   <li
                     key={finding.id}
                     className={cn(
-                      "rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
+                      "min-w-0 overflow-hidden rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
                       editing && "border-violet-400/30 bg-violet-500/[.05]",
                     )}
                   >
@@ -410,7 +381,7 @@ export function FindingsWorkspace() {
                         </div>
                       </div>
                     ) : (
-                      <FindingBody body={finding.body} />
+                      <MessyNoteBody body={finding.body} linkUrls />
                     )}
 
                     {finding.tags.length > 0 ? (

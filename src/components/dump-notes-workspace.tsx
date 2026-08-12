@@ -31,6 +31,7 @@ import {
   type DumpNote,
   type DumpNotesSettings,
 } from "@/lib/dump-notes";
+import { MessyNoteBody } from "@/components/messy-note-body";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso: string) {
@@ -249,7 +250,7 @@ export function DumpNotesWorkspace() {
         </section>
       ) : null}
 
-      <section className="sticky top-4 z-20 mb-5 rounded-2xl border border-violet-400/20 bg-[#0d0e14]/92 p-3 shadow-[0_18px_50px_rgba(0,0,0,.45)] backdrop-blur-md sm:p-4">
+      <section className="sticky top-4 z-20 mb-5 min-w-0 overflow-hidden rounded-2xl border border-violet-400/20 bg-[#0d0e14]/92 p-3 shadow-[0_18px_50px_rgba(0,0,0,.45)] backdrop-blur-md sm:p-4">
         <label htmlFor="dump-note-title" className="sr-only">
           Note title
         </label>
@@ -271,7 +272,7 @@ export function DumpNotesWorkspace() {
           onKeyDown={onCaptureKeyDown}
           rows={5}
           placeholder="Paste a page excerpt, dump what you saw, or write a thought… use #tags"
-          className="min-h-[120px] w-full resize-y bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600"
+          className="min-h-[120px] w-full resize-y break-words bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600 [overflow-wrap:anywhere]"
         />
         <label htmlFor="dump-note-source" className="sr-only">
           Source URL
@@ -332,7 +333,7 @@ export function DumpNotesWorkspace() {
               <li
                 key={note.id}
                 className={cn(
-                  "rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
+                  "min-w-0 overflow-hidden rounded-2xl border border-white/[.08] bg-white/[.02] p-4 transition",
                   editing && "border-violet-400/30 bg-violet-500/[.05]",
                 )}
               >
@@ -342,7 +343,9 @@ export function DumpNotesWorkspace() {
                       {formatWhen(note.updatedAt)}
                     </time>
                     {!editing ? (
-                      <h3 className="mt-1 font-sans text-[15px] font-medium text-zinc-100">{note.title}</h3>
+                      <h3 className="mt-1 break-words font-sans text-[15px] font-medium text-zinc-100 [overflow-wrap:anywhere]">
+                        {note.title}
+                      </h3>
                     ) : null}
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
@@ -435,9 +438,7 @@ export function DumpNotesWorkspace() {
                   </div>
                 ) : (
                   <>
-                    <p className="whitespace-pre-wrap font-sans text-[15px] leading-6 text-zinc-200">
-                      {note.body}
-                    </p>
+                    <MessyNoteBody body={note.body} linkUrls />
                     {note.sourceUrl ? (
                       <a
                         href={note.sourceUrl}
@@ -449,7 +450,7 @@ export function DumpNotesWorkspace() {
                         <ExternalLink className="h-3 w-3 shrink-0 opacity-70" />
                       </a>
                     ) : null}
-                    <p className="mt-3 font-mono text-[11px] text-zinc-600">
+                    <p className="mt-3 break-all font-mono text-[11px] text-zinc-600 [overflow-wrap:anywhere]">
                       {noteWikiLink(note, settings.folder)}
                     </p>
                     {note.tags.length > 0 ? (

@@ -361,7 +361,7 @@ function SpineRow({ label, value, emphasis = false }: { label: string; value: st
   return (
     <div className={cn("border-t border-white/[.05] py-2.5 first:border-t-0 first:pt-0", emphasis && "pt-0")}>
       <p className="mb-1 font-sans text-[10px] uppercase tracking-[.14em] text-violet-300/70">{label}</p>
-      <p className={cn("whitespace-pre-wrap font-sans leading-6 text-zinc-300", emphasis ? "text-[15px] text-zinc-100" : "text-sm")}>
+      <p className={cn("min-w-0 whitespace-pre-wrap break-words font-sans leading-6 text-zinc-300 [overflow-wrap:anywhere]", emphasis ? "text-[15px] text-zinc-100" : "text-sm")}>
         {value}
       </p>
     </div>
