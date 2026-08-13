@@ -186,9 +186,7 @@ export function VibeRoom() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <header className="relative mb-8 overflow-hidden rounded-2xl border border-white/[.07] bg-[radial-gradient(circle_at_78%_18%,rgba(139,92,246,.23),transparent_28%),radial-gradient(circle_at_18%_100%,rgba(37,99,235,.14),transparent_30%),#0b0c12] px-5 pb-7 pt-6 sm:px-7">
-        <div className="pointer-events-none absolute -right-8 -top-16 h-48 w-48 rounded-full border border-violet-300/10 bg-violet-400/[.04] blur-2xl" />
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-8 flex flex-col gap-4 border-b border-white/[.06] pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-3 font-mono text-[10px] uppercase tracking-[.18em] text-violet-400">Shared room · main</p>
           <h1 className="font-mono text-[30px] leading-tight tracking-tight text-zinc-100 sm:text-[36px]">Vibe, together.</h1>
@@ -198,7 +196,6 @@ export function VibeRoom() {
         </div>
         <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[.14em] text-zinc-600">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> shared state
-        </div>
         </div>
       </header>
 
@@ -258,7 +255,7 @@ export function VibeRoom() {
                   <PlaylistShelf
                     key={group.id}
                     group={group}
-                    open={false}
+                    open={openShelfId === group.id}
                     currentId={currentId}
                     onToggle={() => toggleShelf(group.id)}
                     onSelect={(itemId) => void sendControl("select", itemId).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))}
@@ -330,19 +327,6 @@ export function VibeRoom() {
           </section>
         </div>
       )}
-      {openShelfId && snapshot && (() => {
-        const group = groups.find((candidate) => candidate.id === openShelfId);
-        if (!group) return null;
-        return (
-          <PlaylistWindow
-            group={group}
-            currentId={currentId}
-            onClose={() => toggleShelf(group.id)}
-            onSelect={(itemId) => void sendControl("select", itemId).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))}
-            onRemoveItem={(itemId) => void removeItem(itemId)}
-          />
-        );
-      })()}
       <p className="mt-6 text-center font-mono text-[9px] leading-5 text-zinc-700">
         Playback is served from Unstream-finished audio through the shared room relay. Browser autoplay rules may require one click per device.
       </p>
@@ -484,25 +468,6 @@ function PlaylistShelf({
         </ol>
       ) : null}
     </section>
-  );
-}
-
-function PlaylistWindow({ group, currentId, onClose, onSelect, onRemoveItem }: { group: QueueGroup; currentId?: string; onClose: () => void; onSelect: (itemId: string) => void; onRemoveItem: (itemId: string) => void }) {
-  const label = group.playlist?.name || "Singles";
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={`${label} playlist`} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="w-full max-w-2xl overflow-hidden rounded-2xl border border-violet-300/20 bg-[#0c0d14] shadow-[0_30px_100px_rgba(0,0,0,.6)]">
-        <div className="relative overflow-hidden border-b border-white/[.07] p-5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(139,92,246,.22),transparent_45%)]" />
-          <div className="relative flex items-center gap-4">
-            {group.playlist?.cover ? <img src={group.playlist.cover} alt="" className="h-16 w-16 rounded-xl object-cover shadow-xl" /> : <div className="grid h-16 w-16 place-items-center rounded-xl bg-violet-400/[.12]"><Disc3 className="h-7 w-7 text-violet-300" /></div>}
-            <div className="min-w-0 flex-1"><p className="font-mono text-[9px] uppercase tracking-[.18em] text-violet-300/75">{group.playlist?.kind === "album" ? "Album" : "Playlist"}</p><h2 className="mt-1 truncate text-xl text-zinc-100">{label}</h2><p className="mt-1 font-mono text-[10px] text-zinc-500">{group.items.length} tracks · {group.playlist?.owner || "your room"}</p></div>
-            <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-white/[.06] hover:text-zinc-100" aria-label="Close playlist"><X className="h-4 w-4" /></button>
-          </div>
-        </div>
-        <ol className="max-h-[55vh] divide-y divide-white/[.05] overflow-y-auto p-2">{group.items.map((item) => <QueueRow key={item.id} item={item} active={item.id === currentId} onSelect={() => onSelect(item.id)} onRemove={() => onRemoveItem(item.id)} />)}</ol>
-      </section>
-    </div>
   );
 }
 
