@@ -556,6 +556,7 @@ function CardActions({
   saved,
   saveCount,
   actionBusy,
+  spread,
   onReact,
   onSave,
   onShare,
