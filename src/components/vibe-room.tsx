@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Disc3, Headphones, ImagePlus, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
+import { ChevronRight, Disc3, Headphones, ImagePlus, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
 
 import { useAudioPlayer } from "@/components/audio-player-provider";
 import type { VibePlaylistPayload, VibeQueuePayload, VibeSnapshot } from "@/lib/vibe-server";
@@ -34,17 +34,22 @@ export function VibeRoom() {
     }
   }, []);
 
-  function toggleShelf(id: string) {
-    setOpenShelfId((current) => {
-      const next = current === id ? null : id;
-      try {
-        if (next) window.localStorage.setItem("vibe-open-shelf", next);
-        else window.localStorage.removeItem("vibe-open-shelf");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  const closeShelf = React.useCallback(() => {
+    setOpenShelfId(null);
+    try {
+      window.localStorage.removeItem("vibe-open-shelf");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  function openShelf(id: string) {
+    setOpenShelfId(id);
+    try {
+      window.localStorage.setItem("vibe-open-shelf", id);
+    } catch {
+      /* ignore */
+    }
   }
 
   const loadSnapshot = React.useCallback(async () => {
@@ -250,16 +255,13 @@ export function VibeRoom() {
             </div>
 
             {groups.length ? (
-              <div className="grid items-start gap-4 p-4 sm:grid-cols-2">
+              <div className="grid items-stretch gap-4 p-4 sm:grid-cols-2">
                 {groups.map((group) => (
                   <PlaylistShelf
                     key={group.id}
                     group={group}
-                    open={openShelfId === group.id}
                     currentId={currentId}
-                    onToggle={() => toggleShelf(group.id)}
-                    onSelect={(itemId) => void sendControl("select", itemId).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))}
-                    onRemoveItem={(itemId) => void removeItem(itemId)}
+                    onOpen={() => openShelf(group.id)}
                     onRemovePlaylist={group.playlist ? () => void removePlaylist(group.playlist!.id) : undefined}
                     onCoverChange={group.playlist ? (file) => updatePlaylistCover(group.playlist!.id, file).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not update this cover")) : undefined}
                   />
@@ -327,6 +329,15 @@ export function VibeRoom() {
           </section>
         </div>
       )}
+      {openShelfId ? (
+        <PlaylistShelfModal
+          group={groups.find((group) => group.id === openShelfId) || null}
+          currentId={currentId}
+          onClose={closeShelf}
+          onSelect={(itemId) => void sendControl("select", itemId).catch((cause) => setError(cause instanceof Error ? cause.message : "Could not play this track"))}
+          onRemoveItem={(itemId) => void removeItem(itemId)}
+        />
+      ) : null}
       <p className="mt-6 text-center font-mono text-[9px] leading-5 text-zinc-700">
         Playback is served from Unstream-finished audio through the shared room relay. Browser autoplay rules may require one click per device.
       </p>
@@ -356,20 +367,14 @@ function groupQueue(playlists: VibePlaylistPayload[], queue: VibeQueuePayload[])
 
 function PlaylistShelf({
   group,
-  open,
   currentId,
-  onToggle,
-  onSelect,
-  onRemoveItem,
+  onOpen,
   onRemovePlaylist,
   onCoverChange,
 }: {
   group: QueueGroup;
-  open: boolean;
   currentId?: string;
-  onToggle: () => void;
-  onSelect: (itemId: string) => void;
-  onRemoveItem: (itemId: string) => void;
+  onOpen: () => void;
   onRemovePlaylist?: () => void;
   onCoverChange?: (file: File) => void | Promise<void>;
 }) {
@@ -377,6 +382,7 @@ function PlaylistShelf({
   const label = playlist?.name || "Singles";
   const coverInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = React.useState(false);
+  const activeCount = group.items.filter((item) => item.id === currentId).length;
 
   async function handleCover(file: File | undefined) {
     if (!file || !onCoverChange) return;
@@ -392,7 +398,7 @@ function PlaylistShelf({
   return (
     <section
       aria-label={label}
-      className={`w-full self-start overflow-hidden rounded-xl border border-white/[.07] ${open ? "bg-gradient-to-b from-violet-500/[.06] to-transparent" : "bg-white/[.02]"}`}
+      className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/[.07] bg-white/[.02] transition hover:border-white/[.12]"
     >
       <div className="flex items-start gap-3 p-3.5">
         <div className="relative shrink-0">
@@ -426,14 +432,15 @@ function PlaylistShelf({
         </div>
         <button
           type="button"
-          onClick={onToggle}
+          onClick={onOpen}
           className="flex min-w-0 flex-1 items-start gap-3 text-left transition hover:opacity-90"
-          aria-expanded={open}
-          aria-controls={`shelf-${group.id}`}
+          aria-haspopup="dialog"
+          aria-label={`Open ${label} tracks`}
         >
           <div className="min-w-0 flex-1 pt-0.5">
             <p className="font-mono text-[8px] uppercase tracking-[.16em] text-violet-300/70">
               {playlist ? (playlist.kind === "album" ? "Album" : "Playlist") : "Singles"}
+              {activeCount ? " · playing" : ""}
             </p>
             <h3 className="mt-1 truncate font-sans text-sm font-medium tracking-tight text-zinc-100">{label}</h3>
             <p className="mt-1 truncate font-mono text-[9px] text-zinc-500">
@@ -441,7 +448,7 @@ function PlaylistShelf({
               {playlist ? `${playlist.readyCount}/${playlist.trackCount} ready` : `${group.items.length} track${group.items.length === 1 ? "" : "s"}`}
             </p>
           </div>
-          <ChevronDown className={`mt-1 h-4 w-4 shrink-0 text-zinc-600 transition ${open ? "rotate-0" : "-rotate-90"}`} />
+          <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-zinc-600" />
         </button>
         {onRemovePlaylist ? (
           <button
@@ -454,35 +461,123 @@ function PlaylistShelf({
           </button>
         ) : null}
       </div>
-      {open ? (
-        <ol id={`shelf-${group.id}`} className="max-h-80 divide-y divide-white/[.04] overflow-y-auto border-t border-white/[.05]">
-          {group.items.map((item) => (
-            <QueueRow
-              key={item.id}
-              item={item}
-              active={item.id === currentId}
-              onSelect={() => onSelect(item.id)}
-              onRemove={() => onRemoveItem(item.id)}
-            />
-          ))}
-        </ol>
-      ) : null}
     </section>
+  );
+}
+
+function PlaylistShelfModal({
+  group,
+  currentId,
+  onClose,
+  onSelect,
+  onRemoveItem,
+}: {
+  group: QueueGroup | null;
+  currentId?: string;
+  onClose: () => void;
+  onSelect: (itemId: string) => void;
+  onRemoveItem: (itemId: string) => void;
+}) {
+  React.useEffect(() => {
+    if (!group) {
+      onClose();
+      return;
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [group, onClose]);
+
+  if (!group) return null;
+  const playlist = group.playlist;
+  const label = playlist?.name || "Singles";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6" role="presentation">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"
+        aria-label="Close playlist"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`shelf-modal-${group.id}`}
+        className="relative z-10 flex max-h-[min(82vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/[.1] bg-[#101118] shadow-[0_30px_80px_rgba(0,0,0,.55)]"
+      >
+        <div className="flex items-start gap-3 border-b border-white/[.06] p-4">
+          {playlist?.cover ? (
+            <img src={playlist.cover} alt="" className="h-14 w-14 rounded-xl border border-white/10 object-cover" />
+          ) : (
+            <div className="grid h-14 w-14 place-items-center rounded-xl border border-violet-300/20 bg-violet-400/[.1]">
+              <Disc3 className="h-6 w-6 text-violet-300/80" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="font-mono text-[8px] uppercase tracking-[.16em] text-violet-300/70">
+              {playlist ? (playlist.kind === "album" ? "Album" : "Playlist") : "Singles"}
+            </p>
+            <h2 id={`shelf-modal-${group.id}`} className="mt-1 truncate font-sans text-base font-medium text-zinc-50">
+              {label}
+            </h2>
+            <p className="mt-1 font-mono text-[10px] text-zinc-500">
+              {playlist?.owner ? `${playlist.owner} · ` : ""}
+              {group.items.length} track{group.items.length === 1 ? "" : "s"}
+              {playlist ? ` · ${playlist.readyCount} ready` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-zinc-500 transition hover:bg-white/[.05] hover:text-zinc-200"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {group.items.length ? (
+          <ol className="min-h-0 flex-1 divide-y divide-white/[.04] overflow-y-auto">
+            {group.items.map((item) => (
+              <QueueRow
+                key={item.id}
+                item={item}
+                active={item.id === currentId}
+                onSelect={() => onSelect(item.id)}
+                onRemove={() => onRemoveItem(item.id)}
+              />
+            ))}
+          </ol>
+        ) : (
+          <div className="px-6 py-16 text-center">
+            <p className="font-mono text-xs text-zinc-500">No tracks in this shelf yet.</p>
+            <p className="mt-2 font-mono text-[10px] text-zinc-700">Downloads will land here when they finish.</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload; active: boolean; onSelect: () => void; onRemove: () => void }) {
   const playable = item.status === "ready" || item.status === "playing";
   return (
-    <li className={`flex items-center gap-2 px-3 py-2.5 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
-      <span className="w-4 shrink-0 text-center font-mono text-[8px] text-zinc-700">
+    <li className={`flex items-center gap-2 px-4 py-3 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
+      <span className="w-5 shrink-0 text-center font-mono text-[8px] text-zinc-700">
         {active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}
       </span>
       <button
         type="button"
         onClick={playable ? onSelect : undefined}
         disabled={!playable}
-        className={`min-w-0 flex-1 truncate text-left font-mono text-[10px] transition ${active ? "text-violet-100" : "text-zinc-300"} ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-70"}`}
+        className={`min-w-0 flex-1 truncate text-left font-mono text-[11px] transition ${active ? "text-violet-100" : "text-zinc-300"} ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-70"}`}
         aria-label={playable ? `Play ${item.title}` : `${item.title} is not ready yet`}
         title={item.title}
       >
