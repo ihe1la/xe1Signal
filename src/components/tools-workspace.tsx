@@ -1,14 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { ClaimChainWorkspace } from "@/components/claim-chain-workspace";
 import { DumpNotesWorkspace } from "@/components/dump-notes-workspace";
 import { FindingsWorkspace } from "@/components/findings-workspace";
-import { SnippetsWorkspace } from "@/components/snippets-workspace";
+import { RemoteAppFrame } from "@/components/remote-app-frame";
 import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type ToolsTab = "findings" | "dump-notes" | "claim-chain" | "snippets" | "terminal";
+type ToolsTab = "findings" | "dump-notes" | "pinqued" | "th3l30" | "terminal";
+
+const tabs = [
+  ["findings", "Findings"],
+  ["dump-notes", "Dump Notes"],
+  ["pinqued", "Pinqued"],
+  ["th3l30", "th3l30"],
+  ["terminal", "Terminal"],
+] as const;
 
 export function ToolsWorkspace() {
   const [tab, setTab] = React.useState<ToolsTab>("findings");
@@ -18,7 +25,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-sans text-sm text-zinc-500">
-          Local lab for findings, dump notes, claim spines, transforms, and a root VPS terminal.
+          Local findings and dump notes, plus Pinqued and th3l30 workspaces and a root VPS terminal.
         </p>
       </header>
 
@@ -27,15 +34,7 @@ export function ToolsWorkspace() {
         role="tablist"
         aria-label="Tools sections"
       >
-        {(
-          [
-            ["findings", "Findings"],
-            ["dump-notes", "Dump Notes"],
-            ["claim-chain", "Claim Chain"],
-            ["snippets", "Snippets"],
-            ["terminal", "Terminal"],
-          ] as const
-        ).map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -54,8 +53,22 @@ export function ToolsWorkspace() {
 
       {tab === "findings" ? <FindingsWorkspace /> : null}
       {tab === "dump-notes" ? <DumpNotesWorkspace /> : null}
-      {tab === "claim-chain" ? <ClaimChainWorkspace /> : null}
-      {tab === "snippets" ? <SnippetsWorkspace /> : null}
+      {tab === "pinqued" ? (
+        <RemoteAppFrame
+          title="Pinqued"
+          url="https://pinqued.top/"
+          remoteLabel="pinqued"
+          heightClassName="h-[calc(100dvh-18rem)] min-h-[480px] lg:h-[calc(100dvh-15rem)]"
+        />
+      ) : null}
+      {tab === "th3l30" ? (
+        <RemoteAppFrame
+          title="th3l30"
+          url="https://l30on.top/dashboard/"
+          remoteLabel="l30on"
+          heightClassName="h-[calc(100dvh-18rem)] min-h-[480px] lg:h-[calc(100dvh-15rem)]"
+        />
+      ) : null}
       {tab === "terminal" ? <TerminalWorkspace /> : null}
     </div>
   );
