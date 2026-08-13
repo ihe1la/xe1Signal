@@ -23,10 +23,12 @@ function looksLikeCodeBlob(value: string) {
   return false;
 }
 
+/** Keep markdown ``` fences intact so long JWTs inside them stay in one code box. */
 export function splitMessyNoteBody(body: string): BodyBlock[] {
-  const parts = body.split(/(\n+)/);
+  const lines = body.split(/(\n)/);
   const blocks: BodyBlock[] = [];
   let textBuffer = "";
+  let inFence = false;
 
   function flushText() {
     if (!textBuffer) return;
@@ -34,19 +36,28 @@ export function splitMessyNoteBody(body: string): BodyBlock[] {
     textBuffer = "";
   }
 
-  for (const part of parts) {
+  for (const part of lines) {
     if (!part) continue;
-    if (/^\n+$/.test(part)) {
+    if (part === "\n") {
       textBuffer += part;
       continue;
     }
-    if (looksLikeCodeBlob(part)) {
+
+    if (/^ {0,3}(`{3,}|~{3,})/.test(part)) {
+      inFence = !inFence;
+      textBuffer += part;
+      continue;
+    }
+
+    if (!inFence && looksLikeCodeBlob(part)) {
       flushText();
       blocks.push({ kind: "code", value: part.trim() });
       continue;
     }
+
     textBuffer += part;
   }
+
   flushText();
   return blocks.length > 0 ? blocks : [{ kind: "text", value: body }];
 }
