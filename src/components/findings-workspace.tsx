@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Copy, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
 import { FindingsMap } from "@/components/findings-map";
-import { MessyNoteBody } from "@/components/messy-note-body";
+import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import {
   FINDINGS_STORAGE_KEY,
   collectFindingTags,
@@ -125,7 +125,7 @@ export function FindingsWorkspace() {
     <div aria-label="Findings section" className={cn("mx-auto", view === "map" ? "max-w-[1100px]" : "max-w-[860px]")}>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <p className="max-w-xl font-sans text-sm text-zinc-500">
-          Fast recon notes with #tags — search, filter, or map notes onto targets.
+          Fast recon notes with markdown and #tags — search, filter, or map notes onto targets.
         </p>
         <div
           role="tablist"
@@ -169,19 +169,19 @@ export function FindingsWorkspace() {
         <label htmlFor="finding-capture" className="sr-only">
           Capture finding
         </label>
-        <textarea
+        <NoteMarkdownField
           id="finding-capture"
-          ref={captureRef}
+          textareaRef={captureRef}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={setDraft}
           onKeyDown={onCaptureKeyDown}
           rows={3}
-          placeholder="saw a new header on api.target.com #header #auth"
-          className="min-h-[88px] w-full resize-none bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600"
+          placeholder={"**header** on `api.target.com`\n- cookie looks HttpOnly\n#auth #header"}
+          textareaClassName="min-h-[88px] w-full resize-none bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600"
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/[.06] pt-3">
           <p className="font-sans text-[11px] text-zinc-600">
-            Enter to save · Shift+Enter for newline · use #tags
+            Markdown · Enter to save · Shift+Enter for newline · #tags
           </p>
           <button
             type="button"
@@ -353,12 +353,12 @@ export function FindingsWorkspace() {
 
                     {editing ? (
                       <div className="space-y-3">
-                        <textarea
-                          aria-label="Edit finding body"
+                        <NoteMarkdownField
+                          ariaLabel="Edit finding body"
                           value={editBody}
-                          onChange={(event) => setEditBody(event.target.value)}
+                          onChange={setEditBody}
                           rows={4}
-                          className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
+                          textareaClassName="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
                         />
                         <div className="flex justify-end gap-2">
                           <button

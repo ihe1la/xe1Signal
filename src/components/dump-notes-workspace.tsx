@@ -31,7 +31,7 @@ import {
   type DumpNote,
   type DumpNotesSettings,
 } from "@/lib/dump-notes";
-import { MessyNoteBody } from "@/components/messy-note-body";
+import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import { cn } from "@/lib/utils";
 
 function formatWhen(iso: string) {
@@ -178,7 +178,7 @@ export function DumpNotesWorkspace() {
     <div aria-label="Dump notes section" className="mx-auto max-w-[860px]">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <p className="max-w-xl font-sans text-sm text-zinc-500">
-          Dump what you saw, paste from the internet, or write freely. Link each note into your Obsidian vault.
+          Dump what you saw, paste markdown, or write freely. Link each note into your Obsidian vault.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -264,15 +264,15 @@ export function DumpNotesWorkspace() {
         <label htmlFor="dump-note-body" className="sr-only">
           Dump note body
         </label>
-        <textarea
+        <NoteMarkdownField
           id="dump-note-body"
-          ref={bodyRef}
+          textareaRef={bodyRef}
           value={draftBody}
-          onChange={(event) => setDraftBody(event.target.value)}
+          onChange={setDraftBody}
           onKeyDown={onCaptureKeyDown}
           rows={5}
-          placeholder="Paste a page excerpt, dump what you saw, or write a thought… use #tags"
-          className="min-h-[120px] w-full resize-y break-words bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600 [overflow-wrap:anywhere]"
+          placeholder={"## Dump\nPaste a page excerpt, write `code`, or a list:\n- what you saw\n#tags"}
+          textareaClassName="min-h-[120px] w-full resize-y break-words bg-transparent px-1 py-1 font-sans text-[15px] leading-6 text-zinc-100 outline-none placeholder:text-zinc-600 [overflow-wrap:anywhere]"
         />
         <label htmlFor="dump-note-source" className="sr-only">
           Source URL
@@ -285,7 +285,7 @@ export function DumpNotesWorkspace() {
           className="mt-2 w-full border-t border-white/[.06] bg-transparent px-1 pt-3 font-mono text-[12px] text-zinc-400 outline-none placeholder:text-zinc-600"
         />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/[.06] pt-3">
-          <p className="font-sans text-[11px] text-zinc-600">Ctrl/⌘+Enter to save</p>
+          <p className="font-sans text-[11px] text-zinc-600">Markdown · Ctrl/⌘+Enter to save</p>
           <button
             type="button"
             onClick={addNote}
@@ -405,12 +405,12 @@ export function DumpNotesWorkspace() {
                       onChange={(event) => setEditTitle(event.target.value)}
                       className="w-full rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2 font-sans text-sm text-zinc-100 outline-none focus:border-violet-400/30"
                     />
-                    <textarea
-                      aria-label="Edit note body"
+                    <NoteMarkdownField
+                      ariaLabel="Edit note body"
                       value={editBody}
-                      onChange={(event) => setEditBody(event.target.value)}
+                      onChange={setEditBody}
                       rows={6}
-                      className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
+                      textareaClassName="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-sans text-sm leading-6 text-zinc-100 outline-none focus:border-violet-400/30"
                     />
                     <input
                       aria-label="Edit source URL"
