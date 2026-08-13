@@ -79,10 +79,6 @@
 html { background: #08090d; }
 button, a { -webkit-tap-highlight-color: transparent; }
 .font-mono { font-variant-ligatures: none; }
-select option {
-  background: #141418;
-  color: #e4e4e7;
-}
 
 @layer components {
   .grain-overlay {
