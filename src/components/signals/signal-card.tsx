@@ -212,8 +212,8 @@ export function SignalCard({
   }
 
   return (
-    <article className="signal-archive-card group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border border-white/[.08] bg-[#14151c] transition duration-300 hover:-translate-y-0.5 hover:border-violet-400/20">
-      <header className="flex items-center justify-between px-5 pt-4">
+    <article className="signal-archive-card group relative flex w-full flex-col overflow-hidden rounded-[14px] border border-white/[.08] bg-[#14151c] transition duration-300 hover:-translate-y-0.5 hover:border-violet-400/20">
+      <header className="flex items-center justify-between px-4 pt-3">
         <span className="font-mono text-[10px] uppercase tracking-[.16em] text-violet-400">{typeLabel}</span>
         {showExternal && (
           <a
@@ -228,13 +228,13 @@ export function SignalCard({
         )}
       </header>
 
-      <div className={cn("flex flex-1 flex-col px-5 pt-3", variant === "featured" && "pt-4")}>
+      <div className={cn("flex flex-col px-4 pt-2", variant === "featured" && "pt-3")}>
         {(signal.type === "IMAGE" || signal.type === "SCREENSHOT") && (
           <Link
             href={`/signals/${signal.id}`}
             className={cn(
-              "block overflow-hidden rounded-xl bg-zinc-950",
-              variant === "featured" ? "max-h-[70vh]" : "h-[168px]",
+              "block overflow-hidden rounded-lg bg-zinc-950",
+              variant === "featured" ? "max-h-[70vh]" : "h-[120px]",
             )}
           >
             {image ? (
@@ -247,7 +247,7 @@ export function SignalCard({
                 )}
               />
             ) : (
-              <div className="h-full min-h-[168px] bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,.28),transparent_55%),#101014]" />
+              <div className="h-full min-h-[120px] bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,.28),transparent_55%),#101014]" />
             )}
           </Link>
         )}
@@ -255,7 +255,7 @@ export function SignalCard({
         {signal.type === "LINK" && <LinkBody signal={signal} />}
         {signal.type === "NOTE" && <NoteBody signal={signal} />}
         {signal.type === "CODE" && (
-          <div className="relative overflow-hidden rounded-xl bg-[#0c0d12] ring-1 ring-white/[.06]">
+          <div className="relative overflow-hidden rounded-lg bg-[#0c0d12] ring-1 ring-white/[.06]">
             <button
               onClick={() => void copyCode()}
               className="absolute right-2 top-2 z-10 rounded-md p-1.5 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
@@ -263,7 +263,7 @@ export function SignalCard({
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
-            <pre className="max-h-[168px] overflow-hidden px-4 pb-4 pt-4 font-mono text-[11px] leading-[1.65]">
+            <pre className="max-h-[108px] overflow-hidden px-3 pb-3 pt-3 font-mono text-[10px] leading-[1.55]">
               <CodeHighlight code={signal.content || ""} />
             </pre>
           </div>
@@ -291,7 +291,7 @@ export function SignalCard({
           "SONG",
           "AUDIO",
         ].includes(signal.type) && (
-          <Link href={`/signals/${signal.id}`} className="py-6 font-mono text-sm text-zinc-100">
+          <Link href={`/signals/${signal.id}`} className="py-3 font-mono text-sm text-zinc-100">
             {signal.title || "Untitled signal"}
           </Link>
         )}
@@ -300,7 +300,7 @@ export function SignalCard({
         )}
       </div>
 
-      <footer className="mt-auto flex h-12 shrink-0 items-center border-t border-white/[.06] px-3">
+      <footer className="mt-2 flex h-10 shrink-0 items-center border-t border-white/[.06] px-2.5">
         <CardActions
           signal={signal}
           reacted={reacted}
@@ -327,11 +327,11 @@ function TitleMeta({
   owner: string;
 }) {
   return (
-    <div className="mt-auto pt-4 pb-1">
-      <Link href={href} className="line-clamp-2 font-mono text-[15px] leading-snug text-zinc-50 hover:text-white">
+    <div className="pt-2.5 pb-0.5">
+      <Link href={href} className="line-clamp-1 font-mono text-[13px] leading-snug text-zinc-50 hover:text-white">
         {title || "Untitled signal"}
       </Link>
-      <p className="mt-1.5 font-mono text-[12px] text-zinc-500">{owner}</p>
+      <p className="mt-1 font-mono text-[11px] text-zinc-500">{owner}</p>
     </div>
   );
 }
@@ -339,7 +339,7 @@ function TitleMeta({
 function LinkBody({ signal }: { signal: CardSignal }) {
   const domain = signal.sourceDomain || domainFromUrl(signal.sourceUrl);
   return (
-    <Link href={`/signals/${signal.id}`} className="flex min-h-[148px] flex-col pb-2">
+    <Link href={`/signals/${signal.id}`} className="flex flex-col pb-1">
       <span className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
         {domain ? (
           <img
@@ -350,11 +350,11 @@ function LinkBody({ signal }: { signal: CardSignal }) {
         ) : null}
         <span className="truncate">{domain || "Link"}</span>
       </span>
-      <span className="mt-3 line-clamp-2 font-mono text-[15px] leading-snug text-zinc-50">
+      <span className="mt-2 line-clamp-2 font-mono text-[13px] leading-snug text-zinc-50">
         {signal.title || "Untitled link"}
       </span>
       {(signal.description || signal.content) && (
-        <span className="mt-2 line-clamp-3 font-mono text-[12px] leading-5 text-zinc-500">
+        <span className="mt-1.5 line-clamp-2 font-mono text-[11px] leading-5 text-zinc-500">
           {signal.description || signal.content}
         </span>
       )}
@@ -365,17 +365,17 @@ function LinkBody({ signal }: { signal: CardSignal }) {
 function NoteBody({ signal }: { signal: CardSignal }) {
   const items = noteItems(signal.content, signal.description);
   return (
-    <Link href={`/signals/${signal.id}`} className="block min-h-[148px] pb-1">
-      <p className="font-mono text-[15px] leading-snug text-zinc-50">{signal.title || "Untitled note"}</p>
+    <Link href={`/signals/${signal.id}`} className="block pb-1">
+      <p className="font-mono text-[13px] leading-snug text-zinc-50">{signal.title || "Untitled note"}</p>
       {items.length > 0 &&
         (items.length === 1 ? (
-          <p className="mt-3 line-clamp-5 font-mono text-[12px] leading-6 text-zinc-400">{items[0]}</p>
+          <p className="mt-2 line-clamp-3 font-mono text-[11px] leading-5 text-zinc-400">{items[0]}</p>
         ) : (
-          <ul className="mt-3 space-y-1.5 font-mono text-[12px] leading-6 text-zinc-400">
-            {items.slice(0, 4).map((item) => (
+          <ul className="mt-2 space-y-1 font-mono text-[11px] leading-5 text-zinc-400">
+            {items.slice(0, 3).map((item) => (
               <li key={item} className="flex gap-2">
-                <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-violet-400/70" />
-                <span className="line-clamp-2">{item}</span>
+                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-violet-400/70" />
+                <span className="line-clamp-1">{item}</span>
               </li>
             ))}
           </ul>
@@ -387,20 +387,20 @@ function NoteBody({ signal }: { signal: CardSignal }) {
 function DocumentBody({ signal, file }: { signal: CardSignal; file?: SignalFile }) {
   const ext = fileExtension(file?.originalName || signal.title || "PDF");
   return (
-    <Link href={`/signals/${signal.id}`} className="flex min-h-[132px] items-center gap-4 pb-3">
+    <Link href={`/signals/${signal.id}`} className="flex items-center gap-3 py-1">
       <span
         className={cn(
-          "grid h-12 w-12 shrink-0 place-items-center rounded-xl font-mono text-[11px] font-bold tracking-wide text-white",
+          "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-mono text-[10px] font-bold tracking-wide text-white",
           ext === "PDF" ? "bg-[#e11d48]" : "bg-violet-600",
         )}
       >
-        {ext === "PDF" ? "PDF" : <FileText className="h-5 w-5" />}
+        {ext === "PDF" ? "PDF" : <FileText className="h-4 w-4" />}
       </span>
       <span className="min-w-0">
-        <span className="block truncate font-mono text-[15px] text-zinc-50">
+        <span className="block truncate font-mono text-[13px] text-zinc-50">
           {signal.title || file?.originalName || "Saved document"}
         </span>
-        <span className="mt-1 block font-mono text-[12px] text-zinc-500">
+        <span className="mt-0.5 block font-mono text-[11px] text-zinc-500">
           {file ? formatBytes(file.size) : "Document"}
         </span>
       </span>
@@ -431,9 +431,9 @@ function SongBody({
   const hasEmbedded = Boolean(signal.mediaProvider && signal.externalId && signal.sourceUrl && !hasAudius);
 
   return (
-    <div className="pb-2">
-      <div className="flex items-center gap-3">
-        <span className="relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-lg bg-[#1b1b22] ring-1 ring-white/10">
+    <div className="pb-1">
+      <div className="flex items-center gap-2.5">
+        <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-[#1b1b22] ring-1 ring-white/10">
           {image ? (
             <img src={image} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -441,8 +441,8 @@ function SongBody({
           )}
         </span>
         <Link href={`/signals/${signal.id}`} className="min-w-0 flex-1">
-          <span className="block truncate font-mono text-[15px] text-zinc-50">{signal.title || "Untitled song"}</span>
-          <span className="mt-0.5 block truncate font-mono text-[12px] text-zinc-500">{artist}</span>
+          <span className="block truncate font-mono text-[13px] text-zinc-50">{signal.title || "Untitled song"}</span>
+          <span className="mt-0.5 block truncate font-mono text-[11px] text-zinc-500">{artist}</span>
         </Link>
         {hasAudius ? (
           <AudiusPlayButton signal={signal} compact />
@@ -456,18 +456,18 @@ function SongBody({
         ) : hasEmbedded ? (
           <button
             onClick={onPlayEmbedded}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-violet-400/40 bg-violet-500/10 text-violet-200"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-violet-400/40 bg-violet-500/10 text-violet-200"
             aria-label={`Play ${signal.title || "media"}`}
           >
-            <Play className="ml-0.5 h-4 w-4 fill-current" />
+            <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
           </button>
         ) : (
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-zinc-700 text-zinc-600">
-            <Play className="ml-0.5 h-4 w-4 fill-current" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-zinc-700 text-zinc-600">
+            <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
           </span>
         )}
       </div>
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-2.5 flex items-center gap-2.5">
         {hasLocalAudio ? (
           <SyncedWave src={audioFile?.url} />
         ) : hasAudius ? (
@@ -475,7 +475,7 @@ function SongBody({
         ) : (
           <Wave progress={0.42} />
         )}
-        <span className="shrink-0 font-mono text-[11px] text-zinc-500">{duration}</span>
+        <span className="shrink-0 font-mono text-[10px] text-zinc-500">{duration}</span>
       </div>
     </div>
   );
@@ -489,21 +489,20 @@ function VoiceBody({ signal, audioFile }: { signal: CardSignal; audioFile?: Sign
     "--:--";
 
   return (
-    <div className="pb-2">
-      <div className="flex items-center gap-3">
+    <div className="pb-1">
+      <div className="flex items-center gap-2.5">
         <LocalPlayButton
           signalId={signal.id}
           title={signal.title || "Untitled audio"}
           artist={signal.description || audioFile?.originalName}
           src={audioFile?.url}
-          large
         />
         <SyncedWave src={audioFile?.url} />
-        <span className="shrink-0 font-mono text-[11px] text-zinc-500">{duration}</span>
+        <span className="shrink-0 font-mono text-[10px] text-zinc-500">{duration}</span>
       </div>
-      <Link href={`/signals/${signal.id}`} className="mt-4 block">
-        <span className="block truncate font-mono text-[15px] text-zinc-50">{signal.title || "Voice note"}</span>
-        <span className="mt-1 block font-mono text-[12px] text-zinc-500">
+      <Link href={`/signals/${signal.id}`} className="mt-2.5 block">
+        <span className="block truncate font-mono text-[13px] text-zinc-50">{signal.title || "Voice note"}</span>
+        <span className="mt-0.5 block font-mono text-[11px] text-zinc-500">
           {signal.owner.name || signal.owner.username}
         </span>
       </Link>
@@ -600,11 +599,11 @@ function AudiusPlayButton({ signal, compact = false }: { signal: CardSignal; com
       }
       className={cn(
         "grid place-items-center rounded-full border border-violet-400/40 bg-violet-500/10 text-violet-200",
-        compact ? "h-10 w-10 shrink-0" : "absolute inset-0",
+        compact ? "h-8 w-8 shrink-0" : "absolute inset-0",
       )}
       aria-label={`${playing ? "Pause" : "Play"} ${signal.title || "Audius track"}`}
     >
-      {playing ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
+      {playing ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
     </button>
   );
 }
@@ -632,11 +631,11 @@ function LocalPlayButton({
         disabled
         className={cn(
           "grid shrink-0 place-items-center rounded-full border border-zinc-700 text-zinc-600",
-          large ? "h-11 w-11" : "h-10 w-10",
+          large ? "h-10 w-10" : "h-8 w-8",
         )}
         aria-label="No audio file"
       >
-        <Play className={cn("fill-current", large ? "h-4 w-4" : "ml-0.5 h-4 w-4")} />
+        <Play className={cn("fill-current", large ? "h-3.5 w-3.5" : "ml-0.5 h-3.5 w-3.5")} />
       </button>
     );
   }
@@ -656,11 +655,11 @@ function LocalPlayButton({
       }
       className={cn(
         "grid shrink-0 place-items-center rounded-full border border-violet-400/50 bg-violet-500/10 text-violet-100",
-        large ? "h-11 w-11" : "h-10 w-10",
+        large ? "h-10 w-10" : "h-8 w-8",
       )}
       aria-label={playing ? "Pause" : "Play"}
     >
-      {playing ? <Pause className="h-4 w-4 fill-current" /> : <Play className="ml-0.5 h-4 w-4 fill-current" />}
+      {playing ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
     </button>
   );
 }
@@ -672,14 +671,14 @@ function SyncedWave({ src }: { src?: string }) {
 }
 
 function Wave({ progress }: { progress: number }) {
-  const heights = [8, 14, 22, 18, 28, 16, 24, 12, 20, 30, 18, 10, 26, 14, 22, 32, 18, 12, 24, 16, 28, 12, 20, 26, 14, 22, 10, 18, 30, 16, 12, 24];
+  const heights = [6, 12, 18, 14, 22, 12, 18, 10, 16, 24, 14, 8, 20, 12, 18, 26, 14, 10, 18, 12, 22, 10, 16, 20, 12, 18, 8, 14];
   return (
-    <span className="flex h-8 flex-1 items-center gap-[2px] overflow-hidden">
+    <span className="flex h-6 flex-1 items-center gap-[2px] overflow-hidden">
       {heights.map((height, index) => (
         <i
           key={index}
           className={cn(
-            "w-[2.5px] shrink-0 rounded-full bg-violet-500/25",
+            "w-[2px] shrink-0 rounded-full bg-violet-500/25",
             index / heights.length <= progress && "bg-violet-400",
           )}
           style={{ height: `${height}px` }}
@@ -690,7 +689,7 @@ function Wave({ progress }: { progress: number }) {
 }
 
 function CodeHighlight({ code }: { code: string }) {
-  const lines = code.split("\n").slice(0, 8);
+  const lines = code.split("\n").slice(0, 5);
   return (
     <code>
       {lines.map((line, index) => (
