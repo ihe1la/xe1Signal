@@ -52,7 +52,7 @@ export default function DiscoverPage() {
         {types.map((item) => <button key={item} onClick={() => setType(item)} className={`shrink-0 rounded-md border px-2.5 py-1.5 transition ${type === item ? "border-violet-400/20 bg-violet-400/[.08] text-violet-300" : "border-white/[.055] hover:text-zinc-300"}`}>{item === "AUDIO" ? "VOICE" : item}</button>)}
         <select value={sort} onChange={(event) => setSort(event.target.value)} className="ml-auto rounded-md border border-white/[.055] bg-[#0b0c10] px-2.5 py-1.5 outline-none"><option value="latest">LATEST</option><option value="strongest">STRONGEST</option><option value="saved">MOST SAVED</option></select>
       </div>
-      {!ready ? <LoadingGrid /> : signals.length ? <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">{signals.map((signal) => <SignalCard key={signal.id} signal={signal} />)}</div> : <div className="rounded-xl border border-dashed border-white/10 px-6 py-20 text-center"><p className="font-mono text-sm text-zinc-300">No signals on this frequency</p><button onClick={() => setType("ALL")} className="mt-3 font-mono text-xs text-violet-300">Clear filter</button></div>}
+      {!ready ? <LoadingGrid /> : signals.length ? <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">{signals.map((signal) => <SignalCard key={signal.id} signal={signal} />)}</div> : <div className="rounded-xl border border-dashed border-white/10 px-6 py-20 text-center"><p className="font-mono text-sm text-zinc-300">No signals on this frequency</p><button onClick={() => setType("ALL")} className="mt-3 font-mono text-xs text-violet-300">Clear filter</button></div>}
     </AppLayout>
   );
 }

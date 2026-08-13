@@ -165,7 +165,7 @@ export function SignalCard({
   return (
     <article
       className={cn(
-        "signal-archive-card group relative mb-4 inline-block w-full overflow-hidden rounded-[11px] border border-white/[.075] bg-[#0d0e13] align-top shadow-[0_18px_50px_rgba(0,0,0,.12)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[.13]",
+        "signal-archive-card group relative flex h-full w-full flex-col overflow-hidden rounded-[11px] border border-white/[.075] bg-[#0d0e13] shadow-[0_18px_50px_rgba(0,0,0,.12)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[.13]",
         variant === "compact" && "flex",
       )}
     >
@@ -398,7 +398,7 @@ export function SignalCard({
           </Link>
         </div>
       )}
-      <footer className="flex h-10 items-center border-t border-white/[.06] px-4 font-mono text-[10px] text-zinc-500">
+      <footer className="mt-auto flex h-10 shrink-0 items-center border-t border-white/[.06] px-4 font-mono text-[10px] text-zinc-500">
         <Link
           href={`/profile/${signal.owner.username}`}
           className="hover:text-zinc-200"
