@@ -110,6 +110,12 @@ export function SignalCard({
   );
   const image =
     signal.previewImageUrl || imageFile?.thumbnailUrl || imageFile?.url;
+  const visualImage = image || {
+    "idea-at-3am": "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1200&q=82",
+    "login-function": "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=1200&q=82",
+    "oauth-trust": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=82",
+    blue: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=82",
+  }[signal.id];
 
   async function copyCode() {
     await navigator.clipboard.writeText(signal.content || "");
@@ -215,10 +221,16 @@ export function SignalCard({
           <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0a0b10]" />
         </div>
       )}
+      {visualImage && ["NOTE", "AUDIO"].includes(signal.type) && (
+        <Link href={`/signals/${signal.id}`} className="block h-[112px] overflow-hidden bg-zinc-950">
+          <img src={visualImage} alt="" className="h-full w-full object-cover opacity-45 grayscale-[.2] transition duration-500 group-hover:scale-[1.03] group-hover:opacity-65" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-[112px] bg-gradient-to-b from-transparent to-[#0d0e13]" />
+        </Link>
+      )}
       {signal.type === "NOTE" && (
         <Link
           href={`/signals/${signal.id}`}
-          className="block min-h-[198px] px-5 pb-7 pt-16"
+          className={`block min-h-[198px] px-5 pb-7 ${visualImage ? "pt-5" : "pt-16"}`}
         >
           <p className="max-w-[18ch] font-mono text-[17px] leading-[1.35] text-zinc-200">
             {signal.title}
