@@ -509,27 +509,27 @@ function PlaylistWindow({ group, currentId, onClose, onSelect, onRemoveItem }: {
 function QueueRow({ item, active, onSelect, onRemove }: { item: VibeQueuePayload; active: boolean; onSelect: () => void; onRemove: () => void }) {
   const playable = item.status === "ready" || item.status === "playing";
   return (
-    <li className={`flex items-center gap-2 px-3 py-2.5 transition ${active ? "bg-violet-400/[.06]" : ""}`}>
-      <span className="w-4 shrink-0 text-center font-mono text-[8px] text-zinc-700">
+    <li className={`flex min-h-[58px] items-center gap-3 px-4 py-3 transition ${active ? "bg-violet-400/[.08]" : "hover:bg-white/[.035]"}`}>
+      <span className="w-6 shrink-0 text-center font-mono text-[9px] text-zinc-600">
         {active ? <span className="mx-auto block h-1.5 w-1.5 rounded-full bg-violet-300" /> : item.position + 1}
       </span>
       <button
         type="button"
         onClick={playable ? onSelect : undefined}
         disabled={!playable}
-        className={`min-w-0 flex-1 truncate text-left font-mono text-[10px] transition ${active ? "text-violet-100" : "text-zinc-300"} ${playable ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-70"}`}
+        className={`min-h-10 min-w-0 flex-1 truncate rounded-lg px-2 text-left font-mono text-[11px] transition ${active ? "text-violet-100" : "text-zinc-200"} ${playable ? "cursor-pointer hover:text-white" : "cursor-default opacity-70"}`}
         aria-label={playable ? `Play ${item.title}` : `${item.title} is not ready yet`}
         title={item.title}
       >
         {item.title}
       </button>
-      {playable && !active ? (
-        <button type="button" onClick={onSelect} className="rounded-md p-1.5 text-zinc-600 transition hover:bg-white/[.05] hover:text-violet-200" aria-label={`Play ${item.title}`}>
-          <Play className="h-3 w-3 fill-current" />
+      {playable ? (
+        <button type="button" onClick={onSelect} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-violet-300/20 bg-violet-400/[.08] text-violet-200 transition hover:border-violet-300/50 hover:bg-violet-400/[.18]" aria-label={`${active ? "Replay" : "Play"} ${item.title}`}>
+          {active ? <Radio className="h-3.5 w-3.5" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
         </button>
       ) : null}
-      <button type="button" onClick={onRemove} className="rounded-md p-1.5 text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}>
-        <Trash2 className="h-3 w-3" />
+      <button type="button" onClick={onRemove} className="grid h-10 w-8 shrink-0 place-items-center rounded-lg text-zinc-700 transition hover:bg-white/[.05] hover:text-rose-300" aria-label={`Remove ${item.title}`}>
+        <Trash2 className="h-3.5 w-3.5" />
       </button>
     </li>
   );
