@@ -4,17 +4,15 @@ import * as React from "react";
 import { DumpNotesWorkspace } from "@/components/dump-notes-workspace";
 import { FindingsWorkspace } from "@/components/findings-workspace";
 import { RemoteAppFrame } from "@/components/remote-app-frame";
-import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type ToolsTab = "findings" | "dump-notes" | "pinqued" | "th3l30" | "terminal";
+type ToolsTab = "findings" | "dump-notes" | "pinqued" | "th3l30";
 
 const tabs = [
   ["findings", "Findings"],
   ["dump-notes", "Dump Notes"],
   ["pinqued", "Pinqued"],
   ["th3l30", "th3l30"],
-  ["terminal", "Terminal"],
 ] as const;
 
 export function ToolsWorkspace() {
@@ -25,7 +23,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-sans text-sm text-zinc-500">
-          Local findings and dump notes, plus Pinqued and th3l30 workspaces and a root VPS terminal.
+          Local findings and dump notes, plus Pinqued and th3l30 workspaces.
         </p>
       </header>
 
@@ -69,7 +67,6 @@ export function ToolsWorkspace() {
           heightClassName="h-[calc(100dvh-18rem)] min-h-[480px] lg:h-[calc(100dvh-15rem)]"
         />
       ) : null}
-      {tab === "terminal" ? <TerminalWorkspace /> : null}
     </div>
   );
 }
