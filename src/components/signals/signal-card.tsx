@@ -165,17 +165,17 @@ export function SignalCard({
   return (
     <article
       className={cn(
-        "signal-archive-card group relative mb-3 inline-block w-full overflow-hidden rounded-[10px] border border-white/[.075] bg-[#0d0e13] align-top shadow-[0_14px_36px_rgba(0,0,0,.1)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[.13]",
+        "signal-archive-card group relative mb-4 inline-block w-full overflow-hidden rounded-[11px] border border-white/[.075] bg-[#0d0e13] align-top shadow-[0_18px_50px_rgba(0,0,0,.12)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[.13]",
         variant === "compact" && "flex",
       )}
     >
-      <div className="absolute left-3 top-3 z-10 font-mono text-[9px] uppercase tracking-wide text-zinc-500">
+      <div className="absolute left-4 top-3 z-10 font-mono text-[9px] uppercase tracking-wide text-zinc-500">
         {signal.type === "AUDIO" ? "VOICE" : signal.type}
       </div>
       {(signal.type === "IMAGE" || signal.type === "SCREENSHOT") && (
         <Link
           href={`/signals/${signal.id}`}
-          className={cn("block overflow-hidden bg-zinc-900", variant === "featured" ? "max-h-[80vh]" : "h-[148px]")}
+          className={cn("block overflow-hidden bg-zinc-900", variant === "featured" ? "max-h-[80vh]" : "h-[158px]")}
         >
           <img
             src={image || ""}
@@ -187,7 +187,7 @@ export function SignalCard({
       {signal.type === "LINK" && image && (
         <Link
           href={`/signals/${signal.id}`}
-          className="block h-[148px] overflow-hidden"
+          className="block h-[158px] overflow-hidden"
         >
           <img
             src={image}
@@ -197,7 +197,7 @@ export function SignalCard({
         </Link>
       )}
       {signal.type === "CODE" && (
-        <div className="relative h-[164px] overflow-hidden bg-[#0a0b10] px-4 pb-4 pt-11">
+        <div className="relative h-[178px] overflow-hidden bg-[#0a0b10] px-5 pb-4 pt-12">
           <button
             onClick={copyCode}
             className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-zinc-600 hover:bg-white/5 hover:text-zinc-300"
@@ -218,7 +218,7 @@ export function SignalCard({
       {signal.type === "NOTE" && (
         <Link
           href={`/signals/${signal.id}`}
-          className="block min-h-[174px] px-4 pb-6 pt-14"
+          className="block min-h-[198px] px-5 pb-7 pt-16"
         >
           <p className="max-w-[18ch] font-mono text-[17px] leading-[1.35] text-zinc-200">
             {signal.title}
@@ -226,8 +226,8 @@ export function SignalCard({
         </Link>
       )}
       {(signal.type === "DOCUMENT" || signal.type === "FILE") && (
-        <div className="flex min-h-[128px] items-center gap-3 px-4 pt-5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[.03]">
+        <div className="flex min-h-[150px] items-center gap-4 px-6 pt-6">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[.03]">
             <FileText className="h-5 w-5 text-violet-300" />
           </span>
           <span className="min-w-0 flex-1">
@@ -244,7 +244,7 @@ export function SignalCard({
           {documentFile && (
             <a
               href={`${documentFile.url}?download=1`}
-              className="rounded-lg border border-white/[.08] p-2 text-zinc-500 hover:text-violet-300"
+              className="rounded-lg border border-white/[.08] p-2.5 text-zinc-500 hover:text-violet-300"
               aria-label={`Download ${documentFile.originalName}`}
             >
               <Download className="h-4 w-4" />
@@ -306,7 +306,7 @@ export function SignalCard({
               </button>
             )}
           </div>
-          <div className="px-4 pb-4 pt-3">
+          <div className="px-5 pb-5 pt-4">
             <Link
               href={`/signals/${signal.id}`}
               className="line-clamp-2 font-mono text-[13px] text-zinc-200"
@@ -325,7 +325,7 @@ export function SignalCard({
         </div>
       ) : (
         (signal.type === "SONG" || signal.type === "AUDIO") && (
-          <div className="min-h-[166px] px-4 pb-4 pt-12">
+          <div className="min-h-[190px] px-5 pb-5 pt-14">
             <Link
               href={`/signals/${signal.id}`}
               className="font-mono text-[14px] text-zinc-200"
@@ -358,7 +358,7 @@ export function SignalCard({
         "SONG",
         "AUDIO",
       ].includes(signal.type) && (
-        <div className="min-h-[130px] px-4 pt-12">
+        <div className="min-h-[150px] px-5 pt-14">
           <p>{signal.title}</p>
         </div>
       )}
@@ -366,7 +366,7 @@ export function SignalCard({
       {["IMAGE", "SCREENSHOT", "LINK"].includes(signal.type) && (
         <div
           className={cn(
-            "px-4 pb-4",
+            "px-5 pb-5",
             signal.type === "LINK" && !image ? "pt-12" : "pt-4",
           )}
         >
@@ -398,70 +398,70 @@ export function SignalCard({
           </Link>
         </div>
       )}
-      <footer className="flex h-9 items-center border-t border-white/[.06] px-3 font-mono text-[9px] text-zinc-500">
+      <footer className="flex h-10 items-center border-t border-white/[.06] px-4 font-mono text-[10px] text-zinc-500">
         <Link
           href={`/profile/${signal.owner.username}`}
           className="hover:text-zinc-200"
         >
           {signal.owner.name || signal.owner.username}
         </Link>
-        <div className="ml-auto flex items-center gap-0.5">
+        <div className="ml-auto flex items-center gap-1">
           <button
             onClick={() => void toggleReaction()}
             disabled={Boolean(actionBusy)}
             className={cn(
-              "flex items-center gap-1 rounded p-1 hover:bg-white/5",
+              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
               reacted && "text-rose-400",
             )}
             aria-label={reacted ? "Unlike" : "Like"}
           >
-            <Heart className={cn("h-3 w-3", reacted && "fill-current")} />
+            <Heart className={cn("h-3.5 w-3.5", reacted && "fill-current")} />
             <span>
               {reactionCount}
             </span>
           </button>
           <Link
             href={`/signals/${signal.id}#comments`}
-            className="flex items-center gap-1 rounded p-1 hover:bg-white/5"
+            className="flex items-center gap-1 rounded p-1.5 hover:bg-white/5"
             aria-label="Comments"
           >
-            <MessageCircle className="h-3 w-3" />
+            <MessageCircle className="h-3.5 w-3.5" />
             <span>{signal.commentCount || 0}</span>
           </Link>
           <button
             onClick={() => void toggleSave()}
             disabled={Boolean(actionBusy)}
             className={cn(
-              "flex items-center gap-1 rounded p-1 hover:bg-white/5",
+              "flex items-center gap-1 rounded p-1.5 hover:bg-white/5",
               saved && "text-violet-300",
             )}
             aria-label="Save"
           >
-            <Bookmark className={cn("h-3 w-3", saved && "fill-current")} />
+            <Bookmark className={cn("h-3.5 w-3.5", saved && "fill-current")} />
             <span>
               {saveCount}
             </span>
           </button>
-          <button onClick={() => void shareSignal()} className="rounded p-1 hover:bg-white/5" aria-label="Share">
-            <Share2 className="h-3 w-3" />
+          <button onClick={() => void shareSignal()} className="rounded p-1.5 hover:bg-white/5" aria-label="Share">
+            <Share2 className="h-3.5 w-3.5" />
           </button>
           {signal.sourceUrl ? (
             <a
               href={signal.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded p-1 hover:bg-white/5"
+              className="rounded p-1.5 hover:bg-white/5"
               aria-label="Open source"
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : (
             <Link
               href={`/signals/${signal.id}`}
-              className="rounded p-1 hover:bg-white/5"
+              className="rounded p-1.5 hover:bg-white/5"
               aria-label="More"
             >
-              <MoreHorizontal className="h-3 w-3" />
+              <MoreHorizontal className="h-3.5 w-3.5" />
             </Link>
           )}
         </div>

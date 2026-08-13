@@ -35,7 +35,7 @@ export default function ArchivePage() {
   React.useEffect(() => {
     if (!session?.user?.id) return;
     let active = true;
-    fetch(`/api/signals?limit=50&includeDrafts=true&authorId=${encodeURIComponent(session.user.id)}`)
+    fetch(`/api/signals?limit=6&includeDrafts=true&authorId=${encodeURIComponent(session.user.id)}`)
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!active || !Array.isArray(data?.signals)) return;
@@ -50,7 +50,7 @@ export default function ArchivePage() {
     let active = true;
     setCollectionsReady(false);
     const timer = window.setTimeout(() => {
-      fetch(`/api/frequencies?limit=50&q=${encodeURIComponent(query)}`)
+      fetch(`/api/frequencies?limit=6&q=${encodeURIComponent(query)}`)
         .then((response) => response.ok ? response.json() : null)
         .then((data) => { if (active && Array.isArray(data?.frequencies)) setCollections(data.frequencies); })
         .finally(() => { if (active) setCollectionsReady(true); });
