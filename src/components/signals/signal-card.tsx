@@ -212,7 +212,7 @@ export function SignalCard({
   }
 
   return (
-    <article className="signal-archive-card group relative flex w-full flex-col overflow-hidden rounded-[14px] border border-white/[.08] bg-[#14151c] transition duration-300 hover:-translate-y-0.5 hover:border-violet-400/20">
+    <article className="signal-archive-card group relative flex h-full w-full flex-col overflow-hidden rounded-[14px] border border-white/[.08] bg-[#14151c] transition duration-300 hover:-translate-y-0.5 hover:border-violet-400/20">
       <header className="flex items-center justify-between px-4 pt-3">
         <span className="font-mono text-[10px] uppercase tracking-[.16em] text-violet-400">{typeLabel}</span>
         {showExternal && (
@@ -228,7 +228,7 @@ export function SignalCard({
         )}
       </header>
 
-      <div className={cn("flex flex-col px-4 pt-2", variant === "featured" && "pt-3")}>
+      <div className={cn("flex flex-1 flex-col px-4 pt-2", variant === "featured" && "pt-3")}>
         {(signal.type === "IMAGE" || signal.type === "SCREENSHOT") && (
           <Link
             href={`/signals/${signal.id}`}
@@ -300,7 +300,7 @@ export function SignalCard({
         )}
       </div>
 
-      <footer className="mt-2 flex h-10 shrink-0 items-center border-t border-white/[.06] px-2.5">
+      <footer className="mt-auto flex h-10 shrink-0 items-center border-t border-white/[.06] px-2.5">
         <CardActions
           signal={signal}
           reacted={reacted}
@@ -327,7 +327,7 @@ function TitleMeta({
   owner: string;
 }) {
   return (
-    <div className="pt-2.5 pb-0.5">
+    <div className="mt-auto pt-2.5 pb-0.5">
       <Link href={href} className="line-clamp-1 font-mono text-[13px] leading-snug text-zinc-50 hover:text-white">
         {title || "Untitled signal"}
       </Link>
@@ -339,7 +339,7 @@ function TitleMeta({
 function LinkBody({ signal }: { signal: CardSignal }) {
   const domain = signal.sourceDomain || domainFromUrl(signal.sourceUrl);
   return (
-    <Link href={`/signals/${signal.id}`} className="flex flex-col pb-1">
+    <Link href={`/signals/${signal.id}`} className="flex min-h-0 flex-1 flex-col pb-1">
       <span className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
         {domain ? (
           <img
@@ -365,7 +365,7 @@ function LinkBody({ signal }: { signal: CardSignal }) {
 function NoteBody({ signal }: { signal: CardSignal }) {
   const items = noteItems(signal.content, signal.description);
   return (
-    <Link href={`/signals/${signal.id}`} className="block pb-1">
+    <Link href={`/signals/${signal.id}`} className="block min-h-0 flex-1 pb-1">
       <p className="font-mono text-[13px] leading-snug text-zinc-50">{signal.title || "Untitled note"}</p>
       {items.length > 0 &&
         (items.length === 1 ? (
@@ -387,7 +387,7 @@ function NoteBody({ signal }: { signal: CardSignal }) {
 function DocumentBody({ signal, file }: { signal: CardSignal; file?: SignalFile }) {
   const ext = fileExtension(file?.originalName || signal.title || "PDF");
   return (
-    <Link href={`/signals/${signal.id}`} className="flex items-center gap-3 py-1">
+    <Link href={`/signals/${signal.id}`} className="flex min-h-0 flex-1 items-center gap-3 py-1">
       <span
         className={cn(
           "grid h-10 w-10 shrink-0 place-items-center rounded-lg font-mono text-[10px] font-bold tracking-wide text-white",
@@ -431,7 +431,7 @@ function SongBody({
   const hasEmbedded = Boolean(signal.mediaProvider && signal.externalId && signal.sourceUrl && !hasAudius);
 
   return (
-    <div className="pb-1">
+    <div className="flex min-h-0 flex-1 flex-col pb-1">
       <div className="flex items-center gap-2.5">
         <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-[#1b1b22] ring-1 ring-white/10">
           {image ? (
@@ -467,7 +467,7 @@ function SongBody({
           </span>
         )}
       </div>
-      <div className="mt-2.5 flex items-center gap-2.5">
+      <div className="mt-auto flex items-center gap-2.5 pt-2.5">
         {hasLocalAudio ? (
           <SyncedWave src={audioFile?.url} />
         ) : hasAudius ? (
@@ -489,7 +489,7 @@ function VoiceBody({ signal, audioFile }: { signal: CardSignal; audioFile?: Sign
     "--:--";
 
   return (
-    <div className="pb-1">
+    <div className="flex min-h-0 flex-1 flex-col pb-1">
       <div className="flex items-center gap-2.5">
         <LocalPlayButton
           signalId={signal.id}
@@ -500,7 +500,7 @@ function VoiceBody({ signal, audioFile }: { signal: CardSignal; audioFile?: Sign
         <SyncedWave src={audioFile?.url} />
         <span className="shrink-0 font-mono text-[10px] text-zinc-500">{duration}</span>
       </div>
-      <Link href={`/signals/${signal.id}`} className="mt-2.5 block">
+      <Link href={`/signals/${signal.id}`} className="mt-auto block pt-2.5">
         <span className="block truncate font-mono text-[13px] text-zinc-50">{signal.title || "Voice note"}</span>
         <span className="mt-0.5 block font-mono text-[11px] text-zinc-500">
           {signal.owner.name || signal.owner.username}
