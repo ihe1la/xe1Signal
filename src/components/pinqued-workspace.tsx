@@ -47,7 +47,7 @@ export function PinquedWorkspace() {
     <div aria-label="Pinqued tools section" className="-mx-2 font-mono sm:-mx-4 lg:-mx-7">
       <div className="overflow-hidden border border-[#292830] bg-[#09090c] shadow-[0_20px_55px_rgba(0,0,0,.28)]">
         <div className="grid min-h-[760px] grid-cols-[68px_minmax(0,1fr)] sm:grid-cols-[220px_minmax(0,1fr)]">
-          <aside className="border-r border-[#292830] bg-[#09090c]">
+          <aside className="relative border-r border-[#292830] bg-[#09090c]">
             <div className="flex h-[62px] items-center justify-center border-b border-[#292830] sm:justify-start sm:px-5">
               <span className="relative block h-5 w-5 rotate-45 border-l-2 border-t-2 border-[#eee8f2] after:absolute after:-bottom-1 after:-right-1 after:h-3 after:w-3 after:border-b-2 after:border-r-2 after:border-[#eee8f2]" aria-label="Pinqued mark" />
             </div>
