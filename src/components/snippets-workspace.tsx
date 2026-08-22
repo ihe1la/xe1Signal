@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeftRight, Copy, Check } from "lucide-react";
+import { ArrowLeftRight, Check, Copy, Filter, Play, Plus, RefreshCw, Search } from "lucide-react";
 import {
   convertTimestamp,
   decodeBase64,
@@ -143,6 +143,16 @@ export function SnippetsWorkspace() {
     if (!needle) return true;
     return `${snippet.name} ${snippet.hint}`.toLowerCase().includes(needle);
   });
+  const market = [
+    ["JSFuck Encode", "encodes the input and returns a JSFuck payload"],
+    ["extract", "No more remembering the flags for tar vs unzip vs gzip"],
+    ["clip", "simple bash utility script instead of cat'ing and selecting"],
+    ["preview", "bash function which calls jq to output values for key(s)"],
+    ["URL-Bypass", "All the ways to bypass a URL (almost)"],
+    ["Unicode Escape", "Escape unicode characters"],
+    ["Minify JSON", "Compress JSON without changing its meaning"],
+    ["Beautify JSON", "Make JSON readable again"],
+  ];
 
   async function execute(nextId = activeId) {
     setError(null);
@@ -187,149 +197,56 @@ export function SnippetsWorkspace() {
   }
 
   return (
-    <div aria-label="Snippets section" className="mx-auto max-w-[1200px]">
-      <p className="mb-4 font-sans text-sm text-zinc-500">
-        Boop-style transforms. Everything runs in your browser.
-      </p>
+    <div aria-label="Snippets section" className="font-mono text-[#e9e3ee]">
+      <h1 className="mb-5 text-[25px] tracking-[-.04em] text-[#f0ebf4]">Snippets</h1>
 
-      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-white/[.08] bg-white/[.02]">
-          <div className="border-b border-white/[.06] p-3">
-            <label htmlFor="snippet-filter" className="sr-only">
-              Filter snippets
-            </label>
-            <input
-              id="snippet-filter"
-              value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-              placeholder="Filter scripts…"
-              className="w-full rounded-lg border border-white/[.08] bg-[#0a0b10] px-3 py-2 font-sans text-sm text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-violet-400/30"
-            />
+      <section className="border border-[#2a2931] bg-[#0b0b0e]">
+        <div className="border-b border-[#2a2931] px-4 py-3 text-[10px] uppercase tracking-[.14em] text-[#b0a8b5]">Input</div>
+        {active.dual ? (
+          <div className="grid gap-3 p-4 sm:grid-cols-2">
+            <textarea aria-label={active.primaryLabel ?? "Input"} value={input} onChange={(event) => setInput(event.target.value)} rows={7} placeholder={active.primaryPlaceholder ?? "Paste or type text here…"} className="w-full resize-y border border-[#2a2931] bg-[#08080b] p-3 text-[11px] leading-5 text-[#ece7f0] outline-none placeholder:text-[#625d69] focus:border-[#71667b]" />
+            <textarea aria-label={active.secondaryLabel ?? "Secondary input"} value={secondary} onChange={(event) => setSecondary(event.target.value)} rows={7} placeholder={active.secondaryPlaceholder ?? "Second input…"} className="w-full resize-y border border-[#2a2931] bg-[#08080b] p-3 text-[11px] leading-5 text-[#ece7f0] outline-none placeholder:text-[#625d69] focus:border-[#71667b]" />
           </div>
-          <ul className="max-h-[520px] overflow-y-auto p-2" aria-label="Snippet list">
-            {visible.map((snippet) => {
-              const selected = snippet.id === activeId;
-              return (
-                <li key={snippet.id}>
-                  <button
-                    type="button"
-                    onClick={() => selectSnippet(snippet.id)}
-                    className={cn(
-                      "mb-1 w-full rounded-xl px-3 py-2.5 text-left transition",
-                      selected
-                        ? "bg-violet-500/15 text-zinc-100"
-                        : "text-zinc-400 hover:bg-white/[.04] hover:text-zinc-200",
-                    )}
-                  >
-                    <span className="block font-sans text-sm">{snippet.name}</span>
-                    <span className="mt-0.5 block font-sans text-[11px] text-zinc-600">{snippet.hint}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
+        ) : active.needsInput !== false ? <textarea id="snippet-input" aria-label="Snippet input" value={input} onChange={(event) => setInput(event.target.value)} rows={9} placeholder="Paste or type text here…" className="w-full resize-y border-0 bg-[#08080b] p-4 text-[11px] leading-5 text-[#ece7f0] outline-none placeholder:text-[#625d69]" /> : <div className="grid min-h-[180px] place-items-center text-[11px] text-[#68616e]">This snippet generates output without input.</div>}
+        <div className="flex items-center justify-end gap-3 border-t border-[#2a2931] px-3 py-2"><button type="button" title="Search snippets" aria-label="Search snippets" onClick={() => document.getElementById("snippet-filter")?.focus()} className="text-[#a39ba9] hover:text-white"><Search className="h-4 w-4" /></button><button type="button" title="Filter snippets" aria-label="Filter snippets" onClick={() => document.getElementById("snippet-filter")?.focus()} className="text-[#a39ba9] hover:text-white"><Filter className="h-4 w-4" /></button><button type="button" title="Refresh output" aria-label="Refresh output" onClick={() => void execute()} className="text-[#a39ba9] hover:text-white"><RefreshCw className="h-4 w-4" /></button><button type="button" title="Run snippet" aria-label="Run snippet" onClick={() => void execute()} className="text-[#a39ba9] hover:text-white"><Play className="h-4 w-4" /></button><button type="button" title="New snippet input" aria-label="New snippet input" onClick={() => { setInput(""); setSecondary(""); setOutput(""); setError(null); }} className="text-[#a39ba9] hover:text-white"><Plus className="h-4 w-4" /></button></div>
+      </section>
 
-        <section className="rounded-2xl border border-white/[.08] bg-white/[.02] p-4 sm:p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-sans text-lg font-medium text-zinc-100">{active.name}</h2>
-              <p className="mt-0.5 font-sans text-xs text-zinc-500">{active.hint}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => void execute()}
-                className="inline-flex h-9 items-center rounded-lg border border-violet-400/35 bg-violet-500/20 px-4 text-xs font-medium text-violet-100"
-              >
-                Run
-              </button>
-              <button
-                type="button"
-                onClick={swapIo}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.1] px-3 text-xs font-medium text-zinc-300"
-              >
-                <ArrowLeftRight className="h-3.5 w-3.5" />
-                Swap
-              </button>
-              <button
-                type="button"
-                onClick={() => void copyOutput()}
-                disabled={!output}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[.1] px-3 text-xs font-medium text-zinc-300 disabled:opacity-40"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-violet-300" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-          </div>
+      {filter ? <div className="mt-3 flex items-center gap-2 border border-[#2a2931] bg-[#0b0b0e] px-3 py-2"><Search className="h-3.5 w-3.5 text-[#8a8390]" /><input id="snippet-filter" autoFocus value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter snippets…" className="w-full bg-transparent text-[10px] text-[#eee8f2] outline-none placeholder:text-[#625d69]" /></div> : <input id="snippet-filter" value={filter} onChange={(event) => setFilter(event.target.value)} className="sr-only" aria-label="Filter snippets" />}
 
-          {active.dual ? (
-            <div className="mb-3 grid gap-3 sm:grid-cols-2">
-              <div>
-                <label htmlFor="snippet-input" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-                  {active.primaryLabel ?? "Before"}
-                </label>
-                <textarea
-                  id="snippet-input"
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  rows={8}
-                  placeholder={active.primaryPlaceholder ?? "Before…"}
-                  className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-200 outline-none focus:border-violet-400/30"
-                />
-              </div>
-              <div>
-                <label htmlFor="snippet-secondary" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-                  {active.secondaryLabel ?? "After"}
-                </label>
-                <textarea
-                  id="snippet-secondary"
-                  value={secondary}
-                  onChange={(event) => setSecondary(event.target.value)}
-                  rows={8}
-                  placeholder={active.secondaryPlaceholder ?? "After…"}
-                  className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-200 outline-none focus:border-violet-400/30"
-                />
-              </div>
-            </div>
-          ) : active.needsInput !== false ? (
-            <div className="mb-3">
-              <label htmlFor="snippet-input" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-                Input
-              </label>
-              <textarea
-                id="snippet-input"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                rows={8}
-                placeholder="Paste text…"
-                className="w-full resize-y rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-200 outline-none focus:border-violet-400/30"
-              />
-            </div>
-          ) : null}
+      <section className="mt-3 border border-[#2a2931] bg-[#0b0b0e]">
+        <div className="flex items-center justify-between border-b border-[#2a2931] px-4 py-3 text-[10px] uppercase tracking-[.14em] text-[#b0a8b5]"><span>Snippets · {SNIPPETS.length}</span><span className="text-[#716a76]">{active.name}</span></div>
+        <div className="relative min-h-[150px] bg-[#09090c] px-4 py-4"><p className="text-[10px] uppercase tracking-[.14em] text-[#8d8692]">Flow</p><div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[#7b7482]"><span className="border border-[#36343e] px-3 py-2 text-[#dcd5e1]">{active.name}</span><ChevronRightPlaceholder /><span className="border border-dashed border-[#36343e] px-3 py-2">output</span></div><button type="button" onClick={() => void execute()} className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-[#8d8492] hover:text-[#eee8f2]">+ Add Step</button></div>
+        {error ? <p role="alert" className="border-t border-[#2a2931] px-4 py-3 text-[10px] text-rose-300">{error}</p> : null}
+        {output ? <div className="border-t border-[#2a2931] p-4"><div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[.12em] text-[#a39ba9]"><span>Output</span><div className="flex items-center gap-2"><button type="button" onClick={swapIo} className="text-[#8e8794] hover:text-white"><ArrowLeftRight className="h-3.5 w-3.5" /></button><button type="button" onClick={() => void copyOutput()} className="text-[#8e8794] hover:text-white">{copied ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}</button></div></div><pre className="max-h-52 overflow-auto whitespace-pre-wrap break-words border border-[#2a2931] bg-[#08080b] p-3 text-[10px] leading-5 text-[#cbc3d0]">{output}</pre></div> : null}
+      </section>
 
-          {error ? (
-            <p role="alert" className="mb-3 font-sans text-xs text-rose-300">
-              {error}
-            </p>
-          ) : null}
-
-          <div>
-            <label htmlFor="snippet-output" className="mb-1.5 block font-sans text-[11px] text-zinc-500">
-              Output
-            </label>
-            <textarea
-              id="snippet-output"
-              readOnly
-              value={output}
-              rows={10}
-              placeholder="Result…"
-              className="w-full resize-y rounded-xl border border-white/[.08] bg-[#090a0f] px-3 py-2.5 font-mono text-[12px] leading-5 text-zinc-300 outline-none"
-            />
-          </div>
-        </section>
-      </div>
+      <SnippetShelf title="My Collection" snippets={visible} activeId={activeId} onSelect={selectSnippet} />
+      <div className="mt-8"><SnippetShelf title="Market" snippets={market.map(([name, hint], index) => ({ id: `market-${index}` as SnippetId, name, hint, needsInput: false }))} activeId={null} onSelect={() => undefined} /></div>
     </div>
+  );
+}
+
+function ChevronRightPlaceholder() {
+  return <span className="text-[#837b89]">›</span>;
+}
+
+function SnippetShelf({
+  title,
+  snippets,
+  activeId,
+  onSelect,
+}: {
+  title: string;
+  snippets: Snippet[];
+  activeId: SnippetId | null;
+  onSelect: (id: SnippetId) => void;
+}) {
+  return (
+    <section className="mt-7">
+      <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[.14em] text-[#b0a8b5]"><span>{title}</span><span className="h-px flex-1 bg-[#2a2931]" /><span className="text-[#77717d]">⌄</span></div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {snippets.map((snippet) => <button key={snippet.id} type="button" onClick={() => onSelect(snippet.id)} className={cn("relative min-h-[158px] overflow-hidden border bg-[#0d0d11] p-3 text-left transition", activeId === snippet.id ? "border-[#8b6e98] bg-[#17131a]" : "border-[#2a2931] hover:border-[#5a5261]")}><span className="pointer-events-none absolute right-0 top-0 h-6 w-6 bg-[#08080b]" style={{ clipPath: "polygon(0 0, 100% 100%, 100% 0)" }} /><span className="block pr-3 text-[14px] leading-5 text-[#e8e1eb]">{snippet.name}</span><span className="mt-2 block max-h-16 overflow-hidden text-[10px] leading-5 text-[#aaa2af]">{snippet.hint || "—"}</span><span className="absolute bottom-3 right-3 text-[10px] text-[#b6a9bb]">{title === "Market" ? "▣" : ".EXE"}</span></button>)}
+      </div>
+    </section>
   );
 }
