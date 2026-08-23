@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Code2, FolderOpen, Link2, List, ShieldCheck, Terminal, type LucideIcon } from "lucide-react";
+import { Archive, Code2, FolderOpen, KeyRound, Link2, List, Terminal, type LucideIcon } from "lucide-react";
 import { FilesWorkspace } from "@/components/files-workspace";
 import { LogsWorkspace } from "@/components/logs-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
@@ -22,7 +22,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "relay", label: "Relay", icon: Link2 },
   { id: "terminal", label: "Terminal", icon: Terminal },
-  { id: "subkeeper", label: "SubKeeper", icon: ShieldCheck },
+  { id: "subkeeper", label: "SubKeeper", icon: KeyRound },
 ];
 
 export function PinquedWorkspace() {
