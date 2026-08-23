@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronRight, Clipboard, Code2, Folder, Loader2, Play, Plus, Search, Save } from "lucide-react";
+import { Check, ChevronRight, Clipboard, Code2, Folder, Loader2, Play, Plus, Search, Save, Trash2 } from "lucide-react";
 
 type RelayResult = { status: number; contentType: string; body: string; url: string };
 type RelayProject = { id: string; name: string; filename: string; source: string };
@@ -21,6 +21,23 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()`;
 
+const STORAGE_KEY = "xe1signal-pinqued-relay-v1";
+
+function parseProjects(raw: string | null): RelayProject[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is RelayProject => {
+      if (!item || typeof item !== "object") return false;
+      const project = item as Partial<RelayProject>;
+      return typeof project.id === "string" && typeof project.name === "string" && typeof project.filename === "string" && typeof project.source === "string";
+    });
+  } catch {
+    return [];
+  }
+}
+
 export function RelayWorkspace() {
   const [url, setUrl] = React.useState("");
   const [result, setResult] = React.useState<RelayResult | null>(null);
@@ -32,6 +49,29 @@ export function RelayWorkspace() {
   const [filename, setFilename] = React.useState("app.py");
   const [source, setSource] = React.useState(DEFAULT_SOURCE);
   const [activeProjectId, setActiveProjectId] = React.useState<string | null>(null);
+  const [hydrated, setHydrated] = React.useState(false);
+  const [notice, setNotice] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const saved = parseProjects(window.localStorage.getItem(STORAGE_KEY));
+    setProjects(saved);
+    if (saved[0]) {
+      setActiveProjectId(saved[0].id);
+      setProjectName(saved[0].name);
+      setFilename(saved[0].filename);
+      setSource(saved[0].source);
+    }
+    setHydrated(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (hydrated) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+  }, [hydrated, projects]);
+
+  function flash(message: string) {
+    setNotice(message);
+    window.setTimeout(() => setNotice((current) => (current === message ? null : current)), 1600);
+  }
 
   async function relay() {
     const value = url.trim();
@@ -72,11 +112,13 @@ export function RelayWorkspace() {
     const entryFilename = filename.trim() || "app.py";
     if (activeProjectId) {
       setProjects((current) => current.map((project) => project.id === activeProjectId ? { ...project, name, filename: entryFilename, source } : project));
+      flash("Relay saved");
       return;
     }
     const project: RelayProject = { id: `relay-${Date.now().toString(36)}`, name, filename: entryFilename, source };
     setProjects((current) => [...current, project]);
     setActiveProjectId(project.id);
+    flash("Relay saved");
   }
 
   function selectProject(project: RelayProject) {
@@ -87,12 +129,28 @@ export function RelayWorkspace() {
   }
 
   function newRelay() {
-    setActiveProjectId(null);
-    setProjectName("my-flask-app");
+    const baseName = projects.some((project) => project.name === "my-flask-app") ? `my-flask-app-${projects.length + 1}` : "my-flask-app";
+    const project: RelayProject = { id: `relay-${Date.now().toString(36)}`, name: baseName, filename: "app.py", source: DEFAULT_SOURCE };
+    setProjects((current) => [...current, project]);
+    setActiveProjectId(project.id);
+    setProjectName(baseName);
     setFilename("app.py");
     setSource(DEFAULT_SOURCE);
     setResult(null);
     setError(null);
+    flash("New relay created");
+  }
+
+  function deleteProject(id: string) {
+    const next = projects.filter((project) => project.id !== id);
+    setProjects(next);
+    if (activeProjectId !== id) return;
+    const replacement = next[0];
+    setActiveProjectId(replacement?.id ?? null);
+    setProjectName(replacement?.name ?? "my-flask-app");
+    setFilename(replacement?.filename ?? "app.py");
+    setSource(replacement?.source ?? DEFAULT_SOURCE);
+    flash("Relay deleted");
   }
 
   return (
@@ -101,6 +159,7 @@ export function RelayWorkspace() {
         <h1 className="text-[25px] tracking-[-.04em] text-[#f0ebf4]">Relay</h1>
         <button type="button" onClick={newRelay} className="inline-flex h-8 items-center gap-1.5 border border-[#494452] bg-[#1a1920] px-3 text-[10px] text-[#ece6f0] hover:border-[#817990]"><Plus className="h-3.5 w-3.5" /> New Relay</button>
       </div>
+      {notice ? <p role="status" className="mb-3 text-[10px] text-emerald-300">{notice}</p> : null}
 
       <section className="border border-[#2a2931] bg-[#0d0d11]">
         <div className="grid grid-cols-2 sm:grid-cols-4">
@@ -117,7 +176,12 @@ export function RelayWorkspace() {
       </section>
 
       <section className="mt-5 grid min-h-[420px] grid-cols-[228px_minmax(0,1fr)] border border-[#2a2931] bg-[#0d0d11]">
-        <aside className="border-r border-[#2a2931]"><div className="flex items-center justify-between border-b border-[#2a2931] px-4 py-3"><span className="text-[10px] uppercase tracking-[.12em]">Projects · {projects.length}</span><Search className="h-3.5 w-3.5 text-[#8a8390]" /></div><div className="p-3">{projects.length === 0 ? <p className="py-8 text-center text-[10px] text-[#77717e]">No relays yet</p> : <div className="space-y-1">{projects.map((project) => <button key={project.id} type="button" onClick={() => selectProject(project)} className={`flex w-full items-center gap-2 px-2 py-2 text-left text-[10px] ${project.id === activeProjectId ? "bg-[#211c27] text-[#f0e7f3]" : "text-[#99919e] hover:bg-white/[.03]"}`}><Folder className="h-3.5 w-3.5" />{project.name}</button>)}</div>}</div></aside>
+        <aside className="border-r border-[#2a2931]">
+          <div className="flex items-center justify-between border-b border-[#2a2931] px-4 py-3"><span className="text-[10px] uppercase tracking-[.12em]">Projects · {projects.length}</span><Search className="h-3.5 w-3.5 text-[#8a8390]" /></div>
+          <div className="p-3">
+            {projects.length === 0 ? <p className="py-8 text-center text-[10px] text-[#77717e]">No relays yet</p> : <div className="space-y-1">{projects.map((project) => <div key={project.id} className={`flex items-center gap-1 ${project.id === activeProjectId ? "bg-[#211c27]" : "hover:bg-white/[.03]"}`}><button type="button" onClick={() => selectProject(project)} className={`flex min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left text-[10px] ${project.id === activeProjectId ? "text-[#f0e7f3]" : "text-[#99919e]"}`}><Folder className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{project.name}</span></button><button type="button" aria-label={`Delete ${project.name}`} title="Delete relay" onClick={() => deleteProject(project.id)} className="mr-1 grid h-7 w-7 place-items-center text-[#77717e] hover:text-rose-300"><Trash2 className="h-3.5 w-3.5" /></button></div>)}</div>}
+          </div>
+        </aside>
         <div className="min-w-0"><div className="grid border-b border-[#2a2931] sm:grid-cols-[minmax(160px,1fr)_minmax(130px,1fr)_42px]"><label className="border-b border-[#2a2931] px-4 py-2.5 text-[9px] uppercase tracking-[.12em] text-[#a39ba9] sm:border-b-0 sm:border-r">Project name<input value={projectName} onChange={(event) => setProjectName(event.target.value)} className="mt-1 block w-full border-b border-[#4a4651] bg-transparent pb-1 text-[12px] normal-case tracking-normal text-[#ece7f0] outline-none focus:border-[#aba1b0]" /></label><label className="border-b border-[#2a2931] px-4 py-2.5 text-[9px] uppercase tracking-[.12em] text-[#a39ba9] sm:border-b-0 sm:border-r">Entry filename<input value={filename} onChange={(event) => setFilename(event.target.value)} className="mt-1 block w-full border-b border-[#4a4651] bg-transparent pb-1 text-[12px] normal-case tracking-normal text-[#ece7f0] outline-none focus:border-[#aba1b0]" /></label><button type="button" aria-label="Save relay project" title="Save relay project" onClick={saveProject} className="grid h-full min-h-16 place-items-center text-[#a39ba9] hover:bg-white/[.035] hover:text-white"><Save className="h-4 w-4" /></button></div><div className="relative min-h-[340px] bg-[#0b0b0e]"><div className="absolute left-0 top-0 w-12 select-none border-r border-[#1e1d23] py-3 text-right text-[10px] leading-6 text-[#68616e]">{source.split("\n").map((_, index) => <div key={index}>{index + 1}</div>)}</div><textarea aria-label="Relay source" value={source} onChange={(event) => setSource(event.target.value)} spellCheck={false} className="min-h-[340px] w-full resize-y bg-transparent py-3 pl-16 pr-4 font-mono text-[11px] leading-6 text-[#d7d0df] outline-none" /><div className="pointer-events-none absolute right-3 top-3 text-[#8e8794]"><Code2 className="h-4 w-4" /></div></div></div>
       </section>
 

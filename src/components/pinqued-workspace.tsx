@@ -5,11 +5,7 @@ import {
   Archive,
   Code2,
   Crosshair,
-  Files,
-  FolderOpen,
   Link2,
-  MessageCircle,
-  ScrollText,
   Terminal,
   type LucideIcon,
 } from "lucide-react";
@@ -17,9 +13,10 @@ import { PinquedReconWorkspace } from "@/components/pinqued-recon-workspace";
 import { RelayWorkspace } from "@/components/relay-workspace";
 import { SnippetsWorkspace } from "@/components/snippets-workspace";
 import { StashWorkspace } from "@/components/stash-workspace";
+import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type PinquedTool = "recon" | "snippets" | "relay" | "stash";
+type PinquedTool = "terminal" | "recon" | "snippets" | "relay" | "stash";
 
 type SidebarItem = {
   id: string;
@@ -29,15 +26,11 @@ type SidebarItem = {
 };
 
 const sidebarItems: SidebarItem[] = [
-  { id: "explorer", label: "File Explorer", icon: FolderOpen },
-  { id: "terminal", label: "Terminal", icon: Terminal },
+  { id: "terminal", label: "Terminal", icon: Terminal, tool: "terminal" },
   { id: "recon", label: "Recon", icon: Crosshair, tool: "recon" },
   { id: "snippets", label: "Snippets", icon: Code2, tool: "snippets" },
   { id: "relay", label: "Relay", icon: Link2, tool: "relay" },
   { id: "stash", label: "Stash", icon: Archive, tool: "stash" },
-  { id: "logs", label: "Logs", icon: ScrollText },
-  { id: "files", label: "Files", icon: Files },
-  { id: "party", label: "Party", icon: MessageCircle },
 ];
 
 export function PinquedWorkspace() {
@@ -79,6 +72,7 @@ export function PinquedWorkspace() {
 
           <main className="min-w-0 bg-[#09090c] p-3 sm:p-5">
             {activeTool === "recon" ? <PinquedReconWorkspace /> : null}
+            {activeTool === "terminal" ? <TerminalWorkspace /> : null}
             {activeTool === "snippets" ? <SnippetsWorkspace /> : null}
             {activeTool === "relay" ? <RelayWorkspace /> : null}
             {activeTool === "stash" ? <StashWorkspace /> : null}
