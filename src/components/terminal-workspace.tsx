@@ -5,11 +5,13 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal } from "@xterm/xterm";
 import { Loader2, Square, TerminalSquare } from "lucide-react";
+import { usePinqued } from "@/components/pinqued-session";
 import "@xterm/xterm/css/xterm.css";
 
 type Status = "idle" | "connecting" | "open" | "closed" | "error";
 
 export function TerminalWorkspace() {
+  const pinqued = usePinqued();
   const hostRef = React.useRef<HTMLDivElement>(null);
   const termRef = React.useRef<Terminal | null>(null);
   const fitRef = React.useRef<FitAddon | null>(null);
@@ -23,35 +25,59 @@ export function TerminalWorkspace() {
     setStatus((current) => (current === "open" || current === "connecting" ? "closed" : current));
   }, []);
 
+  const destroy = React.useCallback(async () => {
+    disconnect();
+    await pinqued.request("terminal/stop", { method: "POST" }).catch(() => undefined);
+  }, [disconnect, pinqued]);
+
   const connect = React.useCallback(async () => {
     setError(null);
     setStatus("connecting");
     try {
-      const response = await fetch("/api/terminal/ticket", { method: "POST" });
+      const response = await pinqued.request("terminal/start", { method: "POST" });
       if (!response.ok) {
-        throw new Error(response.status === 404 ? "Not available" : "Could not open terminal ticket");
+        const data = await response.json().catch(() => ({})) as { error?: string; message?: string };
+        throw new Error(data.error || data.message || "Could not start Pinqued terminal");
       }
-      const data = (await response.json()) as { ticket: string; wsPath: string };
-      const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      const ws = new WebSocket(
-        `${proto}://${window.location.host}${data.wsPath}?ticket=${encodeURIComponent(data.ticket)}`,
-      );
+      const token = pinqued.getToken();
+      if (!token) throw new Error("Connect to Pinqued again");
+      const ws = new WebSocket("wss://pinqued.top/socket.io/?EIO=4&transport=websocket");
       socketRef.current = ws;
 
       ws.onopen = () => {
-        setStatus("open");
-        const term = termRef.current;
-        const fit = fitRef.current;
-        if (term && fit) {
-          fit.fit();
-          ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
-        }
+        setStatus("connecting");
       };
       ws.onmessage = (event) => {
-        termRef.current?.write(typeof event.data === "string" ? event.data : new Uint8Array(event.data));
+        const packet = typeof event.data === "string" ? event.data : "";
+        if (packet.startsWith("0")) {
+          ws.send(`40/terminal,${JSON.stringify({ token })}`);
+          return;
+        }
+        if (packet === "2") {
+          ws.send("3");
+          return;
+        }
+        if (packet.startsWith("40/terminal")) {
+          setStatus("open");
+          const term = termRef.current;
+          const fit = fitRef.current;
+          if (term && fit) {
+            fit.fit();
+            ws.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: term.cols, rows: term.rows }])}`);
+          }
+          return;
+        }
+        if (!packet.startsWith("42/terminal,")) return;
+        try {
+          const [eventName, payload] = JSON.parse(packet.slice("42/terminal,".length)) as [string, unknown];
+          if (eventName === "terminal_output" && typeof payload === "string") termRef.current?.write(payload);
+          if (eventName === "terminal_exit") setStatus("closed");
+        } catch {
+          // Ignore malformed Socket.IO packets.
+        }
       };
       ws.onerror = () => {
-        setError("WebSocket error — is the terminal service running?");
+        setError("Pinqued terminal connection failed");
         setStatus("error");
       };
       ws.onclose = () => {
@@ -62,7 +88,7 @@ export function TerminalWorkspace() {
       setError(err instanceof Error ? err.message : "Connect failed");
       setStatus("error");
     }
-  }, []);
+  }, [pinqued]);
 
   React.useEffect(() => {
     if (!hostRef.current || termRef.current) return;
@@ -105,14 +131,14 @@ export function TerminalWorkspace() {
 
     const onData = term.onData((data) => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(data);
+        socketRef.current.send(`42/terminal,${JSON.stringify(["terminal_input", data])}`);
       }
     });
 
     const onResize = () => {
       fit.fit();
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+        socketRef.current.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: term.cols, rows: term.rows }])}`);
       }
     };
     window.addEventListener("resize", onResize);
@@ -133,12 +159,12 @@ export function TerminalWorkspace() {
   }, [connect, disconnect]);
 
   return (
-    <div aria-label="Root terminal" className="mx-auto max-w-[1100px]">
+    <div aria-label="Pinqued terminal" className="mx-auto max-w-[1100px]">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-sans text-[11px] uppercase tracking-[.14em] text-violet-300/85">Owner terminal</p>
+          <p className="font-sans text-[11px] uppercase tracking-[.14em] text-violet-300/85">Terminal</p>
           <p className="mt-1 max-w-xl font-sans text-sm text-zinc-500">
-            Root shell on this VPS over HTTPS — no TUN / local SSH proxy needed. Owner-only.
+            Pinqued terminal session. This shell runs on Pinqued, not on he1l.me.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -152,14 +178,7 @@ export function TerminalWorkspace() {
                   : "disconnected"}
           </span>
           {status === "open" ? (
-            <button
-              type="button"
-              onClick={disconnect}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] px-3 font-sans text-xs text-zinc-400 transition hover:border-rose-400/30 hover:text-rose-200"
-            >
-              <Square className="h-3.5 w-3.5" />
-              Disconnect
-            </button>
+            <div className="flex items-center gap-2"><button type="button" onClick={disconnect} className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] px-3 font-sans text-xs text-zinc-400 transition hover:text-white"><Square className="h-3.5 w-3.5" />Disconnect</button><button type="button" onClick={() => void destroy()} className="h-9 border border-rose-400/20 px-3 font-sans text-xs text-rose-300 hover:border-rose-400/40">Destroy</button></div>
           ) : (
             <button
               type="button"
@@ -188,7 +207,7 @@ export function TerminalWorkspace() {
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-          <span className="ml-2 font-mono text-[11px] text-zinc-500">root@he1l.me</span>
+          <span className="ml-2 font-mono text-[11px] text-zinc-500">terminal@pinqued</span>
         </div>
         <div ref={hostRef} className="h-[min(70vh,620px)] w-full p-2" />
       </div>
