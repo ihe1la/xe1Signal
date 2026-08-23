@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Code2, Crosshair, FolderOpen, Link2, List, Terminal, type LucideIcon } from "lucide-react";
+import { Archive, Code2, FolderOpen, Link2, List, Terminal, type LucideIcon } from "lucide-react";
 import { FilesWorkspace } from "@/components/files-workspace";
 import { LogsWorkspace } from "@/components/logs-workspace";
-import { PinquedReconWorkspace } from "@/components/pinqued-recon-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
 import { RelayWorkspace } from "@/components/relay-workspace";
 import { SnippetsWorkspace } from "@/components/snippets-workspace";
@@ -12,11 +11,10 @@ import { StashWorkspace } from "@/components/stash-workspace";
 import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type PinquedTool = "recon" | "snippets" | "stash" | "logs" | "files" | "relay" | "terminal";
+type PinquedTool = "snippets" | "stash" | "logs" | "files" | "relay" | "terminal";
 type SidebarItem = { id: PinquedTool; label: string; icon: LucideIcon };
 
 const sidebarItems: SidebarItem[] = [
-  { id: "recon", label: "Recon", icon: Crosshair },
   { id: "snippets", label: "Snippets", icon: Code2 },
   { id: "stash", label: "Stash", icon: Archive },
   { id: "logs", label: "Logs", icon: List },
@@ -26,7 +24,7 @@ const sidebarItems: SidebarItem[] = [
 ];
 
 export function PinquedWorkspace() {
-  const [activeTool, setActiveTool] = React.useState<PinquedTool>("recon");
+  const [activeTool, setActiveTool] = React.useState<PinquedTool>("snippets");
 
   return (
     <div aria-label="Pinqued tools section" className="pinqued-readable -mx-2 font-mono sm:-mx-4 lg:-mx-7">
@@ -55,7 +53,6 @@ export function PinquedWorkspace() {
 
           <main className="min-w-0 bg-[#09090c] p-3 sm:p-5">
             <PinquedSession>
-              {activeTool === "recon" ? <PinquedReconWorkspace /> : null}
               {activeTool === "snippets" ? <SnippetsWorkspace /> : null}
               {activeTool === "stash" ? <StashWorkspace /> : null}
               {activeTool === "logs" ? <LogsWorkspace /> : null}
