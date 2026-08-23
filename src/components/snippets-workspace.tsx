@@ -12,7 +12,7 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Star,
+  Bookmark,
   Trash2,
   X,
 } from "lucide-react";
@@ -1043,7 +1043,7 @@ function ApiSnippetShelf({
                       : "text-[#6f6975] hover:text-amber-200"
                   }
                 >
-                  <Star
+                  <Bookmark
                     className="h-3.5 w-3.5"
                     fill={snippet.isBookmarked ? "currentColor" : "none"}
                   />

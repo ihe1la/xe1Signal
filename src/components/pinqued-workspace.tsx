@@ -1,17 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Code2, FolderOpen, Link2, List, Terminal, type LucideIcon } from "lucide-react";
+import { Archive, Code2, FolderOpen, Link2, List, ShieldCheck, Terminal, type LucideIcon } from "lucide-react";
 import { FilesWorkspace } from "@/components/files-workspace";
 import { LogsWorkspace } from "@/components/logs-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
 import { RelayWorkspace } from "@/components/relay-workspace";
 import { SnippetsWorkspace } from "@/components/snippets-workspace";
 import { StashWorkspace } from "@/components/stash-workspace";
+import { SubkeeperWorkspace } from "@/components/subkeeper-workspace";
 import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type PinquedTool = "snippets" | "stash" | "logs" | "files" | "relay" | "terminal";
+type PinquedTool = "snippets" | "stash" | "logs" | "files" | "relay" | "terminal" | "subkeeper";
 type SidebarItem = { id: PinquedTool; label: string; icon: LucideIcon };
 
 const sidebarItems: SidebarItem[] = [
@@ -21,6 +22,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "relay", label: "Relay", icon: Link2 },
   { id: "terminal", label: "Terminal", icon: Terminal },
+  { id: "subkeeper", label: "SubKeeper", icon: ShieldCheck },
 ];
 
 export function PinquedWorkspace() {
@@ -46,9 +48,6 @@ export function PinquedWorkspace() {
                 );
               })}
             </nav>
-            <div className="absolute bottom-0 hidden w-[220px] border-t border-[#292830] bg-[#0c0c10] p-3 sm:block">
-              <div className="flex items-center gap-3 border border-[#36333c] px-3 py-2.5"><span className="grid h-7 w-7 place-items-center rounded-full border border-[#5a5261] bg-[#24202a] text-[10px] text-[#e6ddec]">h</span><div className="min-w-0"><p className="text-[11px] text-[#eee8f2]">hela</p><p className="mt-1 text-[9px] text-[#77717e]">Pinqued workspace</p></div><span className="ml-auto text-[#a29aa8]">···</span></div>
-            </div>
           </aside>
 
           <main className="min-w-0 bg-[#09090c] p-3 sm:p-5">
@@ -59,6 +58,7 @@ export function PinquedWorkspace() {
               {activeTool === "files" ? <FilesWorkspace /> : null}
               {activeTool === "relay" ? <RelayWorkspace /> : null}
               {activeTool === "terminal" ? <TerminalWorkspace /> : null}
+              {activeTool === "subkeeper" ? <SubkeeperWorkspace /> : null}
             </PinquedSession>
           </main>
         </div>
