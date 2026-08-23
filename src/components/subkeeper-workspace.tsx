@@ -10,9 +10,9 @@ export function SubkeeperWorkspace() {
           <h1 className="text-[25px] tracking-[-.04em] text-[#f0ebf4]">SubKeeper</h1>
           <p className="mt-1 text-[10px] text-[#77717e]">Connected tool from the l30on.top website.</p>
         </div>
-        <a href="https://l30on.top/subkeeper/" target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-2 border border-[#494452] bg-[#1a1920] px-3 text-[10px] text-[#b9b1be] hover:border-[#6a6270] hover:text-white">
-          l30on.top <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+        <span className="text-[9px] uppercase tracking-[.13em] text-[#6f6975]">
+          Credit: <a href="https://l30on.top/subkeeper/" target="_blank" rel="noopener noreferrer" className="text-[#a79bb0] hover:text-white">l30on.top <ExternalLink className="inline h-3 w-3" /></a>
+        </span>
       </header>
       <iframe
         title="SubKeeper from l30on.top"

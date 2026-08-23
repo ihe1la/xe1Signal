@@ -1039,8 +1039,8 @@ function ApiSnippetShelf({
                   onClick={() => onBookmark(snippet)}
                   className={
                     snippet.isBookmarked
-                      ? "text-amber-300"
-                      : "text-[#6f6975] hover:text-amber-200"
+                      ? "text-white"
+                      : "text-[#6f6975] hover:text-white"
                   }
                 >
                   <Bookmark
