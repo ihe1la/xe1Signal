@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
+import { pinquedError, publicStashUrl } from "@/lib/pinqued";
 
 type JsonRecord = Record<string, unknown>;
 type StashEntry = {
@@ -65,6 +66,7 @@ function normalizeEntry(value: unknown): StashEntry {
     text(raw.publicPath) ||
     text(raw.path) ||
     `/a/${id}`;
+  const publicPath = text(raw.publicPath) || text(raw.public_path) || path;
   const explicitUrl =
     text(raw.shareUrl) ||
     text(raw.share_url) ||
@@ -75,7 +77,7 @@ function normalizeEntry(value: unknown): StashEntry {
     name,
     comment: text(raw.comment),
     method: text(raw.last_method) || text(raw.method) || "GET",
-    path,
+    path: publicPath.startsWith("/") ? publicPath : path,
     status: number(raw.last_status ?? raw.status, 200),
     client:
       text(raw.last_client_ip) ||
@@ -92,7 +94,7 @@ function normalizeEntry(value: unknown): StashEntry {
     ),
     body: text(raw.content) || text(raw.raw_content),
     hits: number(raw.hitCount ?? raw.hit_count ?? raw.hits),
-    shareUrl: explicitUrl || new URL(path, "https://pinqued.top").toString(),
+    shareUrl: explicitUrl || publicStashUrl(publicPath, id),
   };
 }
 
@@ -180,7 +182,7 @@ export function StashWorkspace() {
       const response = await pinqued.request("stashes");
       const data = (await response.json().catch(() => ({}))) as JsonRecord;
       if (!response.ok)
-        throw new Error(text(data.error) || "Could not load Pinqued stash");
+        throw new Error(pinquedError(data, "Could not load Pinqued stash"));
       const source = Array.isArray(data.data)
         ? data.data
         : Array.isArray(data.items)
@@ -276,7 +278,7 @@ export function StashWorkspace() {
       );
       const data = (await response.json().catch(() => ({}))) as JsonRecord;
       if (!response.ok)
-        throw new Error(text(data.error) || "Could not save stash");
+        throw new Error(pinquedError(data, "Could not save stash"));
       setEditorId(null);
       await loadEntries();
     } catch (caught) {
@@ -296,7 +298,7 @@ export function StashWorkspace() {
     );
     if (!response.ok) {
       const data = (await response.json().catch(() => ({}))) as JsonRecord;
-      setError(text(data.error) || "Could not delete stash");
+      setError(pinquedError(data, "Could not delete stash"));
       return;
     }
     await loadEntries();

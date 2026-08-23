@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Code2, Crosshair, Link2, Terminal, type LucideIcon } from "lucide-react";
+import { Archive, Code2, Crosshair, FolderOpen, Link2, List, Terminal, type LucideIcon } from "lucide-react";
+import { FilesWorkspace } from "@/components/files-workspace";
+import { LogsWorkspace } from "@/components/logs-workspace";
 import { PinquedReconWorkspace } from "@/components/pinqued-recon-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
 import { RelayWorkspace } from "@/components/relay-workspace";
@@ -10,15 +12,17 @@ import { StashWorkspace } from "@/components/stash-workspace";
 import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
 
-type PinquedTool = "terminal" | "recon" | "snippets" | "relay" | "stash";
+type PinquedTool = "recon" | "snippets" | "stash" | "logs" | "files" | "relay" | "terminal";
 type SidebarItem = { id: PinquedTool; label: string; icon: LucideIcon };
 
 const sidebarItems: SidebarItem[] = [
-  { id: "terminal", label: "Terminal", icon: Terminal },
   { id: "recon", label: "Recon", icon: Crosshair },
   { id: "snippets", label: "Snippets", icon: Code2 },
-  { id: "relay", label: "Relay", icon: Link2 },
   { id: "stash", label: "Stash", icon: Archive },
+  { id: "logs", label: "Logs", icon: List },
+  { id: "files", label: "Files", icon: FolderOpen },
+  { id: "relay", label: "Relay", icon: Link2 },
+  { id: "terminal", label: "Terminal", icon: Terminal },
 ];
 
 export function PinquedWorkspace() {
@@ -52,10 +56,12 @@ export function PinquedWorkspace() {
           <main className="min-w-0 bg-[#09090c] p-3 sm:p-5">
             <PinquedSession>
               {activeTool === "recon" ? <PinquedReconWorkspace /> : null}
-              {activeTool === "terminal" ? <TerminalWorkspace /> : null}
               {activeTool === "snippets" ? <SnippetsWorkspace /> : null}
-              {activeTool === "relay" ? <RelayWorkspace /> : null}
               {activeTool === "stash" ? <StashWorkspace /> : null}
+              {activeTool === "logs" ? <LogsWorkspace /> : null}
+              {activeTool === "files" ? <FilesWorkspace /> : null}
+              {activeTool === "relay" ? <RelayWorkspace /> : null}
+              {activeTool === "terminal" ? <TerminalWorkspace /> : null}
             </PinquedSession>
           </main>
         </div>

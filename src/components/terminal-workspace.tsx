@@ -6,6 +6,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal } from "@xterm/xterm";
 import { Loader2, Square, TerminalSquare } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
+import { pinquedError } from "@/lib/pinqued";
 import "@xterm/xterm/css/xterm.css";
 
 type Status = "idle" | "connecting" | "open" | "closed" | "error";
@@ -36,8 +37,8 @@ export function TerminalWorkspace() {
     try {
       const response = await pinqued.request("terminal/start", { method: "POST" });
       if (!response.ok) {
-        const data = await response.json().catch(() => ({})) as { error?: string; message?: string };
-        throw new Error(data.error || data.message || "Could not start Pinqued terminal");
+        const data = await response.json().catch(() => ({}));
+        throw new Error(pinquedError(data, "Could not start Pinqued terminal"));
       }
       const ticketResponse = await fetch("/api/terminal/ticket", { method: "POST" });
       if (!ticketResponse.ok) throw new Error("Could not open terminal bridge");
@@ -141,16 +142,16 @@ export function TerminalWorkspace() {
   }, [connect, disconnect]);
 
   return (
-    <div aria-label="Pinqued terminal" className="mx-auto max-w-[1100px]">
+    <div aria-label="Pinqued terminal" className="font-mono text-[#e9e3ee]">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-sans text-[11px] uppercase tracking-[.14em] text-violet-300/85">Terminal</p>
-          <p className="mt-1 max-w-xl font-sans text-sm text-zinc-500">
-            Pinqued terminal session. This shell runs on Pinqued, not on he1l.me.
+          <h1 className="text-[25px] tracking-[-.04em] text-[#f0ebf4]">Terminal</h1>
+          <p className="mt-1 max-w-xl text-[11px] text-[#8a8390]">
+            Live Pinqued container. Input is forwarded to 01x.site, not this machine.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[11px] text-zinc-500">
+          <span className="text-[11px] text-[#8a8390]">
             {status === "connecting"
               ? "connecting…"
               : status === "open"
@@ -160,12 +161,15 @@ export function TerminalWorkspace() {
                   : "disconnected"}
           </span>
           {status === "open" ? (
-            <div className="flex items-center gap-2"><button type="button" onClick={disconnect} className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/[.08] px-3 font-sans text-xs text-zinc-400 transition hover:text-white"><Square className="h-3.5 w-3.5" />Disconnect</button><button type="button" onClick={() => void destroy()} className="h-9 border border-rose-400/20 px-3 font-sans text-xs text-rose-300 hover:border-rose-400/40">Destroy</button></div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={disconnect} className="inline-flex h-8 items-center gap-2 border border-[#494452] px-3 text-[10px] text-[#d7d0df] hover:text-white"><Square className="h-3.5 w-3.5" />Disconnect</button>
+              <button type="button" onClick={() => void destroy()} className="h-8 border border-rose-400/20 px-3 text-[10px] text-rose-300 hover:border-rose-400/40">Destroy</button>
+            </div>
           ) : (
             <button
               type="button"
               onClick={() => void connect()}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/35 bg-violet-500/20 px-3 font-sans text-xs text-violet-100 transition hover:border-violet-300/50"
+              className="inline-flex h-8 items-center gap-2 border border-[#776276] bg-[#2a2033] px-3 text-[10px] text-[#f0e4f4]"
             >
               {status === "connecting" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -179,17 +183,17 @@ export function TerminalWorkspace() {
       </div>
 
       {error ? (
-        <p className="mb-3 font-sans text-[12px] text-rose-300/90" role="alert">
+        <p className="mb-3 text-[10px] text-rose-300" role="alert">
           {error}
         </p>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-violet-400/20 bg-[#08090d] shadow-[0_18px_50px_rgba(0,0,0,.45)]">
-        <div className="flex items-center gap-2 border-b border-white/[.06] px-4 py-2.5">
+      <div className="overflow-hidden border border-[#2a2931] bg-[#08080b]">
+        <div className="flex items-center gap-2 border-b border-[#2a2931] px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-          <span className="ml-2 font-mono text-[11px] text-zinc-500">terminal@pinqued</span>
+          <span className="ml-2 text-[11px] text-[#8a8390]">terminal@pinqued</span>
         </div>
         <div ref={hostRef} className="h-[min(70vh,620px)] w-full p-2" />
       </div>

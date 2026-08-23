@@ -17,9 +17,13 @@ export function usePinqued() {
 
 export function PinquedSession({ children }: { children: React.ReactNode }) {
   const request = React.useCallback(async (path: string, init: RequestInit = {}) => {
+    const headers = new Headers(init.headers);
+    if (init.body && typeof init.body === "string" && !headers.has("content-type")) {
+      headers.set("content-type", "application/json");
+    }
     return fetch(`/api/pinqued/proxy/${path.replace(/^\/+/, "")}`, {
       ...init,
-      headers: { ...init.headers },
+      headers,
     });
   }, []);
 

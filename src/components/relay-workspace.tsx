@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Check, Copy, Folder, Loader2, Play, Plus, Save, Search, Square, Trash2 } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
+import { pinquedError } from "@/lib/pinqued";
 
 type Relay = {
   id: string;
@@ -30,14 +31,6 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()`;
 
-function apiError(value: unknown, fallback: string) {
-  if (!value || typeof value !== "object") return fallback;
-  const error = (value as { error?: unknown }).error;
-  if (typeof error === "string") return error;
-  if (error && typeof error === "object" && typeof (error as { message?: unknown }).message === "string") return (error as { message: string }).message;
-  return fallback;
-}
-
 export function RelayWorkspace() {
   const pinqued = usePinqued();
   const [relays, setRelays] = React.useState<Relay[]>([]);
@@ -58,7 +51,7 @@ export function RelayWorkspace() {
     try {
       const response = await pinqued.request("relays");
       const payload = await response.json().catch(() => ({})) as { data?: Relay[]; meta?: { maxActive?: number } };
-      if (!response.ok) throw new Error(apiError(payload, "Could not load relays"));
+      if (!response.ok) throw new Error(pinquedError(payload, "Could not load relays"));
       const next = Array.isArray(payload.data) ? payload.data : [];
       setRelays(next);
       setMaxActive(payload.meta?.maxActive ?? 5);
@@ -116,7 +109,7 @@ export function RelayWorkspace() {
         body: JSON.stringify({ name: name.trim(), filename: filename.trim(), code }),
       });
       const payload = await response.json().catch(() => ({})) as { data?: Relay };
-      if (!response.ok) throw new Error(apiError(payload, "Could not save relay"));
+      if (!response.ok) throw new Error(pinquedError(payload, "Could not save relay"));
       if (payload.data) setSelectedId(payload.data.id);
       await load();
     } catch (caught) {
@@ -132,7 +125,7 @@ export function RelayWorkspace() {
     setError(null);
     const response = await pinqued.request(`relays/${encodeURIComponent(selected.id)}/${action}`, { method: "POST" });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) setError(apiError(payload, `Could not ${action} relay`));
+    if (!response.ok) setError(pinquedError(payload, `Could not ${action} relay`));
     await load();
     setBusy(false);
   }
@@ -141,7 +134,7 @@ export function RelayWorkspace() {
     if (!selected) return;
     setBusy(true);
     const response = await pinqued.request(`relays/${encodeURIComponent(selected.id)}`, { method: "DELETE" });
-    if (!response.ok) setError(apiError(await response.json().catch(() => ({})), "Could not delete relay"));
+    if (!response.ok) setError(pinquedError(await response.json().catch(() => ({})), "Could not delete relay"));
     resetEditor();
     await load();
     setBusy(false);
