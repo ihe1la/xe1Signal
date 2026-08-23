@@ -3,14 +3,11 @@ import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
-import pty from "node-pty";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 
 const OWNER_USERNAME = "ihe1la";
 const HOST = process.env.TERMINAL_WS_HOST || "127.0.0.1";
 const PORT = Number(process.env.TERMINAL_WS_PORT || 3010);
-const SHELL = process.env.TERMINAL_SHELL || "/bin/bash";
-const SHELL_ARGS = (process.env.TERMINAL_SHELL_ARGS || "-l").split(" ").filter(Boolean);
 
 function loadEnvFile() {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -94,36 +91,49 @@ server.on("upgrade", (request, socket, head) => {
 });
 
 wss.on("connection", (ws) => {
-  let term;
-  try {
-    term = pty.spawn(SHELL, SHELL_ARGS, {
-      name: "xterm-256color",
-      cols: 80,
-      rows: 24,
-      cwd: process.env.HOME || "/root",
-      env: {
-        ...process.env,
-        TERM: "xterm-256color",
-        COLORTERM: "truecolor",
-      },
-    });
-  } catch (error) {
-    ws.send(`\r\nfailed to spawn shell: ${error instanceof Error ? error.message : error}\r\n`);
+  const apiKey = process.env.PINQUED_API_KEY;
+  if (!apiKey) {
+    ws.send("\r\nPinqued API key is not configured.\r\n");
     ws.close();
     return;
   }
+  const upstream = new WebSocket("wss://01x.site/socket.io/?EIO=4&transport=websocket", {
+    headers: { Origin: "https://01x.site" },
+  });
+  let connected = false;
 
-  ws.send("\r\n\x1b[1;35mroot@xe1signal\x1b[0m — owner terminal\r\n\r\n");
-
-  term.onData((data) => {
-    if (ws.readyState === ws.OPEN) ws.send(data);
+  upstream.on("message", (raw) => {
+    const packet = raw.toString("utf8");
+    if (packet.startsWith("0")) {
+      upstream.send(`40/terminal,${JSON.stringify({ token: apiKey })}`);
+      return;
+    }
+    if (packet === "2") {
+      upstream.send("3");
+      return;
+    }
+    if (packet.startsWith("40/terminal")) {
+      connected = true;
+      if (ws.readyState === WebSocket.OPEN) ws.send("\r\n\x1b[1;35mterminal@pinqued\x1b[0m\r\n\r\n");
+      return;
+    }
+    if (!packet.startsWith("42/terminal,")) return;
+    try {
+      const [eventName, payload] = JSON.parse(packet.slice("42/terminal,".length));
+      if (eventName === "terminal_output" && typeof payload === "string" && ws.readyState === WebSocket.OPEN) ws.send(payload);
+      if (eventName === "api_key_revoked" && ws.readyState === WebSocket.OPEN) ws.send("\r\n[Pinqued API key revoked]\r\n");
+      if ((eventName === "terminal_exit" || eventName === "api_key_revoked") && ws.readyState === WebSocket.OPEN) ws.close();
+    } catch {
+      /* ignore malformed upstream packet */
+    }
   });
 
-  term.onExit(({ exitCode }) => {
-    if (ws.readyState === ws.OPEN) {
-      ws.send(`\r\n[shell exited ${exitCode}]\r\n`);
-      ws.close();
-    }
+  upstream.on("error", () => {
+    if (ws.readyState === WebSocket.OPEN) ws.send("\r\n[Pinqued terminal connection failed]\r\n");
+  });
+
+  upstream.on("close", () => {
+    if (ws.readyState === WebSocket.OPEN) ws.close();
   });
 
   ws.on("message", (raw) => {
@@ -132,25 +142,21 @@ wss.on("connection", (ws) => {
       try {
         const msg = JSON.parse(text);
         if (msg.type === "resize" && msg.cols && msg.rows) {
-          term.resize(Number(msg.cols), Number(msg.rows));
+          if (connected && upstream.readyState === WebSocket.OPEN) upstream.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: Number(msg.cols), rows: Number(msg.rows) }])}`);
           return;
         }
       } catch {
         /* fall through as stdin */
       }
     }
-    term.write(text);
+    if (connected && upstream.readyState === WebSocket.OPEN) upstream.send(`42/terminal,${JSON.stringify(["terminal_input", text])}`);
   });
 
   ws.on("close", () => {
-    try {
-      term.kill();
-    } catch {
-      /* ignore */
-    }
+    if (upstream.readyState === WebSocket.OPEN || upstream.readyState === WebSocket.CONNECTING) upstream.close();
   });
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`[terminal-ws] listening on ${HOST}:${PORT} shell=${SHELL}`);
+  console.log(`[terminal-ws] listening on ${HOST}:${PORT} upstream=01x.site`);
 });

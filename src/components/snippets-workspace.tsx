@@ -20,6 +20,17 @@ import {
   parseUrl,
 } from "@/lib/tools";
 import { cn } from "@/lib/utils";
+import { usePinqued } from "@/components/pinqued-session";
+
+type ApiSnippet = {
+  id: string;
+  name: string;
+  comment?: string;
+  content: string;
+  isExecutable: boolean;
+  isBookmarked: boolean;
+  inCollection?: boolean;
+};
 
 type SnippetId =
   | "url-encode"
@@ -129,6 +140,7 @@ async function runSnippet(id: SnippetId, input: string, secondary: string) {
 }
 
 export function SnippetsWorkspace() {
+  const pinqued = usePinqued();
   const [activeId, setActiveId] = React.useState<SnippetId>("base64-encode");
   const [input, setInput] = React.useState("");
   const [secondary, setSecondary] = React.useState("");
@@ -137,6 +149,22 @@ export function SnippetsWorkspace() {
   const [copied, setCopied] = React.useState(false);
   const [filter, setFilter] = React.useState("");
   const [filterOpen, setFilterOpen] = React.useState(false);
+  const [collection, setCollection] = React.useState<ApiSnippet[]>([]);
+  const [marketSnippets, setMarketSnippets] = React.useState<ApiSnippet[]>([]);
+
+  const loadApiSnippets = React.useCallback(async () => {
+    const [collectionResponse, marketResponse] = await Promise.all([
+      pinqued.request("snippets?scope=collection"),
+      pinqued.request("snippets?scope=market"),
+    ]);
+    if (!collectionResponse.ok || !marketResponse.ok) return;
+    const collectionPayload = await collectionResponse.json() as { data?: ApiSnippet[] };
+    const marketPayload = await marketResponse.json() as { data?: ApiSnippet[] };
+    setCollection(Array.isArray(collectionPayload.data) ? collectionPayload.data : []);
+    setMarketSnippets(Array.isArray(marketPayload.data) ? marketPayload.data : []);
+  }, [pinqued]);
+
+  React.useEffect(() => { void loadApiSnippets(); }, [loadApiSnippets]);
 
   const active = SNIPPETS.find((snippet) => snippet.id === activeId) ?? SNIPPETS[0];
   const visible = SNIPPETS.filter((snippet) => {
@@ -144,17 +172,6 @@ export function SnippetsWorkspace() {
     if (!needle) return true;
     return `${snippet.name} ${snippet.hint}`.toLowerCase().includes(needle);
   });
-  const market = [
-    ["JSFuck Encode", "encodes the input and returns a JSFuck payload"],
-    ["extract", "No more remembering the flags for tar vs unzip vs gzip"],
-    ["clip", "simple bash utility script instead of cat'ing and selecting"],
-    ["preview", "bash function which calls jq to output values for key(s)"],
-    ["URL-Bypass", "All the ways to bypass a URL (almost)"],
-    ["Unicode Escape", "Escape unicode characters"],
-    ["Minify JSON", "Compress JSON without changing its meaning"],
-    ["Beautify JSON", "Make JSON readable again"],
-  ];
-
   async function execute(nextId = activeId) {
     setError(null);
     setCopied(false);
@@ -197,6 +214,22 @@ export function SnippetsWorkspace() {
     setError(null);
   }
 
+  function selectApiSnippet(snippet: ApiSnippet) {
+    setInput(snippet.content);
+    setOutput(snippet.isExecutable ? "" : snippet.content);
+    setError(null);
+  }
+
+  async function addMarketSnippet(snippet: ApiSnippet) {
+    const response = await pinqued.request(`snippets/${encodeURIComponent(snippet.id)}/add`, { method: "POST" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { error?: { message?: string } };
+      setError(payload.error?.message || "Could not add snippet");
+      return;
+    }
+    await loadApiSnippets();
+  }
+
   return (
     <div aria-label="Snippets section" className="font-mono text-[#e9e3ee]">
       <h1 className="mb-5 text-[25px] tracking-[-.04em] text-[#f0ebf4]">Snippets</h1>
@@ -221,14 +254,27 @@ export function SnippetsWorkspace() {
         {output ? <div className="border-t border-[#2a2931] p-4"><div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[.12em] text-[#a39ba9]"><span>Output</span><div className="flex items-center gap-2"><button type="button" onClick={swapIo} className="text-[#8e8794] hover:text-white"><ArrowLeftRight className="h-3.5 w-3.5" /></button><button type="button" onClick={() => void copyOutput()} className="text-[#8e8794] hover:text-white">{copied ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}</button></div></div><pre className="max-h-52 overflow-auto whitespace-pre-wrap break-words border border-[#2a2931] bg-[#08080b] p-3 text-[10px] leading-5 text-[#cbc3d0]">{output}</pre></div> : null}
       </section>
 
-      <SnippetShelf title="My Collection" snippets={visible} activeId={activeId} onSelect={selectSnippet} />
-      <div className="mt-8"><SnippetShelf title="Market" snippets={market.map(([name, hint], index) => ({ id: `market-${index}` as SnippetId, name, hint, needsInput: false }))} activeId={null} onSelect={() => undefined} /></div>
+      <ApiSnippetShelf title="My Collection" snippets={collection} onSelect={selectApiSnippet} />
+      <div className="mt-8"><ApiSnippetShelf title="Market" snippets={marketSnippets} onSelect={selectApiSnippet} onAdd={(snippet) => void addMarketSnippet(snippet)} /></div>
+      <div className="mt-8"><SnippetShelf title="Built-ins" snippets={visible} activeId={activeId} onSelect={selectSnippet} /></div>
     </div>
   );
 }
 
 function ChevronRightPlaceholder() {
   return <span className="text-[#837b89]">›</span>;
+}
+
+function ApiSnippetShelf({ title, snippets, onSelect, onAdd }: { title: string; snippets: ApiSnippet[]; onSelect: (snippet: ApiSnippet) => void; onAdd?: (snippet: ApiSnippet) => void }) {
+  return (
+    <section className="mt-7">
+      <div className="mb-3 flex items-center gap-3 text-[10px] uppercase tracking-[.14em] text-[#b0a8b5]"><span>{title}</span><span className="h-px flex-1 bg-[#2a2931]" /><span className="text-[#77717d]">{snippets.length}</span></div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {snippets.map((snippet) => <div key={snippet.id} className="relative min-h-[158px] overflow-hidden border border-[#2a2931] bg-[#0d0d11] p-3 hover:border-[#5a5261]"><button type="button" onClick={() => onSelect(snippet)} className="block w-full text-left"><span className="block pr-3 text-[14px] leading-5 text-[#e8e1eb]">{snippet.name}</span><span className="mt-2 block max-h-16 overflow-hidden text-[10px] leading-5 text-[#aaa2af]">{snippet.comment || "—"}</span></button>{onAdd && !snippet.inCollection ? <button type="button" onClick={() => onAdd(snippet)} className="absolute bottom-3 left-3 text-[9px] text-[#9c8da4] hover:text-white">+ add</button> : null}<span className="absolute bottom-3 right-3 text-[10px] text-[#b6a9bb]">{snippet.isExecutable ? ".EXE" : "▣"}</span></div>)}
+        {!snippets.length ? <p className="py-8 text-[10px] text-[#77717e]">No snippets</p> : null}
+      </div>
+    </section>
+  );
 }
 
 function SnippetShelf({

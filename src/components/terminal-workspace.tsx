@@ -39,42 +39,24 @@ export function TerminalWorkspace() {
         const data = await response.json().catch(() => ({})) as { error?: string; message?: string };
         throw new Error(data.error || data.message || "Could not start Pinqued terminal");
       }
-      const token = pinqued.getToken();
-      if (!token) throw new Error("Connect to Pinqued again");
-      const ws = new WebSocket("wss://pinqued.top/socket.io/?EIO=4&transport=websocket");
+      const ticketResponse = await fetch("/api/terminal/ticket", { method: "POST" });
+      if (!ticketResponse.ok) throw new Error("Could not open terminal bridge");
+      const ticket = await ticketResponse.json() as { ticket: string; wsPath: string };
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${protocol}://${window.location.host}${ticket.wsPath}?ticket=${encodeURIComponent(ticket.ticket)}`);
       socketRef.current = ws;
 
       ws.onopen = () => {
-        setStatus("connecting");
+        setStatus("open");
+        const term = termRef.current;
+        const fit = fitRef.current;
+        if (term && fit) {
+          fit.fit();
+          ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+        }
       };
       ws.onmessage = (event) => {
-        const packet = typeof event.data === "string" ? event.data : "";
-        if (packet.startsWith("0")) {
-          ws.send(`40/terminal,${JSON.stringify({ token })}`);
-          return;
-        }
-        if (packet === "2") {
-          ws.send("3");
-          return;
-        }
-        if (packet.startsWith("40/terminal")) {
-          setStatus("open");
-          const term = termRef.current;
-          const fit = fitRef.current;
-          if (term && fit) {
-            fit.fit();
-            ws.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: term.cols, rows: term.rows }])}`);
-          }
-          return;
-        }
-        if (!packet.startsWith("42/terminal,")) return;
-        try {
-          const [eventName, payload] = JSON.parse(packet.slice("42/terminal,".length)) as [string, unknown];
-          if (eventName === "terminal_output" && typeof payload === "string") termRef.current?.write(payload);
-          if (eventName === "terminal_exit") setStatus("closed");
-        } catch {
-          // Ignore malformed Socket.IO packets.
-        }
+        termRef.current?.write(typeof event.data === "string" ? event.data : new Uint8Array(event.data));
       };
       ws.onerror = () => {
         setError("Pinqued terminal connection failed");
@@ -131,14 +113,14 @@ export function TerminalWorkspace() {
 
     const onData = term.onData((data) => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(`42/terminal,${JSON.stringify(["terminal_input", data])}`);
+        socketRef.current.send(data);
       }
     });
 
     const onResize = () => {
       fit.fit();
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: term.cols, rows: term.rows }])}`);
+        socketRef.current.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
       }
     };
     window.addEventListener("resize", onResize);
