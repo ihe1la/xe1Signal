@@ -77,9 +77,9 @@ export function TerminalWorkspace() {
     if (!hostRef.current || termRef.current) return;
     const term = new Terminal({
       cursorBlink: true,
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: 13,
-      lineHeight: 1.3,
+      fontFamily: "var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      fontSize: 14,
+      lineHeight: 1.4,
       theme: {
         background: "#08090d",
         foreground: "#e4e4e7",

@@ -29,7 +29,7 @@ export function PinquedWorkspace() {
   const [activeTool, setActiveTool] = React.useState<PinquedTool>("recon");
 
   return (
-    <div aria-label="Pinqued tools section" className="-mx-2 font-mono sm:-mx-4 lg:-mx-7">
+    <div aria-label="Pinqued tools section" className="pinqued-readable -mx-2 font-mono sm:-mx-4 lg:-mx-7">
       <div className="overflow-hidden border border-[#292830] bg-[#09090c] shadow-[0_20px_55px_rgba(0,0,0,.28)]">
         <div className="grid min-h-[760px] grid-cols-[68px_minmax(0,1fr)] sm:grid-cols-[220px_minmax(0,1fr)]">
           <aside className="relative border-r border-[#292830] bg-[#09090c]">

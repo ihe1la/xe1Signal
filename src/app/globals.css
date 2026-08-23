@@ -80,6 +80,33 @@ html { background: #08090d; }
 button, a { -webkit-tap-highlight-color: transparent; }
 .font-mono { font-variant-ligatures: none; }
 
+/* Pinqued keeps JetBrains Mono, with slightly larger type for reading. */
+.pinqued-readable {
+  font-family: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-ligatures: none;
+}
+
+.pinqued-readable .text-\[9px\] {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.pinqued-readable .text-\[10px\] {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.pinqued-readable .text-\[11px\] {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.pinqued-readable textarea,
+.pinqued-readable pre {
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
 @layer components {
   .grain-overlay {
     pointer-events: none;
