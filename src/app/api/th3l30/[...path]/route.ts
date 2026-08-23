@@ -47,9 +47,10 @@ async function proxy(request: Request, context: Context) {
     const location = upstream.headers.get("location");
     if (location && upstream.status >= 300 && upstream.status < 400) {
       const resolved = new URL(location, UPSTREAM);
-      const response = NextResponse.redirect(new URL(`${PROXY_PREFIX}${resolved.pathname}${resolved.search}`, request.url), upstream.status);
-      response.headers.set("cache-control", "no-store");
-      return response;
+      return new NextResponse(null, {
+        status: upstream.status,
+        headers: { location: `${PROXY_PREFIX}${resolved.pathname}${resolved.search}`, "cache-control": "no-store" },
+      });
     }
 
     const responseType = upstream.headers.get("content-type") || "application/octet-stream";
@@ -77,4 +78,3 @@ export const POST = proxy;
 export const PUT = proxy;
 export const PATCH = proxy;
 export const DELETE = proxy;
-
