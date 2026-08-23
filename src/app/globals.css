@@ -70,40 +70,53 @@
   body {
     @apply bg-background text-foreground;
     min-width: 320px;
-    background-image: radial-gradient(circle at 58% 18%, rgba(91, 78, 150, 0.045), transparent 32%);
+    background-image: radial-gradient(
+      circle at 58% 18%,
+      rgba(91, 78, 150, 0.045),
+      transparent 32%
+    );
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-html { background: #08090d; }
-button, a { -webkit-tap-highlight-color: transparent; }
-.font-mono { font-variant-ligatures: none; }
+html {
+  background: #08090d;
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+.font-mono {
+  font-variant-ligatures: none;
+}
 
 /* Pinqued keeps JetBrains Mono, with slightly larger type for reading. */
 .pinqued-readable {
-  font-family: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family:
+    var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
   font-variant-ligatures: none;
 }
 
 .pinqued-readable .text-\[9px\] {
-  font-size: 0.75rem;
+  font-size: 0.78125rem;
   line-height: 1.45;
 }
 
 .pinqued-readable .text-\[10px\] {
-  font-size: 0.8125rem;
+  font-size: 0.84375rem;
   line-height: 1.5;
 }
 
 .pinqued-readable .text-\[11px\] {
-  font-size: 0.875rem;
+  font-size: 0.90625rem;
   line-height: 1.5;
 }
 
 .pinqued-readable textarea,
 .pinqued-readable pre {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.65;
 }
 
@@ -172,7 +185,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
   }
 
   .glow-subtle {
-    box-shadow: 0 0 20px -4px hsl(263 70% 50% / 0.1), 0 0 8px -2px hsl(263 70% 50% / 0.08);
+    box-shadow:
+      0 0 20px -4px hsl(263 70% 50% / 0.1),
+      0 0 8px -2px hsl(263 70% 50% / 0.08);
   }
 }
 
@@ -227,8 +242,7 @@ a[href^="/inbox/"] > img.grayscale {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    linear-gradient(160deg, rgba(139, 92, 246, 0.06), transparent 42%),
-    #0d0e14;
+    linear-gradient(160deg, rgba(139, 92, 246, 0.06), transparent 42%), #0d0e14;
   padding: 13px 14px;
   box-shadow:
     0 0 0 1px rgba(139, 92, 246, 0.04),
@@ -242,8 +256,11 @@ a[href^="/inbox/"] > img.grayscale {
 
 .findings-map-node--root {
   border-color: rgba(167, 139, 250, 0.35);
-  background:
-    linear-gradient(155deg, rgba(139, 92, 246, 0.2), rgba(13, 14, 20, 0.98) 58%);
+  background: linear-gradient(
+    155deg,
+    rgba(139, 92, 246, 0.2),
+    rgba(13, 14, 20, 0.98) 58%
+  );
   box-shadow:
     0 0 0 1px rgba(167, 139, 250, 0.12),
     0 18px 44px rgba(0, 0, 0, 0.45);
@@ -251,8 +268,7 @@ a[href^="/inbox/"] > img.grayscale {
 
 .findings-map-node--target {
   border-color: rgba(167, 139, 250, 0.22);
-  background:
-    linear-gradient(165deg, rgba(139, 92, 246, 0.1), #0d0e14 50%);
+  background: linear-gradient(165deg, rgba(139, 92, 246, 0.1), #0d0e14 50%);
 }
 
 .findings-map-node--note {
@@ -263,8 +279,7 @@ a[href^="/inbox/"] > img.grayscale {
 .findings-map-node.is-selected,
 .findings-map-node:hover {
   border-color: rgba(167, 139, 250, 0.45);
-  background:
-    linear-gradient(160deg, rgba(139, 92, 246, 0.14), #12131a 55%);
+  background: linear-gradient(160deg, rgba(139, 92, 246, 0.14), #12131a 55%);
   box-shadow:
     0 0 0 1px rgba(167, 139, 250, 0.14),
     0 18px 44px rgba(0, 0, 0, 0.5);
