@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Archive, Code2, FolderOpen, KeyRound, Link2, List, Terminal, type LucideIcon } from "lucide-react";
+import { Archive, Code2, FolderOpen, Link2, List, Network, Terminal, type LucideIcon } from "lucide-react";
 import { FilesWorkspace } from "@/components/files-workspace";
 import { LogsWorkspace } from "@/components/logs-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
@@ -22,7 +22,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "files", label: "Files", icon: FolderOpen },
   { id: "relay", label: "Relay", icon: Link2 },
   { id: "terminal", label: "Terminal", icon: Terminal },
-  { id: "subkeeper", label: "SubKeeper", icon: KeyRound },
+  { id: "subkeeper", label: "SubKeeper", icon: Network },
 ];
 
 export function PinquedWorkspace() {
@@ -34,7 +34,8 @@ export function PinquedWorkspace() {
         <div className="grid min-h-[760px] grid-cols-[68px_minmax(0,1fr)] sm:grid-cols-[220px_minmax(0,1fr)]">
           <aside className="relative border-r border-[#292830] bg-[#09090c]">
             <div className="flex h-[62px] items-center justify-center border-b border-[#292830] sm:justify-start sm:px-5">
-              <span className="relative block h-5 w-5 rotate-45 border-l-2 border-t-2 border-[#eee8f2] after:absolute after:-bottom-1 after:-right-1 after:h-3 after:w-3 after:border-b-2 after:border-r-2 after:border-[#eee8f2]" aria-label="Pinqued mark" />
+              <span className="hidden text-[14px] font-semibold tracking-[-.03em] text-[#f0ebf4] sm:inline">Pinqued</span>
+              <span className="text-[15px] font-semibold text-[#f0ebf4] sm:hidden" aria-label="Pinqued">P</span>
             </div>
             <nav aria-label="Pinqued navigation" className="space-y-1 px-2 py-4 sm:px-3">
               {sidebarItems.map((item) => {
