@@ -52,6 +52,13 @@ type DirectoryPickerWindow = Window & {
   showDirectoryPicker?: (options?: { mode?: "read" | "readwrite" }) => Promise<ObsidianVaultDirectoryHandle>;
 };
 
+async function requestVaultWriteAccess(handle: ObsidianVaultDirectoryHandle) {
+  const permission = await handle.queryPermission?.({ mode: "readwrite" });
+  if (!permission || permission === "granted") return true;
+  if (permission === "denied") return false;
+  return (await handle.requestPermission?.({ mode: "readwrite" })) !== "denied";
+}
+
 function formatWhen(iso: string) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -250,26 +257,33 @@ export function DumpNotesWorkspace() {
     }
     try {
       const handle = await picker({ mode: "readwrite" });
-      await handle.getDirectoryHandle(".obsidian", { create: true });
+      if (!(await requestVaultWriteAccess(handle))) {
+        flashMessage("Vault folder permission was denied");
+        return;
+      }
       vaultRef.current = handle;
       setVaultReady(true);
       setSettings((current) => ({ ...current, vaultName: handle.name }));
-      await saveObsidianVaultHandle(handle);
-      flashMessage(`Vault connected: ${handle.name}`);
+      const persisted = await saveObsidianVaultHandle(handle);
+      flashMessage(
+        persisted
+          ? `Vault connected: ${handle.name}`
+          : `Vault connected for this session: ${handle.name}`,
+      );
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      flashMessage("Vault could not be connected");
+      flashMessage(
+        error instanceof DOMException && error.name === "NotAllowedError"
+          ? "Vault folder permission was denied"
+          : "Browser could not open that folder",
+      );
     }
   }
 
   async function writeNoteToVault(note: DumpNote) {
     const root = vaultRef.current;
     if (!root) return false;
-    const permission = await root.queryPermission?.({ mode: "readwrite" });
-    if (permission === "prompt") {
-      const requested = await root.requestPermission?.({ mode: "readwrite" });
-      if (requested === "denied") throw new Error("Obsidian vault permission denied");
-    } else if (permission === "denied") {
+    if (!(await requestVaultWriteAccess(root))) {
       throw new Error("Obsidian vault permission denied");
     }
     let folder = root;
@@ -300,14 +314,29 @@ export function DumpNotesWorkspace() {
       flashMessage("Choose your real Obsidian vault first");
       return;
     }
-    try {
-      const wrote = vaultRef.current ? await writeNoteToVault(note) : false;
-      const href = wrote || mode === "open" ? buildObsidianOpenUri(note, settings) : buildObsidianNewUri(note, settings);
-      launchObsidianUri(href);
-      flashMessage(wrote ? "Note saved to Obsidian" : mode === "new" ? "Opening Obsidian (new note)" : "Opening Obsidian");
-    } catch {
-      flashMessage("Could not write to this vault");
+    let wrote = false;
+    let usedFallback = false;
+    if (vaultRef.current) {
+      try {
+        wrote = await writeNoteToVault(note);
+      } catch {
+        usedFallback = true;
+        vaultRef.current = null;
+        setVaultReady(false);
+        void clearObsidianVaultHandle();
+      }
     }
+    const href = wrote || mode === "open" ? buildObsidianOpenUri(note, settings) : buildObsidianNewUri(note, settings);
+    launchObsidianUri(href);
+    flashMessage(
+      wrote
+        ? "Note saved to Obsidian"
+        : usedFallback
+          ? "Folder access failed — opening through Obsidian"
+          : mode === "new"
+            ? "Opening Obsidian (new note)"
+            : "Opening Obsidian",
+    );
   }
 
   function downloadVaultExport() {
