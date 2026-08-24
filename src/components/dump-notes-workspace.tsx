@@ -3,6 +3,8 @@
 import * as React from "react";
 import {
   Copy,
+  Cloud,
+  CloudOff,
   Download,
   ExternalLink,
   FileText,
@@ -36,6 +38,7 @@ import {
 import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { mergeUpdatedItems } from "@/lib/merge-updated-items";
 
 type VaultFileHandle = {
   createWritable: () => Promise<{ write: (value: string) => Promise<void>; close: () => Promise<void> }>;
@@ -80,18 +83,67 @@ export function DumpNotesWorkspace() {
   const [editSource, setEditSource] = React.useState("");
   const [flash, setFlash] = React.useState<string | null>(null);
   const [vaultReady, setVaultReady] = React.useState(false);
+  const [syncState, setSyncState] = React.useState<"syncing" | "synced" | "local">("syncing");
+  const syncReadyRef = React.useRef(false);
   const vaultRef = React.useRef<VaultDirectoryHandle | null>(null);
   const bodyRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
-    setNotes(sortDumpNotesNewestFirst(parseDumpNotes(window.localStorage.getItem(DUMP_NOTES_STORAGE_KEY))));
+    const existing = sortDumpNotesNewestFirst(
+      parseDumpNotes(window.localStorage.getItem(DUMP_NOTES_STORAGE_KEY)),
+    );
+    const migrated = window.localStorage.getItem("xe1signal-tools-dump-notes-account-sync-v1") === "true";
+    setNotes(existing);
     setSettings(parseDumpNotesSettings(window.localStorage.getItem(DUMP_NOTES_SETTINGS_KEY)));
     setHydrated(true);
+
+    let active = true;
+    void fetch("/api/tools/notes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "dump-notes", items: existing, mode: migrated ? "pull" : "merge" }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Notes could not sync");
+        const data = (await response.json()) as { items?: unknown[] };
+        const accountItems = parseDumpNotes(JSON.stringify(data.items || []));
+        if (!active) return;
+        window.localStorage.setItem("xe1signal-tools-dump-notes-account-sync-v1", "true");
+        syncReadyRef.current = true;
+        setNotes((current) =>
+          sortDumpNotesNewestFirst(mergeUpdatedItems(current, accountItems)),
+        );
+        setSyncState("synced");
+      })
+      .catch(() => {
+        if (!active) return;
+        syncReadyRef.current = true;
+        setSyncState("local");
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   React.useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem(DUMP_NOTES_STORAGE_KEY, serializeDumpNotes(notes));
+  }, [notes, hydrated]);
+
+  React.useEffect(() => {
+    if (!hydrated || !syncReadyRef.current) return;
+    const timer = window.setTimeout(() => {
+      setSyncState("syncing");
+      void fetch("/api/tools/notes", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scope: "dump-notes", items: notes }),
+      })
+        .then((response) => setSyncState(response.ok ? "synced" : "local"))
+        .catch(() => setSyncState("local"));
+    }, 450);
+    return () => window.clearTimeout(timer);
   }, [notes, hydrated]);
 
   React.useEffect(() => {
@@ -254,6 +306,18 @@ export function DumpNotesWorkspace() {
           Dump what you saw, paste markdown, or write freely. Link each note into your Obsidian vault.
         </p>
         <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-[10px]",
+              syncState === "local"
+                ? "border-amber-400/20 text-amber-200/70"
+                : "border-white/[.08] text-zinc-500",
+            )}
+            title={syncState === "local" ? "Saved in this app only" : "Saved to your account"}
+          >
+            {syncState === "local" ? <CloudOff className="h-3.5 w-3.5" /> : <Cloud className="h-3.5 w-3.5" />}
+            {syncState === "syncing" ? "Syncing" : syncState === "synced" ? "Account" : "Local"}
+          </span>
           <button
             type="button"
             onClick={() => setShowSettings((current) => !current)}

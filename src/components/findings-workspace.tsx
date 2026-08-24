@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
+import { Cloud, CloudOff, Copy, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
 import { FindingsMap } from "@/components/findings-map";
 import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/lib/findings";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { mergeUpdatedItems } from "@/lib/merge-updated-items";
 
 type FindingsView = "notes" | "map";
 
@@ -42,19 +43,65 @@ export function FindingsWorkspace() {
   const [editBody, setEditBody] = React.useState("");
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
   const [lastAddedId, setLastAddedId] = React.useState<string | null>(null);
+  const [syncState, setSyncState] = React.useState<"syncing" | "synced" | "local">("syncing");
+  const syncReadyRef = React.useRef(false);
   const captureRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
     const existing = parseFindings(window.localStorage.getItem(FINDINGS_STORAGE_KEY));
+    const migrated = window.localStorage.getItem("xe1signal-tools-findings-account-sync-v1") === "true";
     // Drop legacy Linktree seed notes if they were previously auto-loaded.
     const cleaned = existing.filter((item) => !item.id.startsWith("seed_lt_"));
     setFindings(sortFindingsNewestFirst(cleaned));
     setHydrated(true);
+
+    let active = true;
+    void fetch("/api/tools/notes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scope: "findings", items: cleaned, mode: migrated ? "pull" : "merge" }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Notes could not sync");
+        const data = (await response.json()) as { items?: unknown[] };
+        const accountItems = parseFindings(JSON.stringify(data.items || []));
+        if (!active) return;
+        window.localStorage.setItem("xe1signal-tools-findings-account-sync-v1", "true");
+        syncReadyRef.current = true;
+        setFindings((current) =>
+          sortFindingsNewestFirst(mergeUpdatedItems(current, accountItems)),
+        );
+        setSyncState("synced");
+      })
+      .catch(() => {
+        if (!active) return;
+        syncReadyRef.current = true;
+        setSyncState("local");
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   React.useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem(FINDINGS_STORAGE_KEY, serializeFindings(findings));
+  }, [findings, hydrated]);
+
+  React.useEffect(() => {
+    if (!hydrated || !syncReadyRef.current) return;
+    const timer = window.setTimeout(() => {
+      setSyncState("syncing");
+      void fetch("/api/tools/notes", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scope: "findings", items: findings }),
+      })
+        .then((response) => setSyncState(response.ok ? "synced" : "local"))
+        .catch(() => setSyncState("local"));
+    }, 450);
+    return () => window.clearTimeout(timer);
   }, [findings, hydrated]);
 
   const tagStats = React.useMemo(() => collectFindingTags(findings), [findings]);
@@ -129,11 +176,24 @@ export function FindingsWorkspace() {
         <p className="max-w-xl font-sans text-sm text-zinc-500">
           Fast recon notes with markdown and #tags — search, filter, or map notes onto targets.
         </p>
-        <div
-          role="tablist"
-          aria-label="Findings view"
-          className="inline-flex rounded-lg border border-white/[.08] bg-white/[.02] p-0.5"
-        >
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 font-mono text-[10px]",
+              syncState === "local"
+                ? "border-amber-400/20 text-amber-200/70"
+                : "border-white/[.08] text-zinc-500",
+            )}
+            title={syncState === "local" ? "Saved in this app only" : "Saved to your account"}
+          >
+            {syncState === "local" ? <CloudOff className="h-3.5 w-3.5" /> : <Cloud className="h-3.5 w-3.5" />}
+            {syncState === "syncing" ? "Syncing" : syncState === "synced" ? "Account" : "Local"}
+          </span>
+          <div
+            role="tablist"
+            aria-label="Findings view"
+            className="inline-flex rounded-lg border border-white/[.08] bg-white/[.02] p-0.5"
+          >
           <button
             type="button"
             role="tab"
@@ -164,6 +224,7 @@ export function FindingsWorkspace() {
             <Network className="h-3.5 w-3.5" />
             Map
           </button>
+          </div>
         </div>
       </div>
 

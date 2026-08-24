@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 const profileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -97,6 +98,7 @@ const activityNotificationFields = [
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, update } = useSession();
+  const { setTheme } = useTheme();
   const [activeTab, setActiveTab] = React.useState<
     "profile" | "notifications" | "appearance" | "security" | "danger"
   >("profile");
@@ -176,12 +178,13 @@ export default function SettingsPage() {
       .then((data) => {
         if (data?.settings) {
           appearanceForm.reset(data.settings);
+          setTheme(data.settings.theme);
           document.documentElement.dataset.compact = data.settings.compactMode ? "true" : "false";
           document.documentElement.dataset.reducedMotion = data.settings.reducedMotion ? "true" : "false";
         }
       })
       .catch(() => undefined);
-  }, [session?.user?.id, appearanceForm]);
+  }, [session?.user?.id, appearanceForm, setTheme]);
 
   const uploadProfileImage = async (kind: "avatar" | "banner", file: File) => {
     setIsImageSaving(true);
@@ -301,17 +304,7 @@ export default function SettingsPage() {
       });
       if (res.ok) {
         toast.success("Appearance settings saved");
-        // Apply theme immediately
-        document.documentElement.classList.remove("light", "dark");
-        if (
-          data.theme === "dark" ||
-          (data.theme === "system" &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches)
-        ) {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.add("light");
-        }
+        setTheme(data.theme);
         document.documentElement.dataset.compact = data.compactMode ? "true" : "false";
         document.documentElement.dataset.reducedMotion = data.reducedMotion ? "true" : "false";
       } else {
@@ -353,10 +346,10 @@ export default function SettingsPage() {
 
   return (
     <AppLayout showRightSidebar={false}>
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="settings-console mx-auto max-w-4xl space-y-5">
         <div>
-          <h1 className="text-heading-xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-mono text-3xl font-medium tracking-tight">Settings</h1>
+          <p className="mt-1 font-mono text-sm text-muted-foreground">
             Manage your account and preferences
           </p>
         </div>
@@ -375,7 +368,7 @@ export default function SettingsPage() {
           }
           className="space-y-4"
         >
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-5 rounded-xl border border-border bg-card/70 p-1">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" /> Profile
             </TabsTrigger>

@@ -24,7 +24,7 @@ const PinquedWorkspace = dynamic(
 type ToolsTab = "findings" | "dump-notes" | "pinqued";
 
 const tabs = [
-  ["findings", "Findings"],
+  ["findings", "Notes"],
   ["dump-notes", "Dump Notes"],
   ["pinqued", "Pinqued"],
 ] as const;
@@ -33,11 +33,11 @@ export function ToolsWorkspace() {
   const [tab, setTab] = React.useState<ToolsTab>("findings");
 
   return (
-    <div className="mx-auto max-w-[1200px]">
+    <div className="tools-console mx-auto max-w-[1200px]">
       <header className="mb-6">
-        <h1 className="font-sans text-3xl font-semibold tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
-        <p className="mt-2 font-sans text-sm text-zinc-500">
-          Local findings, dump notes, and connected tools.
+        <h1 className="font-mono text-3xl font-medium tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
+        <p className="mt-2 font-mono text-sm text-zinc-500">
+          Notes, dump notes, and connected tools.
         </p>
       </header>
 
@@ -54,7 +54,7 @@ export function ToolsWorkspace() {
             aria-selected={tab === id}
             onClick={() => setTab(id)}
             className={cn(
-              "min-w-[7.5rem] flex-1 rounded-lg px-4 py-2.5 font-sans text-sm transition",
+              "min-w-[7.5rem] flex-1 rounded-lg px-4 py-2.5 font-mono text-sm transition",
               tab === id ? "bg-violet-500/15 text-zinc-100" : "text-zinc-500 hover:text-zinc-300",
             )}
           >
