@@ -101,6 +101,7 @@ wss.on("connection", (ws) => {
     headers: { Origin: "https://01x.site" },
   });
   let connected = false;
+  let terminalSize = null;
 
   upstream.on("message", (raw) => {
     const packet = raw.toString("utf8");
@@ -114,6 +115,9 @@ wss.on("connection", (ws) => {
     }
     if (packet.startsWith("40/terminal")) {
       connected = true;
+      if (terminalSize && upstream.readyState === WebSocket.OPEN) {
+        upstream.send(`42/terminal,${JSON.stringify(["terminal_resize", terminalSize])}`);
+      }
       if (ws.readyState === WebSocket.OPEN) ws.send("\r\n\x1b[1;35mterminal@pinqued\x1b[0m\r\n\r\n");
       return;
     }
@@ -142,7 +146,8 @@ wss.on("connection", (ws) => {
       try {
         const msg = JSON.parse(text);
         if (msg.type === "resize" && msg.cols && msg.rows) {
-          if (connected && upstream.readyState === WebSocket.OPEN) upstream.send(`42/terminal,${JSON.stringify(["terminal_resize", { cols: Number(msg.cols), rows: Number(msg.rows) }])}`);
+          terminalSize = { cols: Number(msg.cols), rows: Number(msg.rows) };
+          if (connected && upstream.readyState === WebSocket.OPEN) upstream.send(`42/terminal,${JSON.stringify(["terminal_resize", terminalSize])}`);
           return;
         }
       } catch {
