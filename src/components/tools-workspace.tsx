@@ -24,7 +24,7 @@ const PinquedWorkspace = dynamic(
 type ToolsTab = "findings" | "dump-notes" | "pinqued";
 
 const tabs = [
-  ["findings", "Notes"],
+  ["findings", "Findings"],
   ["dump-notes", "Dump Notes"],
   ["pinqued", "Pinqued"],
 ] as const;
@@ -37,7 +37,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-mono text-3xl font-medium tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-mono text-sm text-zinc-500">
-          Notes, dump notes, and connected tools.
+          Findings, dump notes, and connected tools.
         </p>
       </header>
 

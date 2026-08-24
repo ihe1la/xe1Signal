@@ -18,11 +18,13 @@ import {
 import {
   DUMP_NOTES_SETTINGS_KEY,
   DUMP_NOTES_STORAGE_KEY,
+  DEFAULT_DUMP_NOTES_SETTINGS,
   buildObsidianNewUri,
   buildObsidianOpenUri,
   createDumpNote,
   formatDumpNoteMarkdown,
   formatDumpNotesVaultExport,
+  hasConfiguredDumpNotesVault,
   noteWikiLink,
   parseDumpNotes,
   parseDumpNotesSettings,
@@ -35,23 +37,19 @@ import {
   type DumpNote,
   type DumpNotesSettings,
 } from "@/lib/dump-notes";
+import {
+  clearObsidianVaultHandle,
+  loadObsidianVaultHandle,
+  saveObsidianVaultHandle,
+  type ObsidianVaultDirectoryHandle,
+} from "@/lib/obsidian-vault";
 import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { mergeUpdatedItems } from "@/lib/merge-updated-items";
 
-type VaultFileHandle = {
-  createWritable: () => Promise<{ write: (value: string) => Promise<void>; close: () => Promise<void> }>;
-};
-
-type VaultDirectoryHandle = {
-  name: string;
-  getDirectoryHandle: (name: string, options?: { create?: boolean }) => Promise<VaultDirectoryHandle>;
-  getFileHandle: (name: string, options?: { create?: boolean }) => Promise<VaultFileHandle>;
-};
-
 type DirectoryPickerWindow = Window & {
-  showDirectoryPicker?: (options?: { mode?: "read" | "readwrite" }) => Promise<VaultDirectoryHandle>;
+  showDirectoryPicker?: (options?: { mode?: "read" | "readwrite" }) => Promise<ObsidianVaultDirectoryHandle>;
 };
 
 function formatWhen(iso: string) {
@@ -67,10 +65,7 @@ function formatWhen(iso: string) {
 
 export function DumpNotesWorkspace() {
   const [notes, setNotes] = React.useState<DumpNote[]>([]);
-  const [settings, setSettings] = React.useState<DumpNotesSettings>({
-    vaultName: "Vault",
-    folder: "xe1Signal/Dump",
-  });
+  const [settings, setSettings] = React.useState<DumpNotesSettings>(DEFAULT_DUMP_NOTES_SETTINGS);
   const [hydrated, setHydrated] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [draftTitle, setDraftTitle] = React.useState("");
@@ -85,7 +80,7 @@ export function DumpNotesWorkspace() {
   const [vaultReady, setVaultReady] = React.useState(false);
   const [syncState, setSyncState] = React.useState<"syncing" | "synced" | "local">("syncing");
   const syncReadyRef = React.useRef(false);
-  const vaultRef = React.useRef<VaultDirectoryHandle | null>(null);
+  const vaultRef = React.useRef<ObsidianVaultDirectoryHandle | null>(null);
   const bodyRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
@@ -93,6 +88,7 @@ export function DumpNotesWorkspace() {
       parseDumpNotes(window.localStorage.getItem(DUMP_NOTES_STORAGE_KEY)),
     );
     const migrated = window.localStorage.getItem("xe1signal-tools-dump-notes-account-sync-v1") === "true";
+    const syncMode = migrated && existing.length === 0 ? "pull" : "merge";
     setNotes(existing);
     setSettings(parseDumpNotesSettings(window.localStorage.getItem(DUMP_NOTES_SETTINGS_KEY)));
     setHydrated(true);
@@ -101,7 +97,7 @@ export function DumpNotesWorkspace() {
     void fetch("/api/tools/notes", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scope: "dump-notes", items: existing, mode: migrated ? "pull" : "merge" }),
+      body: JSON.stringify({ scope: "dump-notes", items: existing, mode: syncMode }),
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Notes could not sync");
@@ -120,6 +116,24 @@ export function DumpNotesWorkspace() {
         syncReadyRef.current = true;
         setSyncState("local");
       });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+    void loadObsidianVaultHandle()
+      .then(async (handle) => {
+        if (!active || !handle) return;
+        const permission = await handle.queryPermission?.({ mode: "readwrite" });
+        if (!active || permission === "denied") return;
+        vaultRef.current = handle;
+        setVaultReady(true);
+        setSettings((current) => ({ ...current, vaultName: handle.name }));
+      })
+      .catch(() => undefined);
 
     return () => {
       active = false;
@@ -224,6 +238,7 @@ export function DumpNotesWorkspace() {
   function setVaultName(value: string) {
     vaultRef.current = null;
     setVaultReady(false);
+    void clearObsidianVaultHandle();
     setSettings((current) => ({ ...current, vaultName: value }));
   }
 
@@ -239,6 +254,7 @@ export function DumpNotesWorkspace() {
       vaultRef.current = handle;
       setVaultReady(true);
       setSettings((current) => ({ ...current, vaultName: handle.name }));
+      await saveObsidianVaultHandle(handle);
       flashMessage(`Vault connected: ${handle.name}`);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -249,6 +265,13 @@ export function DumpNotesWorkspace() {
   async function writeNoteToVault(note: DumpNote) {
     const root = vaultRef.current;
     if (!root) return false;
+    const permission = await root.queryPermission?.({ mode: "readwrite" });
+    if (permission === "prompt") {
+      const requested = await root.requestPermission?.({ mode: "readwrite" });
+      if (requested === "denied") throw new Error("Obsidian vault permission denied");
+    } else if (permission === "denied") {
+      throw new Error("Obsidian vault permission denied");
+    }
     let folder = root;
     for (const part of settings.folder.split(/[\\/]+/).filter(Boolean)) {
       folder = await folder.getDirectoryHandle(part, { create: true });
@@ -272,9 +295,9 @@ export function DumpNotesWorkspace() {
   }
 
   async function openInObsidian(note: DumpNote, mode: "new" | "open") {
-    if (!settings.vaultName.trim()) {
+    if (!hasConfiguredDumpNotesVault(settings)) {
       setShowSettings(true);
-      flashMessage("Choose your Obsidian vault first");
+      flashMessage("Choose your real Obsidian vault first");
       return;
     }
     try {
@@ -362,9 +385,12 @@ export function DumpNotesWorkspace() {
               <input
                 value={settings.vaultName}
                 onChange={(event) => setVaultName(event.target.value)}
-                placeholder="Vault"
+                placeholder="Exact vault name from Obsidian"
                 className="h-10 w-full rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 font-sans text-sm text-zinc-100 outline-none focus:border-violet-400/30"
               />
+              <span className="mt-1.5 block font-sans text-[11px] text-zinc-600">
+                Use the exact vault name shown in Obsidian, or choose the vault folder below.
+              </span>
             </label>
             <label className="block">
               <span className="mb-1.5 block font-sans text-[11px] text-zinc-500">Folder path</span>
@@ -384,7 +410,7 @@ export function DumpNotesWorkspace() {
             className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 font-sans text-xs text-violet-100 transition hover:border-violet-300/40"
           >
             <FolderOpen className="h-3.5 w-3.5" />
-            {vaultReady ? `Vault connected: ${settings.vaultName}` : "Choose / create vault folder"}
+            {vaultReady ? `Vault connected: ${settings.vaultName}` : "Choose Obsidian vault"}
           </button>
           <p className="mt-3 font-mono text-[11px] text-zinc-600">
             Example wiki link: [[

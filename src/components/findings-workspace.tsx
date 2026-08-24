@@ -52,6 +52,7 @@ export function FindingsWorkspace() {
     const migrated = window.localStorage.getItem("xe1signal-tools-findings-account-sync-v1") === "true";
     // Drop legacy Linktree seed notes if they were previously auto-loaded.
     const cleaned = existing.filter((item) => !item.id.startsWith("seed_lt_"));
+    const syncMode = migrated && cleaned.length === 0 ? "pull" : "merge";
     setFindings(sortFindingsNewestFirst(cleaned));
     setHydrated(true);
 
@@ -59,7 +60,7 @@ export function FindingsWorkspace() {
     void fetch("/api/tools/notes", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scope: "findings", items: cleaned, mode: migrated ? "pull" : "merge" }),
+      body: JSON.stringify({ scope: "findings", items: cleaned, mode: syncMode }),
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Notes could not sync");

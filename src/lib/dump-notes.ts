@@ -17,7 +17,7 @@ export const DUMP_NOTES_STORAGE_KEY = "xe1signal-tools-dump-notes-v1";
 export const DUMP_NOTES_SETTINGS_KEY = "xe1signal-tools-dump-notes-settings-v1";
 
 export const DEFAULT_DUMP_NOTES_SETTINGS: DumpNotesSettings = {
-  vaultName: "Vault",
+  vaultName: "",
   folder: "xe1Signal/Dump",
 };
 
@@ -126,15 +126,22 @@ export function serializeDumpNotes(notes: DumpNote[]) {
   return JSON.stringify(notes);
 }
 
+function normalizeVaultName(value: unknown) {
+  if (typeof value !== "string") return "";
+  const name = value.trim();
+  return name.toLowerCase() === "vault" ? "" : name;
+}
+
+export function hasConfiguredDumpNotesVault(settings: DumpNotesSettings) {
+  return normalizeVaultName(settings.vaultName).length > 0;
+}
+
 export function parseDumpNotesSettings(raw: string | null): DumpNotesSettings {
   if (!raw) return { ...DEFAULT_DUMP_NOTES_SETTINGS };
   try {
     const parsed = JSON.parse(raw) as Partial<DumpNotesSettings>;
     return {
-      vaultName:
-        typeof parsed.vaultName === "string" && parsed.vaultName.trim()
-          ? parsed.vaultName.trim()
-          : DEFAULT_DUMP_NOTES_SETTINGS.vaultName,
+      vaultName: normalizeVaultName(parsed.vaultName),
       folder:
         typeof parsed.folder === "string" && parsed.folder.trim()
           ? parsed.folder.trim().replace(/^\/+|\/+$/g, "")
@@ -147,7 +154,7 @@ export function parseDumpNotesSettings(raw: string | null): DumpNotesSettings {
 
 export function serializeDumpNotesSettings(settings: DumpNotesSettings) {
   return JSON.stringify({
-    vaultName: settings.vaultName.trim() || DEFAULT_DUMP_NOTES_SETTINGS.vaultName,
+    vaultName: normalizeVaultName(settings.vaultName),
     folder: settings.folder.trim().replace(/^\/+|\/+$/g, "") || DEFAULT_DUMP_NOTES_SETTINGS.folder,
   });
 }
@@ -217,7 +224,8 @@ export function formatDumpNotesVaultExport(notes: DumpNote[], settings: DumpNote
 
 export function buildObsidianNewUri(note: DumpNote, settings: DumpNotesSettings) {
   const params = new URLSearchParams();
-  if (settings.vaultName.trim()) params.set("vault", settings.vaultName.trim());
+  const vaultName = normalizeVaultName(settings.vaultName);
+  if (vaultName) params.set("vault", vaultName);
   params.set("file", noteVaultPath(note, settings.folder));
   params.set("content", formatDumpNoteMarkdown(note, settings));
   return `obsidian://new?${params.toString()}`;
@@ -225,7 +233,8 @@ export function buildObsidianNewUri(note: DumpNote, settings: DumpNotesSettings)
 
 export function buildObsidianOpenUri(note: DumpNote, settings: DumpNotesSettings) {
   const params = new URLSearchParams();
-  if (settings.vaultName.trim()) params.set("vault", settings.vaultName.trim());
+  const vaultName = normalizeVaultName(settings.vaultName);
+  if (vaultName) params.set("vault", vaultName);
   params.set("file", noteVaultPath(note, settings.folder));
   return `obsidian://open?${params.toString()}`;
 }
