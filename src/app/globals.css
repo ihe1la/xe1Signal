@@ -273,6 +273,14 @@ a[href^="/inbox/"] > img.grayscale {
   display: none;
 }
 
+.findings-map-flow .react-flow__edges {
+  z-index: 0 !important;
+}
+
+.findings-map-flow .react-flow__nodes {
+  z-index: 1 !important;
+}
+
 .findings-map-node {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);

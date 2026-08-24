@@ -11,7 +11,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
-  getBezierPath,
+  getSmoothStepPath,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -63,7 +63,7 @@ function FindingsFlowNode({ data, selected }: NodeProps<MapNode>) {
           <p className="font-sans text-[10px] uppercase tracking-[0.16em] text-violet-300/70">
             {data.kind === "root" ? "Root" : data.kind === "target" ? "Target" : "Note"}
           </p>
-          <p className="mt-1.5 font-sans text-[13px] font-medium leading-5 tracking-tight text-zinc-100">
+          <p className="mt-1.5 line-clamp-3 break-words font-sans text-[13px] font-medium leading-5 tracking-tight text-zinc-100 [overflow-wrap:anywhere]">
             {data.label}
           </p>
           {data.detail ? (
@@ -105,15 +105,18 @@ function FindingsFlowEdge({
   data,
   style,
 }: EdgeProps<MapEdge>) {
-  const [edgePath] = getBezierPath({
+  const spine = data?.kind === "spine";
+  const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 16,
+    offset: 26,
+    stepPosition: spine ? 0.36 : 0.5,
   });
-  const spine = data?.kind === "spine";
 
   return (
     <>

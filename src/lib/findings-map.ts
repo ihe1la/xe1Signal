@@ -2,7 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 
 import { extractUrls, type Finding } from "@/lib/findings";
 
-export const FINDINGS_MAP_STORAGE_KEY = "xe1signal-tools-findings-map-v2";
+export const FINDINGS_MAP_STORAGE_KEY = "xe1signal-tools-findings-map-v3";
 
 export type FindingsMapPositions = Record<string, { x: number; y: number }>;
 
@@ -30,11 +30,11 @@ export type FindingsMapEdgeData = {
 
 const SKIP_TAGS = new Set(["recon", "threat", "header", "auth", "ihe1la"]);
 
-const TARGET_GAP = 168;
-const NOTE_GAP = 92;
-const COL_ROOT = 48;
-const COL_TARGET = 340;
-const COL_NOTE = 680;
+const TARGET_GAP = 188;
+const NOTE_GAP = 124;
+const COL_ROOT = 56;
+const COL_TARGET = 390;
+const COL_NOTE = 760;
 
 export function extractFindingHost(finding: Finding) {
   for (const url of extractUrls(finding.body)) {
