@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
 import { asRecord, asText, pinquedError } from "@/lib/pinqued";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type RequestLog = {
   id: string;
@@ -373,7 +374,7 @@ export function LogsWorkspace() {
               <button
                 type="button"
                 onClick={() =>
-                  void navigator.clipboard.writeText(
+                    void copyTextToClipboard(
                     listener.url || listener.address,
                   )
                 }
@@ -386,7 +387,7 @@ export function LogsWorkspace() {
                 type="button"
                 aria-label={`Copy ${listener.label} listener`}
                 onClick={() =>
-                  void navigator.clipboard.writeText(
+                    void copyTextToClipboard(
                     listener.url || listener.address,
                   )
                 }
@@ -611,7 +612,7 @@ export function LogsWorkspace() {
                   type="button"
                   aria-label="Copy raw packet"
                   onClick={() =>
-                    void navigator.clipboard.writeText(rawPacket(selected))
+                    void copyTextToClipboard(rawPacket(selected))
                   }
                 >
                   <Copy className="h-3.5 w-3.5" />

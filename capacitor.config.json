@@ -1,0 +1,18 @@
+{
+  "appId": "me.he1l.xe1signal",
+  "appName": "xe1Signal",
+  "webDir": "mobile-shell",
+  "backgroundColor": "#07080c",
+  "server": {
+    "url": "https://he1l.me",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": ["he1l.me", "www.he1l.me"]
+  },
+  "android": {
+    "backgroundColor": "#07080c",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

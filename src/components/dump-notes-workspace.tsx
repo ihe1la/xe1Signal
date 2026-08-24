@@ -6,6 +6,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FolderOpen,
   Link2,
   Pencil,
   Search,
@@ -26,6 +27,7 @@ import {
   searchDumpNotes,
   serializeDumpNotes,
   serializeDumpNotesSettings,
+  slugifyNoteTitle,
   sortDumpNotesNewestFirst,
   updateDumpNote,
   type DumpNote,
@@ -33,6 +35,21 @@ import {
 } from "@/lib/dump-notes";
 import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import { cn } from "@/lib/utils";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+
+type VaultFileHandle = {
+  createWritable: () => Promise<{ write: (value: string) => Promise<void>; close: () => Promise<void> }>;
+};
+
+type VaultDirectoryHandle = {
+  name: string;
+  getDirectoryHandle: (name: string, options?: { create?: boolean }) => Promise<VaultDirectoryHandle>;
+  getFileHandle: (name: string, options?: { create?: boolean }) => Promise<VaultFileHandle>;
+};
+
+type DirectoryPickerWindow = Window & {
+  showDirectoryPicker?: (options?: { mode?: "read" | "readwrite" }) => Promise<VaultDirectoryHandle>;
+};
 
 function formatWhen(iso: string) {
   const date = new Date(iso);
@@ -62,6 +79,8 @@ export function DumpNotesWorkspace() {
   const [editBody, setEditBody] = React.useState("");
   const [editSource, setEditSource] = React.useState("");
   const [flash, setFlash] = React.useState<string | null>(null);
+  const [vaultReady, setVaultReady] = React.useState(false);
+  const vaultRef = React.useRef<VaultDirectoryHandle | null>(null);
   const bodyRef = React.useRef<HTMLTextAreaElement>(null);
 
   React.useEffect(() => {
@@ -91,12 +110,7 @@ export function DumpNotesWorkspace() {
   }
 
   async function copyText(text: string, message: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      flashMessage(message);
-    } catch {
-      flashMessage("Copy failed");
-    }
+    flashMessage((await copyTextToClipboard(text)) ? message : "Copy failed");
   }
 
   function addNote() {
@@ -155,11 +169,70 @@ export function DumpNotesWorkspace() {
     if (editingId === id) setEditingId(null);
   }
 
-  function openInObsidian(note: DumpNote, mode: "new" | "open") {
-    const href =
-      mode === "new" ? buildObsidianNewUri(note, settings) : buildObsidianOpenUri(note, settings);
-    window.location.href = href;
-    flashMessage(mode === "new" ? "Opening Obsidian (new note)" : "Opening Obsidian");
+  function setVaultName(value: string) {
+    vaultRef.current = null;
+    setVaultReady(false);
+    setSettings((current) => ({ ...current, vaultName: value }));
+  }
+
+  async function chooseVault() {
+    const picker = (window as DirectoryPickerWindow).showDirectoryPicker;
+    if (!picker) {
+      flashMessage("Choose a vault in Chrome or the desktop app");
+      return;
+    }
+    try {
+      const handle = await picker({ mode: "readwrite" });
+      await handle.getDirectoryHandle(".obsidian", { create: true });
+      vaultRef.current = handle;
+      setVaultReady(true);
+      setSettings((current) => ({ ...current, vaultName: handle.name }));
+      flashMessage(`Vault connected: ${handle.name}`);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      flashMessage("Vault could not be connected");
+    }
+  }
+
+  async function writeNoteToVault(note: DumpNote) {
+    const root = vaultRef.current;
+    if (!root) return false;
+    let folder = root;
+    for (const part of settings.folder.split(/[\\/]+/).filter(Boolean)) {
+      folder = await folder.getDirectoryHandle(part, { create: true });
+    }
+    const file = await folder.getFileHandle(`${slugifyNoteTitle(note.title)}.md`, { create: true });
+    const writable = await file.createWritable();
+    await writable.write(formatDumpNoteMarkdown(note, settings));
+    await writable.close();
+    return true;
+  }
+
+  function launchObsidianUri(href: string) {
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer";
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
+  async function openInObsidian(note: DumpNote, mode: "new" | "open") {
+    if (!settings.vaultName.trim()) {
+      setShowSettings(true);
+      flashMessage("Choose your Obsidian vault first");
+      return;
+    }
+    try {
+      const wrote = vaultRef.current ? await writeNoteToVault(note) : false;
+      const href = wrote || mode === "open" ? buildObsidianOpenUri(note, settings) : buildObsidianNewUri(note, settings);
+      launchObsidianUri(href);
+      flashMessage(wrote ? "Note saved to Obsidian" : mode === "new" ? "Opening Obsidian (new note)" : "Opening Obsidian");
+    } catch {
+      flashMessage("Could not write to this vault");
+    }
   }
 
   function downloadVaultExport() {
@@ -224,9 +297,7 @@ export function DumpNotesWorkspace() {
               <span className="mb-1.5 block font-sans text-[11px] text-zinc-500">Vault name</span>
               <input
                 value={settings.vaultName}
-                onChange={(event) =>
-                  setSettings((current) => ({ ...current, vaultName: event.target.value }))
-                }
+                onChange={(event) => setVaultName(event.target.value)}
                 placeholder="Vault"
                 className="h-10 w-full rounded-xl border border-white/[.08] bg-[#0a0b10] px-3 font-sans text-sm text-zinc-100 outline-none focus:border-violet-400/30"
               />
@@ -243,6 +314,14 @@ export function DumpNotesWorkspace() {
               />
             </label>
           </div>
+          <button
+            type="button"
+            onClick={() => void chooseVault()}
+            className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 font-sans text-xs text-violet-100 transition hover:border-violet-300/40"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            {vaultReady ? `Vault connected: ${settings.vaultName}` : "Choose / create vault folder"}
+          </button>
           <p className="mt-3 font-mono text-[11px] text-zinc-600">
             Example wiki link: [[
             {settings.folder.trim() || "xe1Signal/Dump"}/My note]]

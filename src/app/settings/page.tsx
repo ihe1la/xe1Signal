@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,15 @@ type NotificationForm = z.infer<typeof notificationSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
 type AppearanceForm = z.infer<typeof appearanceSchema>;
 
+const activityNotificationFields = [
+  { key: "signalReactions", label: "Signal reactions", desc: "When someone reacts to your signals" },
+  { key: "signalComments", label: "Signal comments", desc: "When someone comments on your signals" },
+  { key: "newFollowers", label: "New followers", desc: "When someone follows you" },
+  { key: "frequencyUpdates", label: "Frequency updates", desc: "New signals in followed frequencies" },
+  { key: "trailUpdates", label: "Trail updates", desc: "Updates to followed research trails" },
+  { key: "mentions", label: "Mentions", desc: "When someone mentions you" },
+] as const;
+
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, update } = useSession();
@@ -143,12 +152,36 @@ export default function SettingsPage() {
     if (!session?.user?.id) return;
     fetch("/api/user/profile").then((response) => response.ok ? response.json() : null).then((data) => {
       if (data?.user) {
-        profileForm.reset({ name: data.user.name || "", username: data.user.username || "", bio: data.user.bio || "", website: "", twitter: "", github: "", location: "" });
+        profileForm.reset({ name: data.user.name || "", username: data.user.username || "", bio: data.user.bio || "", website: data.user.website || "", twitter: data.user.twitter || "", github: data.user.github || "", location: data.user.location || "" });
         setAvatarPreview(data.user.avatarUrl || null);
         setCoverPreview(data.user.bannerUrl || null);
       }
     }).catch(() => undefined);
   }, [session?.user?.id, profileForm]);
+
+  React.useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch("/api/user/notifications")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (data?.settings) notificationForm.reset(data.settings);
+      })
+      .catch(() => undefined);
+  }, [session?.user?.id, notificationForm]);
+
+  React.useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch("/api/user/appearance")
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (data?.settings) {
+          appearanceForm.reset(data.settings);
+          document.documentElement.dataset.compact = data.settings.compactMode ? "true" : "false";
+          document.documentElement.dataset.reducedMotion = data.settings.reducedMotion ? "true" : "false";
+        }
+      })
+      .catch(() => undefined);
+  }, [session?.user?.id, appearanceForm]);
 
   const uploadProfileImage = async (kind: "avatar" | "banner", file: File) => {
     setIsImageSaving(true);
@@ -279,6 +312,8 @@ export default function SettingsPage() {
         } else {
           document.documentElement.classList.add("light");
         }
+        document.documentElement.dataset.compact = data.compactMode ? "true" : "false";
+        document.documentElement.dataset.reducedMotion = data.reducedMotion ? "true" : "false";
       } else {
         toast.error("Failed to save settings");
       }
@@ -594,8 +629,12 @@ export default function SettingsPage() {
                         Receive notifications via email
                       </p>
                     </div>
-                    <Switch
-                      {...notificationForm.register("emailNotifications")}
+                    <Controller
+                      control={notificationForm.control}
+                      name="emailNotifications"
+                      render={({ field }) => (
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      )}
                     />
                   </div>
 
@@ -608,8 +647,12 @@ export default function SettingsPage() {
                         Receive browser push notifications
                       </p>
                     </div>
-                    <Switch
-                      {...notificationForm.register("pushNotifications")}
+                    <Controller
+                      control={notificationForm.control}
+                      name="pushNotifications"
+                      render={({ field }) => (
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      )}
                     />
                   </div>
 
@@ -620,38 +663,7 @@ export default function SettingsPage() {
                       Activity Notifications
                     </h4>
                     <div className="grid sm:grid-cols-2 gap-4">
-                      {[
-                        {
-                          key: "signalReactions",
-                          label: "Signal reactions",
-                          desc: "When someone reacts to your signals",
-                        },
-                        {
-                          key: "signalComments",
-                          label: "Signal comments",
-                          desc: "When someone comments on your signals",
-                        },
-                        {
-                          key: "newFollowers",
-                          label: "New followers",
-                          desc: "When someone follows you",
-                        },
-                        {
-                          key: "frequencyUpdates",
-                          label: "Frequency updates",
-                          desc: "New signals in followed frequencies",
-                        },
-                        {
-                          key: "trailUpdates",
-                          label: "Trail updates",
-                          desc: "Updates to followed research trails",
-                        },
-                        {
-                          key: "mentions",
-                          label: "Mentions",
-                          desc: "When someone mentions you",
-                        },
-                      ].map(({ key, label, desc }) => (
+                      {activityNotificationFields.map(({ key, label, desc }) => (
                         <div
                           key={key}
                           className="flex items-center justify-between"
@@ -662,7 +674,13 @@ export default function SettingsPage() {
                               {desc}
                             </p>
                           </div>
-                          <Switch {...notificationForm.register(key as any)} />
+                          <Controller
+                            control={notificationForm.control}
+                            name={key}
+                            render={({ field }) => (
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            )}
+                          />
                         </div>
                       ))}
                     </div>
@@ -677,7 +695,13 @@ export default function SettingsPage() {
                         Receive a weekly summary of your archive activity
                       </p>
                     </div>
-                    <Switch {...notificationForm.register("weeklyDigest")} />
+                    <Controller
+                      control={notificationForm.control}
+                      name="weeklyDigest"
+                      render={({ field }) => (
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      )}
+                    />
                   </div>
 
                   <Button type="submit" disabled={isSaving}>
@@ -741,7 +765,13 @@ export default function SettingsPage() {
                           Reduce spacing for denser information display
                         </p>
                       </div>
-                      <Switch {...appearanceForm.register("compactMode")} />
+                      <Controller
+                        control={appearanceForm.control}
+                        name="compactMode"
+                        render={({ field }) => (
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        )}
+                      />
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -751,7 +781,13 @@ export default function SettingsPage() {
                           Minimize animations and transitions
                         </p>
                       </div>
-                      <Switch {...appearanceForm.register("reducedMotion")} />
+                      <Controller
+                        control={appearanceForm.control}
+                        name="reducedMotion"
+                        render={({ field }) => (
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        )}
+                      />
                     </div>
                   </div>
 

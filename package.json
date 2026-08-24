@@ -23,10 +23,17 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
+    "android:build": "cap sync android && cd android && gradlew.bat assembleDebug",
+    "windows:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-electron.ps1",
+    "windows:run": "dist\\electron\\xe1Signal-win32-x64\\xe1Signal.exe",
     "db:reset": "prisma migrate reset --force && npm run db:seed"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.2",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.20.0",
     "@radix-ui/react-accordion": "^1.2.1",
@@ -105,6 +112,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@playwright/test": "^1.48.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",

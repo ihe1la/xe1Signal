@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
 import { pinquedError, publicStashUrl } from "@/lib/pinqued";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type JsonRecord = Record<string, unknown>;
 type StashEntry = {
@@ -325,9 +326,10 @@ export function StashWorkspace() {
 
   async function copyLink(entry: StashEntry) {
     try {
-      await navigator.clipboard.writeText(entry.shareUrl);
+      if (await copyTextToClipboard(entry.shareUrl)) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1200);
+      }
     } catch {
       /* clipboard permission denied */
     }

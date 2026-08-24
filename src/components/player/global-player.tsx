@@ -1,17 +1,18 @@
 "use client";
 import * as React from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ListMusic, Pause, Play, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ListMusic, Pause, Play, Share2, X } from "lucide-react";
 import { usePlayer } from "./player-provider";
 import { YouTubePlayer } from "./youtube-player";
 import { SpotifyPlayer } from "./spotify-player";
+import { ShareMenu } from "@/components/share-menu";
 
 export function GlobalPlayer() {
-  const player = usePlayer(); const [expanded, setExpanded] = React.useState(true); const [unavailable, setUnavailable] = React.useState(false);
+  const player = usePlayer(); const [expanded, setExpanded] = React.useState(true); const [unavailable, setUnavailable] = React.useState(false); const [sharing, setSharing] = React.useState(false);
   React.useEffect(() => setUnavailable(false), [player.current?.signalId]);
   if (!player.current || !player.isOpen) return null;
   const item = player.current;
-  return <section aria-label="Global media player" className="fixed inset-x-3 bottom-[76px] z-[80] mx-auto max-w-3xl overflow-hidden rounded-xl border border-white/10 bg-[#101116]/95 shadow-2xl backdrop-blur-xl lg:bottom-4 lg:left-[292px]">
+  return <section aria-label="Global media player" className="fixed inset-x-3 bottom-[76px] z-[80] mx-auto max-w-3xl overflow-visible rounded-xl border border-white/10 bg-[#101116]/95 shadow-2xl backdrop-blur-xl lg:bottom-4 lg:left-[292px]">
     {expanded && <div className="border-b border-white/[.07] bg-black/30">
       {!unavailable && item.provider === "youtube" && <YouTubePlayer videoId={item.externalId} playing={player.isPlaying} onPlayingChange={(value) => value !== player.isPlaying && player.toggle()} onUnavailable={() => setUnavailable(true)} />}
       {!unavailable && item.provider === "spotify" && <SpotifyPlayer uri={item.providerUri || item.canonicalUrl} playing={player.isPlaying} onPlayingChange={(value) => value !== player.isPlaying && player.toggle()} onUnavailable={() => setUnavailable(true)} />}
@@ -24,8 +25,10 @@ export function GlobalPlayer() {
       <button onClick={player.toggle} className="grid h-9 w-9 place-items-center rounded-full border border-violet-300/40 text-violet-200" aria-label={player.isPlaying ? "Pause" : "Play"}>{player.isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}</button>
       <button onClick={player.next} className="hidden rounded p-2 text-zinc-500 hover:text-zinc-200 sm:block" aria-label="Next"><ChevronRight className="h-4 w-4" /></button>
       <span title={`${player.queue.length} queued`} className="hidden p-2 text-zinc-600 sm:block"><ListMusic className="h-4 w-4" /></span>
+      <button onClick={() => setSharing((value) => !value)} className="rounded p-2 text-zinc-500 hover:text-violet-200" aria-label="Share current media"><Share2 className="h-4 w-4" /></button>
       <button onClick={() => setExpanded((value) => !value)} className="rounded p-2 text-zinc-500 hover:text-zinc-200" aria-label={expanded ? "Minimize player" : "Expand player"}><ChevronDown className={`h-4 w-4 transition ${expanded ? "" : "rotate-180"}`} /></button>
       <button onClick={player.close} className="rounded p-2 text-zinc-600 hover:text-zinc-200" aria-label="Close player"><X className="h-4 w-4" /></button>
+      {sharing ? <ShareMenu title={item.title} sourceUrl={item.canonicalUrl} signalUrl={`/signals/${item.signalId}`} onClose={() => setSharing(false)} className="absolute bottom-full right-2 mb-2 w-72" /> : null}
     </div>
   </section>;
 }

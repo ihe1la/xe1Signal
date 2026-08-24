@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Space-invader mark, padded for adaptive-icon safe zone -->
+    <path
+        android:fillColor="#C4B5FD"
+        android:pathData="M42,34h6v6h-6zM60,34h6v6h-6zM36,40h6v6h-6zM48,40h12v6h-12zM66,40h6v6h-6zM30,46h48v6h-48zM30,52h12v6h-12zM48,52h12v6h-12zM66,52h12v6h-12zM30,58h6v6h-6zM42,58h6v6h-6zM60,58h6v6h-6zM72,58h6v6h-6zM36,64h6v6h-6zM66,64h6v6h-6zM42,70h6v6h-6zM60,70h6v6h-6z" />
+</vector>

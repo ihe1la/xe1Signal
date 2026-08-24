@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type Result = { id?: string; name: string; occurrenceIndex: number; marker: string; reflected: boolean; reflectionCount: number; context: string | null; encoding: string | null; snippet: string | null };
 type Run = { runId: string; finalRequestUrl: string; statusCode: number; contentType: string; responseSize: number; responseTimeMs: number; requestCount: number; results: Result[] };
 
-function copy(value: string) { return navigator.clipboard.writeText(value); }
+function copy(value: string) { return copyTextToClipboard(value); }
 
 export function ReflectionMapper() {
   const [targetUrl, setTargetUrl] = useState("");

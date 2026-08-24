@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Signal Archive',
-    short_name: 'Signal Archive',
+    name: 'xe1Signal',
+    short_name: 'xe1Signal',
     description: 'A private space for signals, songs, links, and fragments worth keeping.',
     start_url: '/',
     scope: '/',
@@ -12,6 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#07080c',
     orientation: 'portrait-primary',
     categories: ['lifestyle', 'music', 'productivity'],
+    id: 'https://he1l.me/',
     icons: [
       {
         src: '/icon-192x192.png',

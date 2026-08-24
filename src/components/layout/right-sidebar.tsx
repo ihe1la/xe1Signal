@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowRight, Check, Pencil, Plus, X } from "lucide-react";
 import { MOOD_SYMBOLS } from "@/lib/mood-symbols";
+import { loadSidebarSnapshot } from "@/lib/sidebar-client-cache";
 
 type SidebarData = {
   profile: { username: string; name: string; avatarUrl: string | null; strength: number } | null;
@@ -43,7 +44,7 @@ export function RightSidebar() {
     let active = true;
     Promise.all([
       fetch("/api/user/mood").then((response) => (response.ok ? response.json() : null)),
-      fetch("/api/sidebar").then((response) => (response.ok ? response.json() : null)),
+      loadSidebarSnapshot(),
     ])
       .then(([moodData, sidebarData]) => {
         if (!active) return;

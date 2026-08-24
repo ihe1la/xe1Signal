@@ -72,9 +72,16 @@ export function VibeRoom() {
     void load();
     const source = new EventSource("/api/vibe/events");
     source.addEventListener("vibe", () => { void load(); });
-    source.onerror = () => { source.close(); };
-    const poll = window.setInterval(() => { void load(); }, 3_000);
-    return () => { active = false; source.close(); window.clearInterval(poll); };
+    let fallbackPoll: number | undefined;
+    source.onerror = () => {
+      source.close();
+      if (fallbackPoll === undefined) fallbackPoll = window.setInterval(() => { void load(); }, 10_000);
+    };
+    return () => {
+      active = false;
+      source.close();
+      if (fallbackPoll !== undefined) window.clearInterval(fallbackPoll);
+    };
   }, [loadSnapshot]);
 
   const sendControl = React.useCallback(async (action: VibeAction, itemId?: string) => {
@@ -104,7 +111,7 @@ export function VibeRoom() {
       title: item.title,
       artist: item.artists.join(", ") || "Unknown artist",
       src: item.fileUrl,
-      href: "/vibe",
+      href: item.sourceUrl,
       onToggle: () => {
         void controlRef.current(roomPlayingRef.current ? "pause" : "play", item.id).catch((cause) =>
           setError(cause instanceof Error ? cause.message : "Could not update playback"),
@@ -125,7 +132,7 @@ export function VibeRoom() {
         );
       },
     }).catch(() => setPlaybackBlocked(true));
-  }, [snapshot?.room.currentItemId, snapshot?.room.isPlaying, snapshot?.nowPlaying?.fileUrl, snapshot?.nowPlaying?.title, artistsKey]);
+  }, [snapshot?.room.currentItemId, snapshot?.room.isPlaying, snapshot?.nowPlaying?.fileUrl, snapshot?.nowPlaying?.sourceUrl, snapshot?.nowPlaying?.title, artistsKey]);
 
   async function queueUrl(event: React.FormEvent) {
     event.preventDefault();

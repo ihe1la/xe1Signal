@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { InstallAppButton } from "@/components/install-app-button";
@@ -17,7 +18,7 @@ export default async function HomePage() {
     <div className="absolute inset-0 bg-[url('/media/archive-landing-bg.png')] bg-cover bg-center"/>
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(8,9,14,.18),rgba(5,6,10,.82)_78%),linear-gradient(to_bottom,rgba(5,6,10,.2),rgba(5,6,10,.72))]"/>
     <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
-      <Link href="/" className="font-mono text-[12px] tracking-[.32em] text-zinc-200">SIGNAL ARCHIVE <i className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-violet-400"/></Link>
+      <Link href="/" className="flex items-center gap-3 font-mono text-[12px] tracking-[.24em] text-zinc-200"><Image src="/icon-192x192.png" alt="" width={30} height={30} priority className="h-[30px] w-[30px] object-contain"/>xe1Signal <i className="inline-block h-1.5 w-1.5 rounded-full bg-violet-400"/></Link>
       <Link href="/login" className="font-mono text-[10px] text-zinc-400 transition hover:text-zinc-100">ENTER ARCHIVE →</Link>
     </header>
     <section className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center justify-center px-6 pb-28 text-center">

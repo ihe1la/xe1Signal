@@ -17,6 +17,7 @@ import {
   type Finding,
 } from "@/lib/findings";
 import { cn } from "@/lib/utils";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type FindingsView = "notes" | "map";
 
@@ -113,9 +114,10 @@ export function FindingsWorkspace() {
 
   async function copyFinding(finding: Finding) {
     try {
-      await navigator.clipboard.writeText(finding.body);
+      if (await copyTextToClipboard(finding.body)) {
       setCopiedId(finding.id);
       window.setTimeout(() => setCopiedId((current) => (current === finding.id ? null : current)), 1400);
+      }
     } catch {
       /* ignore */
     }

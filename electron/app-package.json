@@ -1,0 +1,6 @@
+{
+  "name": "xe1signal",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.cjs"
+}

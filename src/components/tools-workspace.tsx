@@ -1,10 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { DumpNotesWorkspace } from "@/components/dump-notes-workspace";
-import { FindingsWorkspace } from "@/components/findings-workspace";
-import { PinquedWorkspace } from "@/components/pinqued-workspace";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
+
+function WorkspaceLoading() {
+  return <div className="h-72 animate-pulse rounded-xl border border-white/[.07] bg-white/[.015]" aria-label="Loading workspace" />;
+}
+
+const FindingsWorkspace = dynamic(
+  () => import("@/components/findings-workspace").then((module) => module.FindingsWorkspace),
+  { loading: WorkspaceLoading },
+);
+const DumpNotesWorkspace = dynamic(
+  () => import("@/components/dump-notes-workspace").then((module) => module.DumpNotesWorkspace),
+  { loading: WorkspaceLoading },
+);
+const PinquedWorkspace = dynamic(
+  () => import("@/components/pinqued-workspace").then((module) => module.PinquedWorkspace),
+  { loading: WorkspaceLoading },
+);
 
 type ToolsTab = "findings" | "dump-notes" | "pinqued";
 

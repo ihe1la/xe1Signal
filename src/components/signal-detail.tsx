@@ -7,6 +7,7 @@ import { ArrowLeft, Bookmark, ExternalLink, Heart, MessageCircle, Pencil, Send, 
 import toast from "react-hot-toast";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SignalCard } from "@/components/signals/signal-card";
+import { ShareMenu } from "@/components/share-menu";
 import { type DemoSignal } from "@/lib/demo-data";
 
 type Comment = {
@@ -27,6 +28,7 @@ export function SignalDetail({ signal, canEdit = false }: { signal: DemoSignal &
   const [reactionCount, setReactionCount] = React.useState(signal.reactionCount || 0);
   const [saveCount, setSaveCount] = React.useState(signal.saveCount || 0);
   const [actionBusy, setActionBusy] = React.useState<"react" | "save" | null>(null);
+  const [shareOpen, setShareOpen] = React.useState(false);
 
   React.useEffect(() => {
     let active = true;
@@ -85,16 +87,6 @@ export function SignalDetail({ signal, canEdit = false }: { signal: DemoSignal &
     } finally { setActionBusy(null); }
   }
 
-  async function share() {
-    try {
-      if (navigator.share) await navigator.share({ title: signal.title || "Signal", url: location.href });
-      else { await navigator.clipboard.writeText(location.href); toast.success("Signal link copied"); }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("Signal could not be shared");
-    }
-  }
-
   async function remove() {
     if (!window.confirm("Delete this signal?")) return;
     const response = await fetch(`/api/signals/${signal.id}`, { method: "DELETE" });
@@ -116,7 +108,8 @@ export function SignalDetail({ signal, canEdit = false }: { signal: DemoSignal &
       </div>
       <aside className="space-y-4">
         <section className="rounded-xl border border-white/[.07] bg-white/[.015] p-5"><p className="font-mono text-[9px] uppercase tracking-wider text-zinc-600">Signal details</p><dl className="mt-5 space-y-4 font-mono text-[10px]"><Row label="Strength" value={`${signal.signalStrength}%`}/><Row label="Saved" value={String(saveCount)}/><Row label="Reactions" value={String(reactionCount)}/><Row label="Visibility" value={signal.visibility.toLowerCase()}/><Row label="Frequency" value={signal.frequency?.name || "Unsorted"}/></dl></section>
-        <div className="grid grid-cols-2 gap-2"><Action icon={Heart} label={reacted ? "Reacted" : "React"} active={reacted} busy={actionBusy === "react"} onClick={toggleReaction}/><Action icon={Bookmark} label={saved ? "Saved" : "Save"} active={saved} busy={actionBusy === "save"} onClick={toggleSave}/><Action icon={Share2} label="Share" onClick={share}/>{signal.sourceUrl ? <a href={signal.sourceUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-lg border border-white/[.07] font-mono text-[10px] text-zinc-500 hover:text-zinc-200"><ExternalLink className="h-3.5 w-3.5"/>Source</a> : <a href="#comments" className="flex h-10 items-center justify-center gap-2 rounded-lg border border-white/[.07] font-mono text-[10px] text-zinc-500 hover:text-zinc-200"><MessageCircle className="h-3.5 w-3.5"/>Comment</a>}</div>
+        <div className="grid grid-cols-2 gap-2"><Action icon={Heart} label={reacted ? "Reacted" : "React"} active={reacted} busy={actionBusy === "react"} onClick={toggleReaction}/><Action icon={Bookmark} label={saved ? "Saved" : "Save"} active={saved} busy={actionBusy === "save"} onClick={toggleSave}/><Action icon={Share2} label="Share" onClick={() => setShareOpen(true)}/>{signal.sourceUrl ? <a href={signal.sourceUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-lg border border-white/[.07] font-mono text-[10px] text-zinc-500 hover:text-zinc-200"><ExternalLink className="h-3.5 w-3.5"/>Source</a> : <a href="#comments" className="flex h-10 items-center justify-center gap-2 rounded-lg border border-white/[.07] font-mono text-[10px] text-zinc-500 hover:text-zinc-200"><MessageCircle className="h-3.5 w-3.5"/>Comment</a>}</div>
+        {shareOpen ? <ShareMenu title={signal.title || "Signal"} sourceUrl={signal.sourceUrl} signalUrl={`/signals/${signal.id}`} onClose={() => setShareOpen(false)} className="mt-3" /> : null}
         {canEdit && <><Link href={`/signals/${signal.id}/edit`} className="flex h-10 items-center justify-center gap-2 rounded-lg border border-white/[.07] font-mono text-[10px] text-zinc-500 hover:text-zinc-200"><Pencil className="h-3.5 w-3.5"/>Edit signal</Link><button onClick={() => void remove()} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-red-400/10 font-mono text-[10px] text-red-400/60 hover:bg-red-400/[.04]"><Trash2 className="h-3.5 w-3.5"/>Delete signal</button></>}
       </aside>
     </div>

@@ -4,6 +4,7 @@ import * as React from "react";
 import { Check, Copy, Folder, Loader2, Play, Plus, Save, Search, Square, Trash2 } from "lucide-react";
 import { usePinqued } from "@/components/pinqued-session";
 import { pinquedError } from "@/lib/pinqued";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type Relay = {
   id: string;
@@ -142,7 +143,7 @@ export function RelayWorkspace() {
 
   async function copyLink() {
     if (!selected?.url) return;
-    await navigator.clipboard.writeText(selected.url);
+    if (!(await copyTextToClipboard(selected.url))) return;
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
   }

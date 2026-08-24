@@ -1,16 +1,22 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Archive, Code2, FolderOpen, GitBranch, Link2, List, Terminal, type LucideIcon } from "lucide-react";
-import { FilesWorkspace } from "@/components/files-workspace";
-import { LogsWorkspace } from "@/components/logs-workspace";
 import { PinquedSession } from "@/components/pinqued-session";
-import { RelayWorkspace } from "@/components/relay-workspace";
-import { SnippetsWorkspace } from "@/components/snippets-workspace";
-import { StashWorkspace } from "@/components/stash-workspace";
-import { SubkeeperWorkspace } from "@/components/subkeeper-workspace";
-import { TerminalWorkspace } from "@/components/terminal-workspace";
 import { cn } from "@/lib/utils";
+
+function ToolLoading() {
+  return <div className="h-[520px] animate-pulse border border-[#292830] bg-[#0d0d11]" aria-label="Loading Pinqued tool" />;
+}
+
+const SnippetsWorkspace = dynamic(() => import("@/components/snippets-workspace").then((module) => module.SnippetsWorkspace), { loading: ToolLoading });
+const StashWorkspace = dynamic(() => import("@/components/stash-workspace").then((module) => module.StashWorkspace), { loading: ToolLoading });
+const LogsWorkspace = dynamic(() => import("@/components/logs-workspace").then((module) => module.LogsWorkspace), { loading: ToolLoading });
+const FilesWorkspace = dynamic(() => import("@/components/files-workspace").then((module) => module.FilesWorkspace), { loading: ToolLoading });
+const RelayWorkspace = dynamic(() => import("@/components/relay-workspace").then((module) => module.RelayWorkspace), { loading: ToolLoading });
+const TerminalWorkspace = dynamic(() => import("@/components/terminal-workspace").then((module) => module.TerminalWorkspace), { loading: ToolLoading, ssr: false });
+const SubkeeperWorkspace = dynamic(() => import("@/components/subkeeper-workspace").then((module) => module.SubkeeperWorkspace), { loading: ToolLoading, ssr: false });
 
 type PinquedTool = "snippets" | "stash" | "logs" | "files" | "relay" | "terminal" | "subkeeper";
 type SidebarItem = { id: PinquedTool; label: string; icon: LucideIcon };

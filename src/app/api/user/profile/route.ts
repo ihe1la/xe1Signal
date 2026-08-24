@@ -7,12 +7,16 @@ const profileSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   username: z.string().trim().min(3).max(30).regex(/^[a-zA-Z0-9_-]+$/).transform((value) => value.toLowerCase()).optional(),
   bio: z.string().max(500).optional(),
+  website: z.string().trim().url().optional().or(z.literal("")),
+  twitter: z.string().trim().max(50).optional(),
+  github: z.string().trim().max(50).optional(),
+  location: z.string().trim().max(100).optional(),
 });
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const user = await db.user.findUnique({ where: { id: session.user.id }, select: { id: true, email: true, name: true, username: true, bio: true, avatarUrl: true, bannerUrl: true, currentMood: true, role: true } });
+  const user = await db.user.findUnique({ where: { id: session.user.id }, select: { id: true, email: true, name: true, username: true, bio: true, website: true, twitter: true, github: true, location: true, avatarUrl: true, bannerUrl: true, currentMood: true, role: true } });
   return user ? NextResponse.json({ user }) : NextResponse.json({ error: "User not found" }, { status: 404 });
 }
 
@@ -25,6 +29,6 @@ export async function PATCH(request: Request) {
     const taken = await db.user.findFirst({ where: { username: parsed.data.username, NOT: { id: session.user.id } }, select: { id: true } });
     if (taken) return NextResponse.json({ error: "This username is already taken" }, { status: 409 });
   }
-  const user = await db.user.update({ where: { id: session.user.id }, data: parsed.data, select: { id: true, email: true, name: true, username: true, bio: true, avatarUrl: true, currentMood: true } });
+  const user = await db.user.update({ where: { id: session.user.id }, data: parsed.data, select: { id: true, email: true, name: true, username: true, bio: true, website: true, twitter: true, github: true, location: true, avatarUrl: true, currentMood: true } });
   return NextResponse.json({ user });
 }

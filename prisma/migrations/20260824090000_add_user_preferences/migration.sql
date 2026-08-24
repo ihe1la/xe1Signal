@@ -1,0 +1,14 @@
+ALTER TABLE "User" ADD COLUMN "website" TEXT;
+ALTER TABLE "User" ADD COLUMN "twitter" TEXT;
+ALTER TABLE "User" ADD COLUMN "github" TEXT;
+ALTER TABLE "User" ADD COLUMN "location" TEXT;
+
+ALTER TABLE "UserSettings" ADD COLUMN "signalReactions" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "signalComments" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "newFollowers" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "frequencyUpdates" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "trailUpdates" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "mentions" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "UserSettings" ADD COLUMN "weeklyDigest" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "UserSettings" ADD COLUMN "compactMode" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "UserSettings" ADD COLUMN "reducedMotion" BOOLEAN NOT NULL DEFAULT false;

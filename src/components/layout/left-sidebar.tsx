@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import * as React from "react";
@@ -8,6 +9,7 @@ import { Archive, CircleUserRound, Compass, Grid2X2, Headphones, Plus, Radio, Se
 import { canAccessOwnerTools } from "@/lib/owner-access";
 import { cn } from "@/lib/utils";
 import { StrengthBars } from "@/components/layout/right-sidebar";
+import { loadSidebarSnapshot } from "@/lib/sidebar-client-cache";
 import type { LucideIcon } from "lucide-react";
 
 type SidebarSummary = {
@@ -38,8 +40,7 @@ export function LeftSidebar() {
   React.useEffect(() => {
     if (!session?.user?.id) return;
     let active = true;
-    fetch("/api/sidebar")
-      .then((response) => (response.ok ? response.json() : null))
+    loadSidebarSnapshot()
       .then((data) => {
         if (active && data) setSummary(data);
       })
@@ -53,8 +54,9 @@ export function LeftSidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
-      <Link href="/discover" className="flex h-20 items-center border-b border-white/[0.055] px-9 font-mono text-[15px] tracking-[.24em] text-zinc-100">
-        SIGNAL ARCHIVE<span className="ml-3 h-1.5 w-1.5 rounded-full bg-violet-400" />
+      <Link href="/discover" className="flex h-20 items-center gap-3 border-b border-white/[0.055] px-8 font-mono text-[14px] tracking-[.18em] text-zinc-100">
+        <Image src="/icon-192x192.png" alt="" width={30} height={30} priority className="h-[30px] w-[30px] object-contain" />
+        <span>xe1Signal</span><span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
       </Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
         <nav className="space-y-1">

@@ -41,6 +41,7 @@ import {
   type PinquedSnippet,
 } from "@/lib/pinqued";
 import { runPinquedSnippet } from "@/lib/pinqued-snippet-runtime";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 type SnippetId =
   | "url-encode"
@@ -374,7 +375,7 @@ export function SnippetsWorkspace() {
 
   async function copyOutput() {
     if (!output) return;
-    await navigator.clipboard.writeText(output);
+    if (!(await copyTextToClipboard(output))) return;
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
   }

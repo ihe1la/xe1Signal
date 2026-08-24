@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { useAudioPlayer } from "@/components/audio-player-provider";
 import { usePlayer } from "@/components/player/player-provider";
+import { ShareMenu } from "@/components/share-menu";
 
 type SignalFile = {
   id: string;
@@ -78,6 +80,7 @@ export function SignalCard({
   variant = "default",
   onSave,
   onReact,
+  onShare,
 }: {
   signal: CardSignal;
   variant?: "default" | "compact" | "featured";
@@ -96,6 +99,7 @@ export function SignalCard({
   const [saveCount, setSaveCount] = React.useState(signal.saveCount || 0);
   const [actionBusy, setActionBusy] = React.useState<"react" | "save" | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [shareOpen, setShareOpen] = React.useState(false);
   const newestFiles = [...(signal.files || [])].reverse();
   const imageFile = newestFiles.find((file) => file.mimeType.startsWith("image/"));
   const audioFile = newestFiles.find((file) => file.mimeType.startsWith("audio/"));
@@ -112,7 +116,8 @@ export function SignalCard({
   const showExternal = Boolean(signal.sourceUrl) && ["LINK", "DOCUMENT", "FILE"].includes(signal.type);
 
   async function copyCode() {
-    await navigator.clipboard.writeText(signal.content || "");
+    const didCopy = await copyTextToClipboard(signal.content || "");
+    if (!didCopy) return;
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
   }
@@ -155,18 +160,9 @@ export function SignalCard({
     }
   }
 
-  async function shareSignal() {
-    const url = `${window.location.origin}/signals/${signal.id}`;
-    try {
-      if (navigator.share) await navigator.share({ title: signal.title || "Signal", url });
-      else {
-        await navigator.clipboard.writeText(url);
-        toast.success("Signal link copied");
-      }
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("Signal could not be shared");
-    }
+  function shareSignal() {
+    onShare?.(signal.id);
+    setShareOpen(true);
   }
 
   function playEmbeddedMedia() {
@@ -207,6 +203,7 @@ export function SignalCard({
           onSave={() => void toggleSave()}
           onShare={() => void shareSignal()}
         />
+        {shareOpen ? <ShareMenu title={signal.title || "Signal"} sourceUrl={signal.sourceUrl} signalUrl={`/signals/${signal.id}`} onClose={() => setShareOpen(false)} className="mt-3 w-full" /> : null}
       </article>
     );
   }
@@ -313,6 +310,7 @@ export function SignalCard({
           onShare={() => void shareSignal()}
         />
       </footer>
+      {shareOpen ? <ShareMenu title={signal.title || "Signal"} sourceUrl={signal.sourceUrl} signalUrl={`/signals/${signal.id}`} onClose={() => setShareOpen(false)} className="mx-3 mb-3" /> : null}
     </article>
   );
 }
@@ -452,6 +450,7 @@ function SongBody({
             title={signal.title || "Untitled audio"}
             artist={typeof artist === "string" ? artist : undefined}
             src={audioFile?.url}
+            href={signal.sourceUrl}
           />
         ) : hasEmbedded ? (
           <button
@@ -496,6 +495,7 @@ function VoiceBody({ signal, audioFile }: { signal: CardSignal; audioFile?: Sign
           title={signal.title || "Untitled audio"}
           artist={signal.description || audioFile?.originalName}
           src={audioFile?.url}
+          href={signal.sourceUrl}
         />
         <SyncedWave src={audioFile?.url} />
         <span className="shrink-0 font-mono text-[10px] text-zinc-500">{duration}</span>
@@ -587,13 +587,14 @@ function AudiusPlayButton({ signal, compact = false }: { signal: CardSignal; com
   return (
     <button
       onClick={() =>
-        player
+          player
           .playTrack({
             id: `${signal.id}:audius:${signal.externalId}`,
             signalId: signal.id,
             title: signal.title || "Untitled Audius track",
             artist: signal.creatorName || "Audius",
             src,
+            href: signal.sourceUrl || undefined,
           })
           .catch(() => undefined)
       }
@@ -613,12 +614,14 @@ function LocalPlayButton({
   title,
   artist,
   src,
+  href,
   large = false,
 }: {
   signalId: string;
   title: string;
   artist?: string;
   src?: string;
+  href?: string | null;
   large?: boolean;
 }) {
   const player = useAudioPlayer();
@@ -650,6 +653,7 @@ function LocalPlayButton({
             title,
             artist,
             src,
+            href: href || undefined,
           })
           .catch(() => undefined)
       }
