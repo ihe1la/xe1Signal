@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { canAccessOwnerTools } from "@/lib/owner-access";
@@ -30,5 +31,6 @@ export async function POST(request: Request) {
 
   const result = await createTrackerEntry(parsed.data);
   if (!result.workspace) return NextResponse.json({ error: result.error || "The study entry could not be saved" }, { status: 502 });
+  revalidatePath("/study");
   return NextResponse.json(result.workspace, { status: 201 });
 }

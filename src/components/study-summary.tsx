@@ -13,6 +13,12 @@ function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(Math.round(value));
 }
 
+function formatTrendBucket(bucket: string) {
+  const date = new Date(`${bucket}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return bucket;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date);
+}
+
 function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <article className="rounded-xl border border-white/[.07] bg-white/[.015] px-4 py-4 transition-colors hover:border-white/[.1]">
@@ -46,6 +52,56 @@ export function StudySummary({ summary }: { summary: TrackerStudySummary }) {
         <Stat label="This week" value={formatDuration(summary.weekSeconds)} detail="Across your focus sessions" />
         <Stat label="Lifetime" value={formatDuration(summary.lifetimeSeconds)} detail={`Level ${summary.level || "—"} · ${summary.badgeCount} badges`} />
       </div>
+
+      <section className="rounded-xl border border-white/[.07] bg-white/[.015] p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-sans text-sm font-medium text-zinc-200">Insights</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[.14em] text-zinc-600">your tracker data, here in Study</p>
+          </div>
+          <a href="https://tracker.l30on.top/insights" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-500 transition hover:text-violet-200">Open full insights ↗</a>
+        </div>
+
+        <div className="mt-6 grid gap-8 lg:grid-cols-2">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[.14em] text-zinc-500">Today by label</p>
+            {summary.todayLabels.length ? (
+              <div className="mt-4 space-y-4">
+                {summary.todayLabels.map((item) => (
+                  <div key={item.name}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3 font-sans text-xs">
+                      <span className="flex min-w-0 items-center gap-2 truncate text-zinc-300"><i className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />{item.name}</span>
+                      <span className="shrink-0 tabular-nums text-zinc-500">{formatDuration(item.seconds)}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[.05]"><div className="h-full rounded-full" style={{ width: `${Math.max(3, (item.seconds / Math.max(summary.todaySeconds, 1)) * 100)}%`, backgroundColor: item.color, opacity: 0.72 }} /></div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="mt-4 font-sans text-xs text-zinc-500">No labeled focus logged today.</p>}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-mono text-[10px] uppercase tracking-[.14em] text-zinc-500">This week by day</p>
+              <span className="font-sans text-[11px] tabular-nums text-zinc-600">{formatDuration(summary.weekSeconds)}</span>
+            </div>
+            {summary.weeklyTrend.length ? (
+              <div className="mt-4 space-y-3">
+                {summary.weeklyTrend.map((item) => {
+                  const maxSeconds = Math.max(...summary.weeklyTrend.map((trend) => trend.seconds), 1);
+                  return (
+                    <div key={item.bucket} className="flex items-center gap-3 font-sans text-xs">
+                      <span className="w-16 shrink-0 text-zinc-500">{formatTrendBucket(item.bucket)}</span>
+                      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[.05]"><div className="h-full rounded-full bg-violet-400/70" style={{ width: `${Math.max(item.seconds ? 4 : 0, (item.seconds / maxSeconds) * 100)}%` }} /></div>
+                      <span className="w-12 shrink-0 text-right tabular-nums text-zinc-500">{formatDuration(item.seconds)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : <p className="mt-4 font-sans text-xs text-zinc-500">Weekly trend data is unavailable.</p>}
+          </div>
+        </div>
+      </section>
 
       <section className="rounded-xl border border-white/[.07] bg-white/[.015] p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">

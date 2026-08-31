@@ -30,7 +30,7 @@ export default async function StudyPage() {
           <div className="flex flex-wrap items-center justify-end gap-3">
             {summary && <p className="font-mono text-[10px] text-zinc-600">updated {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(summary.updatedAt))}</p>}
             <span className="font-mono text-[10px] text-zinc-600">source: <a href="https://tracker.l30on.top/" target="_blank" rel="noreferrer" className="text-zinc-500 transition hover:text-violet-300">tracker.l30on.top</a></span>
-            <a href="https://tracker.l30on.top/" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-400 transition hover:text-violet-200">Open original ↗</a>
+            <a href="https://tracker.l30on.top/insights" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-400 transition hover:text-violet-200">Open original ↗</a>
           </div>
         </header>
         {!linked ? (

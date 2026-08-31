@@ -409,7 +409,7 @@ function trackerMetadata(input: { labelId?: number | null; taskId?: number | nul
   };
 }
 
-async function trackerMutation(path: string, method: "POST" | "PATCH", cookies: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
+async function trackerMutation(path: string, method: "POST" | "PATCH" | "DELETE", cookies: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
   try {
     const response = await fetch(`${TRACKER_ORIGIN}${path}`, {
       method,
@@ -452,6 +452,26 @@ export async function createTrackerEntry(input: TrackerEntryInput): Promise<{ wo
     duration_seconds: input.durationSeconds,
     ...trackerMetadata(input),
   });
+  if (!result.ok) return { workspace: null, error: result.error };
+  return { workspace: await getTrackerStudyWorkspace() };
+}
+
+export async function updateTrackerEntry(entryId: number, input: TrackerEntryInput): Promise<{ workspace: StudyWorkspace | null; error?: string }> {
+  const cookies = cookieHeader();
+  if (!cookies) return { workspace: null, error: "Study tracking is not configured." };
+  const result = await trackerMutation(`/api/entries/${entryId}`, "PATCH", cookies, {
+    date: input.date,
+    duration_seconds: input.durationSeconds,
+    ...trackerMetadata(input),
+  });
+  if (!result.ok) return { workspace: null, error: result.error };
+  return { workspace: await getTrackerStudyWorkspace() };
+}
+
+export async function deleteTrackerEntry(entryId: number): Promise<{ workspace: StudyWorkspace | null; error?: string }> {
+  const cookies = cookieHeader();
+  if (!cookies) return { workspace: null, error: "Study tracking is not configured." };
+  const result = await trackerMutation(`/api/entries/${entryId}`, "DELETE", cookies);
   if (!result.ok) return { workspace: null, error: result.error };
   return { workspace: await getTrackerStudyWorkspace() };
 }

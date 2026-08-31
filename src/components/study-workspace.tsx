@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Clock3, Pause, Play, RefreshCw, Square } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Clock3, Pause, Pencil, Play, RefreshCw, Square, Trash2, X } from "lucide-react";
 import type { StudyEntry, StudyTask, StudyWorkspace as TrackerStudyWorkspace } from "@/lib/tracker-client";
 
 function formatTimer(milliseconds: number) {
@@ -45,6 +46,7 @@ function taskLabel(task: StudyTask, tasks: StudyTask[]) {
 }
 
 export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: TrackerStudyWorkspace }) {
+  const router = useRouter();
   const [workspace, setWorkspace] = React.useState(initialWorkspace);
   const [loadedAt, setLoadedAt] = React.useState(() => Date.now());
   const [now, setNow] = React.useState(() => Date.now());
@@ -53,6 +55,13 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
   const [description, setDescription] = React.useState(initialWorkspace.timer.description);
   const [loading, setLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [entryActionId, setEntryActionId] = React.useState<number | null>(null);
+  const [editingEntry, setEditingEntry] = React.useState<StudyEntry | null>(null);
+  const [editDate, setEditDate] = React.useState("");
+  const [editDuration, setEditDuration] = React.useState("");
+  const [editLabelId, setEditLabelId] = React.useState("");
+  const [editTaskId, setEditTaskId] = React.useState("");
+  const [editDescription, setEditDescription] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -116,6 +125,101 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
       setError("The timer could not be updated.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function openEntryEditor(entry: StudyEntry) {
+    setError(null);
+    setEditingEntry(entry);
+    setEditDate(entry.date);
+    setEditDuration(String(entry.durationSeconds));
+    setEditLabelId(entry.labelId ? String(entry.labelId) : "");
+    setEditTaskId(entry.taskId ? String(entry.taskId) : "");
+    setEditDescription(entry.description);
+  }
+
+  async function resumeEntry(entry: StudyEntry) {
+    if (workspace.timer.running) {
+      setError("Pause the current session before resuming another log.");
+      return;
+    }
+    setEntryActionId(entry.id);
+    setError(null);
+    try {
+      const response = await fetch("/api/study/timer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "start", labelId: entry.labelId, taskId: entry.taskId, description: entry.description || null }),
+      });
+      const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
+      if (!response.ok || !next || !("timer" in next)) {
+        setError((next && "error" in next && next.error) || "The session could not be resumed.");
+        return;
+      }
+      syncWorkspace(next);
+      router.refresh();
+    } catch {
+      setError("The session could not be resumed.");
+    } finally {
+      setEntryActionId(null);
+    }
+  }
+
+  async function saveEntryEdit() {
+    if (!editingEntry) return;
+    const durationSeconds = Number.parseInt(editDuration, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(editDate) || !Number.isSafeInteger(durationSeconds) || durationSeconds <= 0) {
+      setError("Enter a valid date and a duration greater than zero.");
+      return;
+    }
+
+    setEntryActionId(editingEntry.id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/study/entries/${editingEntry.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          date: editDate,
+          durationSeconds,
+          labelId: editLabelId ? Number(editLabelId) : null,
+          taskId: editTaskId ? Number(editTaskId) : null,
+          description: editDescription.trim() || null,
+        }),
+      });
+      const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
+      if (!response.ok || !next || !("timer" in next)) {
+        setError((next && "error" in next && next.error) || "The study log could not be updated.");
+        return;
+      }
+      syncWorkspace(next);
+      setEditingEntry(null);
+      router.refresh();
+    } catch {
+      setError("The study log could not be updated.");
+    } finally {
+      setEntryActionId(null);
+    }
+  }
+
+  async function deleteEntry(entry: StudyEntry) {
+    if (!window.confirm(`Delete “${entryTitle(entry)}” from your study log?`)) return;
+    setEntryActionId(entry.id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/study/entries/${entry.id}`, { method: "DELETE" });
+      const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
+      if (!response.ok || !next || !("timer" in next)) {
+        setError((next && "error" in next && next.error) || "The study log could not be deleted.");
+        return;
+      }
+      syncWorkspace(next);
+      if (editingEntry?.id === entry.id) setEditingEntry(null);
+      router.refresh();
+    } catch {
+      setError("The study log could not be deleted.");
+    } finally {
+      setEntryActionId(null);
     }
   }
 
@@ -197,6 +301,17 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
                       <p className="mt-1 truncate font-mono text-[10px] text-zinc-600">{formatEntryRange(entry)}{entry.labelName ? ` · ${entry.labelName}` : ""}</p>
                     </div>
                     <span className="shrink-0 font-mono text-[10px] tabular-nums text-zinc-400">{formatDuration(entry.durationSeconds)}</span>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button type="button" onClick={() => void resumeEntry(entry)} disabled={loading || entryActionId !== null || workspace.timer.running} className="grid h-8 w-8 place-items-center rounded-md text-violet-400/70 transition hover:bg-violet-400/[.08] hover:text-violet-200 disabled:opacity-35" aria-label={`Resume ${entryTitle(entry)}`} title="Resume as timer">
+                        <Play className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => openEntryEditor(entry)} disabled={loading || entryActionId !== null} className="grid h-8 w-8 place-items-center rounded-md text-zinc-600 transition hover:bg-white/[.05] hover:text-zinc-200 disabled:opacity-35" aria-label={`Edit ${entryTitle(entry)}`} title="Edit study log">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button type="button" onClick={() => void deleteEntry(entry)} disabled={loading || entryActionId !== null} className="grid h-8 w-8 place-items-center rounded-md text-zinc-600 transition hover:bg-rose-400/[.06] hover:text-rose-300 disabled:opacity-35" aria-label={`Delete ${entryTitle(entry)}`} title="Delete study log">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -205,6 +320,53 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
         </div>
 
       </section>
+
+      {editingEntry && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/65 px-4 py-6">
+          <section role="dialog" aria-modal="true" aria-labelledby="edit-study-log-title" className="w-full max-w-lg rounded-xl border border-white/[.1] bg-[#0d0e14] p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[.16em] text-zinc-600">study log</p>
+                <h2 id="edit-study-log-title" className="mt-2 font-sans text-lg font-medium text-zinc-100">Edit session</h2>
+              </div>
+              <button type="button" onClick={() => setEditingEntry(null)} disabled={entryActionId !== null} className="grid h-8 w-8 place-items-center rounded-md text-zinc-600 transition hover:bg-white/[.05] hover:text-zinc-200 disabled:opacity-35" aria-label="Close edit study log">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form className="mt-6 space-y-4" onSubmit={(event) => { event.preventDefault(); void saveEntryEdit(); }}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="font-mono text-[10px] text-zinc-500">Date
+                  <input type="date" value={editDate} onChange={(event) => setEditDate(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
+                </label>
+                <label className="font-mono text-[10px] text-zinc-500">Duration (seconds)
+                  <input type="number" min="1" max={24 * 60 * 60} step="1" value={editDuration} onChange={(event) => setEditDuration(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="font-mono text-[10px] text-zinc-500">Label
+                  <select value={editLabelId} onChange={(event) => setEditLabelId(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30">
+                    <option value="">No label</option>
+                    {workspace.labels.map((label) => <option key={label.id} value={label.id}>{label.name}</option>)}
+                  </select>
+                </label>
+                <label className="font-mono text-[10px] text-zinc-500">Task
+                  <select value={editTaskId} onChange={(event) => setEditTaskId(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30">
+                    <option value="">No task</option>
+                    {workspace.tasks.map((task) => <option key={task.id} value={task.id}>{taskLabel(task, workspace.tasks)}</option>)}
+                  </select>
+                </label>
+              </div>
+              <label className="block font-mono text-[10px] text-zinc-500">Session note
+                <input value={editDescription} onChange={(event) => setEditDescription(event.target.value)} maxLength={1000} placeholder="What were you working on?" className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition placeholder:text-zinc-700 focus:border-violet-300/30" />
+              </label>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setEditingEntry(null)} disabled={entryActionId !== null} className="h-10 rounded-lg border border-white/[.08] px-4 font-mono text-[10px] text-zinc-400 transition hover:bg-white/[.04] hover:text-zinc-200 disabled:opacity-35">Cancel</button>
+                <button type="submit" disabled={entryActionId !== null} className="h-10 rounded-lg border border-violet-300/25 bg-violet-400/[.14] px-4 font-mono text-[10px] text-violet-100 transition hover:bg-violet-400/[.2] disabled:opacity-50">Save changes</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {error && <p role="alert" className="font-mono text-[10px] text-rose-300">{error}</p>}
     </div>
