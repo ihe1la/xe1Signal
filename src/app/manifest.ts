@@ -15,19 +15,19 @@ export default function manifest(): MetadataRoute.Manifest {
     id: 'https://he1l.me/',
     icons: [
       {
-        src: '/alien-192.png',
+        src: '/alien-dark-192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/alien-512.png',
+        src: '/alien-dark-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/alien-maskable-512.png',
+        src: '/alien-dark-maskable-512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

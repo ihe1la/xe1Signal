@@ -1,12 +1,12 @@
-const CACHE_NAME = 'signal-shell-v3';
+const CACHE_NAME = 'signal-shell-v4';
 const SHELL = [
   '/offline',
   '/manifest.webmanifest',
   '/favicon.ico',
-  '/alien-32.png',
-  '/alien-192.png',
-  '/alien-512.png',
-  '/alien-maskable-512.png',
+  '/alien-dark-32.png',
+  '/alien-dark-192.png',
+  '/alien-dark-512.png',
+  '/alien-dark-maskable-512.png',
   '/apple-touch-icon.png',
 ];
 

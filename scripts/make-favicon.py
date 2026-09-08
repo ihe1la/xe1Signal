@@ -1,52 +1,50 @@
-"""Restore the original light Pinterest alien icons and rebuild favicon.ico."""
+"""Build Signal Archive icons from the darker embossed alien."""
 from __future__ import annotations
 
-import io
-import subprocess
 from pathlib import Path
 
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Prefer the committed dark master asset.
+source_path = ROOT / "public" / "icon-dark-512x512.png"
+if not source_path.exists():
+    raise SystemExit(f"missing {source_path}")
 
-def git_bytes(rev: str, path: str) -> bytes:
-    return subprocess.check_output(["git", "show", f"{rev}:{path}"], cwd=ROOT)
+source = Image.open(source_path).convert("RGBA")
 
 
-def git_image(rev: str, path: str) -> Image.Image:
-    return Image.open(io.BytesIO(git_bytes(rev, path))).convert("RGBA")
-
-
-def write(path: Path, data: bytes) -> None:
+def write_png(path: Path, image: Image.Image) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data)
-    print(f"wrote {path.relative_to(ROOT)} ({len(data)} bytes)")
+    image.save(path, format="PNG")
+    print(f"wrote {path.relative_to(ROOT)} ({path.stat().st_size} bytes)")
 
 
-# Original Pinterest alien (light lavender), before the darker polish.
-write(ROOT / "src" / "app" / "icon.png", git_bytes("41bde32", "src/app/icon.png"))
-write(ROOT / "public" / "icon-192x192.png", git_bytes("a402052", "public/icon-192x192.png"))
-write(ROOT / "public" / "icon-512x512.png", git_bytes("a402052", "public/icon-512x512.png"))
-write(ROOT / "public" / "icon-maskable-512x512.png", git_bytes("a402052", "public/icon-maskable-512x512.png"))
-write(ROOT / "public" / "apple-touch-icon.png", git_bytes("a402052", "public/apple-touch-icon.png"))
+write_png(ROOT / "src" / "app" / "icon.png", source)
+write_png(ROOT / "public" / "icon-512x512.png", source)
+write_png(ROOT / "public" / "alien-512.png", source)
+write_png(ROOT / "public" / "alien-dark-512.png", source)
+write_png(ROOT / "public" / "icon-maskable-512x512.png", source)
+write_png(ROOT / "public" / "alien-maskable-512.png", source)
+write_png(ROOT / "public" / "alien-dark-maskable-512.png", source)
 
-# New filenames so pinned PWAs cannot keep serving the old cached dark icon.
-for src, dest in [
-    ("icon-192x192.png", "alien-192.png"),
-    ("icon-512x512.png", "alien-512.png"),
-    ("icon-maskable-512x512.png", "alien-maskable-512.png"),
-]:
-    data = (ROOT / "public" / src).read_bytes()
-    write(ROOT / "public" / dest, data)
+im192 = source.resize((192, 192), Image.Resampling.LANCZOS)
+write_png(ROOT / "public" / "icon-192x192.png", im192)
+write_png(ROOT / "public" / "alien-192.png", im192)
+write_png(ROOT / "public" / "alien-dark-192.png", im192)
 
-source = Image.open(ROOT / "public" / "icon-512x512.png").convert("RGBA")
+im180 = source.resize((180, 180), Image.Resampling.LANCZOS).convert("RGB")
+write_png(ROOT / "public" / "apple-touch-icon.png", im180)
+
+im32 = source.resize((32, 32), Image.Resampling.LANCZOS)
+write_png(ROOT / "public" / "alien-32.png", im32)
+write_png(ROOT / "public" / "alien-dark-32.png", im32)
+write_png(ROOT / "public" / "icon-32x32.png", im32)
+
 sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (256, 256)]
-source.save(ROOT / "public" / "favicon.ico", format="ICO", sizes=sizes)
-(ROOT / "src" / "app" / "favicon.ico").write_bytes((ROOT / "public" / "favicon.ico").read_bytes())
-print(f"wrote public/favicon.ico ({(ROOT / 'public' / 'favicon.ico').stat().st_size} bytes)")
-
-source.resize((32, 32), Image.Resampling.NEAREST).save(ROOT / "public" / "alien-32.png", format="PNG")
-source.resize((32, 32), Image.Resampling.NEAREST).save(ROOT / "public" / "icon-32x32.png", format="PNG")
-print("wrote public/alien-32.png")
-print("restore complete")
+favicon = ROOT / "public" / "favicon.ico"
+source.save(favicon, format="ICO", sizes=sizes)
+(ROOT / "src" / "app" / "favicon.ico").write_bytes(favicon.read_bytes())
+print(f"wrote public/favicon.ico ({favicon.stat().st_size} bytes)")
+print("dark icons ready")

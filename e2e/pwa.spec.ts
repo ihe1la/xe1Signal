@@ -18,9 +18,9 @@ test('exposes an installable, privacy-safe PWA shell', async ({ page, request })
   });
   expect(manifest.icons).toEqual(
     expect.arrayContaining([
-      expect.objectContaining({ src: '/alien-192.png', sizes: '192x192' }),
-      expect.objectContaining({ src: '/alien-512.png', sizes: '512x512' }),
-      expect.objectContaining({ src: '/alien-maskable-512.png', purpose: 'maskable' }),
+      expect.objectContaining({ src: '/alien-dark-192.png', sizes: '192x192' }),
+      expect.objectContaining({ src: '/alien-dark-512.png', sizes: '512x512' }),
+      expect.objectContaining({ src: '/alien-dark-maskable-512.png', purpose: 'maskable' }),
     ])
   );
 
