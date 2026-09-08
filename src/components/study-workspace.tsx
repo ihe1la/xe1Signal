@@ -14,12 +14,29 @@ function formatTimer(milliseconds: number) {
 }
 
 function formatDuration(seconds: number) {
-  const totalMinutes = Math.max(0, Math.round(seconds / 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const { hours, minutes } = durationParts(seconds);
   if (hours && minutes) return `${hours}h ${minutes}m`;
   if (hours) return `${hours}h`;
   return `${minutes}m`;
+}
+
+function durationParts(seconds: number) {
+  const totalMinutes = Math.max(0, Math.round(seconds / 60));
+  return {
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
+  };
+}
+
+function parseDurationSeconds(hoursValue: string, minutesValue: string) {
+  const hours = hoursValue.trim() === "" ? 0 : Number.parseInt(hoursValue, 10);
+  const minutes = minutesValue.trim() === "" ? 0 : Number.parseInt(minutesValue, 10);
+  if (!Number.isSafeInteger(hours) || !Number.isSafeInteger(minutes) || hours < 0 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+  const durationSeconds = hours * 3600 + minutes * 60;
+  if (durationSeconds <= 0 || durationSeconds > 24 * 60 * 60) return null;
+  return durationSeconds;
 }
 
 function formatClock(value: string | null) {
@@ -58,7 +75,8 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
   const [entryActionId, setEntryActionId] = React.useState<number | null>(null);
   const [editingEntry, setEditingEntry] = React.useState<StudyEntry | null>(null);
   const [editDate, setEditDate] = React.useState("");
-  const [editDuration, setEditDuration] = React.useState("");
+  const [editHours, setEditHours] = React.useState("");
+  const [editMinutes, setEditMinutes] = React.useState("");
   const [editLabelId, setEditLabelId] = React.useState("");
   const [editTaskId, setEditTaskId] = React.useState("");
   const [editDescription, setEditDescription] = React.useState("");
@@ -132,7 +150,9 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
     setError(null);
     setEditingEntry(entry);
     setEditDate(entry.date);
-    setEditDuration(String(entry.durationSeconds));
+    const parts = durationParts(entry.durationSeconds);
+    setEditHours(String(parts.hours));
+    setEditMinutes(String(parts.minutes));
     setEditLabelId(entry.labelId ? String(entry.labelId) : "");
     setEditTaskId(entry.taskId ? String(entry.taskId) : "");
     setEditDescription(entry.description);
@@ -167,9 +187,9 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
 
   async function saveEntryEdit() {
     if (!editingEntry) return;
-    const durationSeconds = Number.parseInt(editDuration, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(editDate) || !Number.isSafeInteger(durationSeconds) || durationSeconds <= 0) {
-      setError("Enter a valid date and a duration greater than zero.");
+    const durationSeconds = parseDurationSeconds(editHours, editMinutes);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(editDate) || durationSeconds === null) {
+      setError("Enter a valid date and a duration in hours and minutes.");
       return;
     }
 
@@ -338,9 +358,21 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
                 <label className="font-mono text-[10px] text-zinc-500">Date
                   <input type="date" value={editDate} onChange={(event) => setEditDate(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
                 </label>
-                <label className="font-mono text-[10px] text-zinc-500">Duration (seconds)
-                  <input type="number" min="1" max={24 * 60 * 60} step="1" value={editDuration} onChange={(event) => setEditDuration(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
-                </label>
+                <fieldset className="min-w-0">
+                  <legend className="font-mono text-[10px] text-zinc-500">Duration</legend>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <label className="relative block">
+                      <span className="sr-only">Hours</span>
+                      <input type="number" min="0" max="24" step="1" inputMode="numeric" value={editHours} onChange={(event) => setEditHours(event.target.value)} className="h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 pr-8 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
+                      <span className="pointer-events-none absolute inset-y-0 right-3 grid place-items-center font-mono text-[10px] text-zinc-600">h</span>
+                    </label>
+                    <label className="relative block">
+                      <span className="sr-only">Minutes</span>
+                      <input type="number" min="0" max="59" step="1" inputMode="numeric" value={editMinutes} onChange={(event) => setEditMinutes(event.target.value)} className="h-10 w-full rounded-lg border border-white/[.07] bg-[#090a0e] px-3 pr-8 text-xs text-zinc-300 outline-none transition focus:border-violet-300/30" />
+                      <span className="pointer-events-none absolute inset-y-0 right-3 grid place-items-center font-mono text-[10px] text-zinc-600">m</span>
+                    </label>
+                  </div>
+                </fieldset>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="font-mono text-[10px] text-zinc-500">Label
