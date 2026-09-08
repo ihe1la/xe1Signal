@@ -55,7 +55,7 @@ export function LeftSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/[0.055] bg-[#08090d] lg:flex">
       <Link href="/discover" className="flex h-20 items-center gap-3 border-b border-white/[0.055] px-8 font-mono text-[13px] tracking-[.14em] text-zinc-100">
-        <Image src="/icon-192x192.png" alt="" width={30} height={30} priority className="h-[30px] w-[30px] object-contain" />
+        <Image src="/alien-192.png" alt="" width={30} height={30} priority className="h-[30px] w-[30px] object-contain" />
         <span>SIGNAL ARCHIVE</span><span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
       </Link>
       <div className="scrollbar-thin flex-1 overflow-y-auto px-7 py-9">
