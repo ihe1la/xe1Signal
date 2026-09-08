@@ -33,6 +33,8 @@ New-Item -ItemType Directory -Path $resourcesRoot -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $projectRoot 'electron\main.cjs') -Destination $resourcesRoot
 Copy-Item -LiteralPath (Join-Path $projectRoot 'electron\offline.html') -Destination $resourcesRoot
 Copy-Item -LiteralPath (Join-Path $projectRoot 'public\icon-512x512.png') -Destination (Join-Path $resourcesRoot 'icon.png')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'public\favicon.ico') -Destination (Join-Path $resourcesRoot 'icon.ico')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'public\favicon.ico') -Destination (Join-Path $appRoot 'xe1Signal.ico')
 Copy-Item -LiteralPath (Join-Path $projectRoot 'electron\app-package.json') -Destination (Join-Path $resourcesRoot 'package.json')
 
 $zipPath = Join-Path $outputRoot 'xe1Signal-windows-x64.zip'

@@ -1,4 +1,5 @@
 const { app, BrowserWindow, shell } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const APP_URL = 'https://he1l.me';
@@ -19,11 +20,11 @@ function createWindow() {
     height: 900,
     minWidth: 960,
     minHeight: 640,
-    title: 'xe1Signal',
+    title: 'Signal Archive',
     backgroundColor: '#07080c',
     show: false,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, 'icon.png'),
+    icon: fs.existsSync(path.join(__dirname, 'icon.ico')) ? path.join(__dirname, 'icon.ico') : path.join(__dirname, 'icon.png'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
