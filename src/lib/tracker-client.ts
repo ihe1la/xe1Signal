@@ -208,11 +208,19 @@ function cookieHeader(): string | null {
   return `tracker_session=${trackerSession}; l30_session=${l30Session}`;
 }
 
+const TRACKER_FETCH_HEADERS = {
+  accept: "application/json",
+  "user-agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+} as const;
+
+export type TrackerConnectionStatus = "ok" | "unconfigured" | "unauthorized" | "unreachable" | "error";
+
 async function getTrackerJson<T>(path: string, cookies: string): Promise<T | null> {
   try {
     const response = await fetch(`${TRACKER_ORIGIN}${path}`, {
       headers: {
-        accept: "application/json",
+        ...TRACKER_FETCH_HEADERS,
         cookie: cookies,
       },
       cache: "no-store",
@@ -222,6 +230,26 @@ async function getTrackerJson<T>(path: string, cookies: string): Promise<T | nul
     return (await response.json()) as T;
   } catch {
     return null;
+  }
+}
+
+export async function getTrackerConnectionStatus(): Promise<TrackerConnectionStatus> {
+  const cookies = cookieHeader();
+  if (!cookies) return "unconfigured";
+  try {
+    const response = await fetch(`${TRACKER_ORIGIN}/api/auth/me`, {
+      headers: {
+        ...TRACKER_FETCH_HEADERS,
+        cookie: cookies,
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.status === 401 || response.status === 403) return "unauthorized";
+    if (!response.ok) return "error";
+    return "ok";
+  } catch {
+    return "unreachable";
   }
 }
 
@@ -414,7 +442,7 @@ async function trackerMutation(path: string, method: "POST" | "PATCH" | "DELETE"
     const response = await fetch(`${TRACKER_ORIGIN}${path}`, {
       method,
       headers: {
-        accept: "application/json",
+        ...TRACKER_FETCH_HEADERS,
         "content-type": "application/json",
         cookie: cookies,
       },
@@ -423,6 +451,9 @@ async function trackerMutation(path: string, method: "POST" | "PATCH" | "DELETE"
       signal: AbortSignal.timeout(10_000),
     });
     if (response.ok) return { ok: true };
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, error: "Tracker session expired. Refresh TRACKER_SESSION_COOKIE and TRACKER_L30_SESSION_COOKIE on the server." };
+    }
     const payload = await response.json().catch(() => null) as { error?: unknown } | null;
     return { ok: false, error: stringValue(payload?.error) || "The tracker rejected the update." };
   } catch {

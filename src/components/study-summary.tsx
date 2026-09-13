@@ -29,13 +29,31 @@ function Stat({ label, value, detail }: { label: string; value: string; detail?:
   );
 }
 
-export function StudyUnavailable({ reason = "Study data is unavailable right now." }: { reason?: string }) {
+export function StudyUnavailable({
+  reason = "Study data is unavailable right now.",
+  actionHref,
+  actionLabel,
+}: {
+  reason?: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   return (
     <section className="rounded-xl border border-white/[.07] bg-white/[.015] px-5 py-12 text-center">
       <p className="font-sans text-sm text-zinc-300">{reason}</p>
       <p className="mx-auto mt-2 max-w-md font-sans text-xs leading-5 text-zinc-500">
         Your tracker session is kept on the server and is never sent to the browser.
       </p>
+      {actionHref && actionLabel ? (
+        <a
+          href={actionHref}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-5 inline-flex font-mono text-[10px] uppercase tracking-[.14em] text-violet-300 transition hover:text-violet-200"
+        >
+          {actionLabel}
+        </a>
+      ) : null}
     </section>
   );
 }

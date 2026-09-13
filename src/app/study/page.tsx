@@ -3,11 +3,18 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AppLayout } from "@/components/layout/app-layout";
 import { StudySummary, StudyUnavailable } from "@/components/study-summary";
-import { getTrackerStudySummary, getTrackerStudyWorkspace, trackerUsernameMatches } from "@/lib/tracker-client";
+import { getTrackerStudySummary, getTrackerStudyWorkspace, getTrackerConnectionStatus, trackerUsernameMatches } from "@/lib/tracker-client";
 import { StudyWorkspace } from "@/components/study-workspace";
 import { canAccessOwnerTools } from "@/lib/owner-access";
 
 export const metadata: Metadata = { title: "Study" };
+
+function unavailableReason(status: Awaited<ReturnType<typeof getTrackerConnectionStatus>>) {
+  if (status === "unconfigured") return "Study tracking is not configured on this server.";
+  if (status === "unauthorized") return "Tracker session expired. Refresh the server tracker cookies to reconnect Study.";
+  if (status === "unreachable") return "Tracker could not be reached right now.";
+  return "Study data is unavailable right now.";
+}
 
 export default async function StudyPage() {
   const session = await auth();
@@ -15,9 +22,9 @@ export default async function StudyPage() {
   if (!canAccessOwnerTools(username)) notFound();
 
   const linked = trackerUsernameMatches(username);
-  const [summary, workspace] = linked
-    ? await Promise.all([getTrackerStudySummary(), getTrackerStudyWorkspace()])
-    : [null, null];
+  const [summary, workspace, connection] = linked
+    ? await Promise.all([getTrackerStudySummary(), getTrackerStudyWorkspace(), getTrackerConnectionStatus()])
+    : [null, null, "unconfigured" as const];
 
   return (
     <AppLayout>
@@ -41,7 +48,11 @@ export default async function StudyPage() {
             {summary && <StudySummary summary={summary} />}
           </>
         ) : (
-          <StudyUnavailable reason="Study data is unavailable right now." />
+          <StudyUnavailable
+            reason={unavailableReason(connection)}
+            actionHref={connection === "unauthorized" ? "https://tracker.l30on.top/login" : undefined}
+            actionLabel={connection === "unauthorized" ? "Sign in on tracker ↗" : undefined}
+          />
         )}
       </div>
     </AppLayout>
