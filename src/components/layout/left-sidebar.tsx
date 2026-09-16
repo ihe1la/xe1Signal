@@ -8,7 +8,7 @@ import * as React from "react";
 import { Archive, CircleUserRound, Compass, Grid2X2, Headphones, Plus, Radio, Settings, Timer, Users } from "lucide-react";
 import { canAccessOwnerTools } from "@/lib/owner-access";
 import { cn } from "@/lib/utils";
-import { StrengthBars } from "@/components/layout/right-sidebar";
+import { StrengthBars } from "@/components/layout/strength-bars";
 import { loadSidebarSnapshot } from "@/lib/sidebar-client-cache";
 import type { LucideIcon } from "lucide-react";
 

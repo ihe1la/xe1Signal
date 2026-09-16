@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Cloud, CloudOff, Copy, Network, Pencil, Search, StickyNote, Trash2 } from "lucide-react";
-import { FindingsMap } from "@/components/findings-map";
+import dynamic from "next/dynamic";
 import { MessyNoteBody, NoteMarkdownField } from "@/components/messy-note-body";
 import {
   FINDINGS_STORAGE_KEY,
@@ -21,6 +21,11 @@ import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { mergeUpdatedItems } from "@/lib/merge-updated-items";
 
 type FindingsView = "notes" | "map";
+
+const FindingsMap = dynamic(() => import("@/components/findings-map").then((module) => module.FindingsMap), {
+  ssr: false,
+  loading: () => <p className="py-16 text-center font-sans text-sm text-zinc-600">Loading map…</p>,
+});
 
 function formatWhen(iso: string) {
   const date = new Date(iso);

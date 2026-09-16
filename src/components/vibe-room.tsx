@@ -3,28 +3,14 @@
 import * as React from "react";
 import { ChevronRight, Disc3, Headphones, ImagePlus, Link2, LoaderCircle, Pause, Play, Radio, SkipForward, Trash2, X } from "lucide-react";
 
-import { useAudioPlayer } from "@/components/audio-player-provider";
-import type { VibePlaylistPayload, VibeQueuePayload, VibeSnapshot } from "@/lib/vibe-server";
+import { useVibe } from "@/components/vibe-provider";
+import type { VibePlaylistPayload, VibeQueuePayload } from "@/lib/vibe-server";
 
 export function VibeRoom() {
-  const [snapshot, setSnapshot] = React.useState<VibeSnapshot | null>(null);
+  const { snapshot, setSnapshot, loading, error, setError, playbackBlocked, sendControl } = useVibe();
   const [url, setUrl] = React.useState("");
-  const [loading, setLoading] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [playbackBlocked, setPlaybackBlocked] = React.useState(false);
   const [openShelfId, setOpenShelfId] = React.useState<string | null>(null);
-  const player = useAudioPlayer();
-  const playerRef = React.useRef(player);
-  const controlRef = React.useRef<(action: VibeAction, itemId?: string) => Promise<void>>(() => Promise.resolve());
-  const nowPlayingRef = React.useRef<VibeQueuePayload | null>(null);
-  const roomPlayingRef = React.useRef(false);
-  const dismissedItemIdRef = React.useRef<string | null>(null);
-  const artistsKey = snapshot?.nowPlaying?.artists.join(", ") ?? "";
-  playerRef.current = player;
-  nowPlayingRef.current = snapshot?.nowPlaying || null;
-  roomPlayingRef.current = snapshot?.room.isPlaying || false;
-
   React.useEffect(() => {
     try {
       const saved = window.localStorage.getItem("vibe-open-shelf");
@@ -51,88 +37,6 @@ export function VibeRoom() {
       /* ignore */
     }
   }
-
-  const loadSnapshot = React.useCallback(async () => {
-    try {
-      const response = await fetch("/api/vibe", { cache: "no-store" });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error || "Vibe state is unavailable");
-      setSnapshot(data);
-      setError(null);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Vibe state is unavailable");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    let active = true;
-    const load = async () => { if (active) await loadSnapshot(); };
-    void load();
-    const source = new EventSource("/api/vibe/events");
-    source.addEventListener("vibe", () => { void load(); });
-    let fallbackPoll: number | undefined;
-    source.onerror = () => {
-      source.close();
-      if (fallbackPoll === undefined) fallbackPoll = window.setInterval(() => { void load(); }, 10_000);
-    };
-    return () => {
-      active = false;
-      source.close();
-      if (fallbackPoll !== undefined) window.clearInterval(fallbackPoll);
-    };
-  }, [loadSnapshot]);
-
-  const sendControl = React.useCallback(async (action: VibeAction, itemId?: string) => {
-    if (action === "play" || action === "select") dismissedItemIdRef.current = null;
-    const response = await fetch("/api/vibe/control", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, ...(action === "clear" ? {} : { itemId }) }),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(data?.error || "Vibe control failed");
-    setSnapshot(data);
-    setError(null);
-  }, []);
-  controlRef.current = sendControl;
-
-  React.useEffect(() => {
-    const item = nowPlayingRef.current;
-    if (!item?.fileUrl) {
-      if (playerRef.current.current?.id.startsWith("vibe:")) playerRef.current.stop();
-      return;
-    }
-    if (dismissedItemIdRef.current === item.id) return;
-
-    const track = {
-      id: `vibe:${item.id}`,
-      title: item.title,
-      artist: item.artists.join(", ") || "Unknown artist",
-      src: item.fileUrl,
-      href: item.sourceUrl,
-      onToggle: () => {
-        void controlRef.current(roomPlayingRef.current ? "pause" : "play", item.id).catch((cause) =>
-          setError(cause instanceof Error ? cause.message : "Could not update playback"),
-        );
-      },
-      onClose: () => {
-        dismissedItemIdRef.current = item.id;
-        void controlRef.current("pause", item.id).catch(() => undefined);
-      },
-    };
-    setPlaybackBlocked(false);
-    playerRef.current.playTrack(track, {
-      autoplay: roomPlayingRef.current,
-      onEnded: () => {
-        dismissedItemIdRef.current = null;
-        void controlRef.current("skip", item.id).catch((cause) =>
-          setError(cause instanceof Error ? cause.message : "Could not skip the finished track"),
-        );
-      },
-    }).catch(() => setPlaybackBlocked(true));
-  }, [snapshot?.room.currentItemId, snapshot?.room.isPlaying, snapshot?.nowPlaying?.fileUrl, snapshot?.nowPlaying?.sourceUrl, snapshot?.nowPlaying?.title, artistsKey]);
 
   async function queueUrl(event: React.FormEvent) {
     event.preventDefault();
@@ -351,8 +255,6 @@ export function VibeRoom() {
     </div>
   );
 }
-
-type VibeAction = "play" | "pause" | "skip" | "clear" | "select";
 
 type QueueGroup = {
   id: string;

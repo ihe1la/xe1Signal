@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, LogOut, Mail, Menu, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { status } = useSession();
   const [query, setQuery] = React.useState("");
   const [mobileSearch, setMobileSearch] = React.useState(false);
@@ -25,7 +26,8 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
 
     let active = true;
     const load = () => {
-      fetch("/api/notifications")
+      if (document.hidden) return;
+      if (pathname === "/notifications") fetch("/api/notifications")
         .then((response) => (response.ok ? response.json() : null))
         .then((data) => {
           if (active) {
@@ -34,7 +36,7 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
         })
         .catch(() => undefined);
 
-      fetch("/api/messages/unread")
+      if (pathname === "/inbox" || pathname.startsWith("/inbox/")) fetch("/api/messages/unread")
         .then((response) => (response.ok ? response.json() : null))
         .then((data) => {
           if (active) setUnreadMessages(Number(data?.unread) || 0);
@@ -42,13 +44,22 @@ export function Header({ reserveRightSidebar = true }: { reserveRightSidebar?: b
         .catch(() => undefined);
     };
 
-    load();
-    const timer = window.setInterval(load, 30000);
+    let timer: number | undefined;
+    const update = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+      if (document.hidden || (pathname !== "/notifications" && pathname !== "/inbox" && !pathname.startsWith("/inbox/"))) return;
+      load();
+      timer = window.setInterval(load, 30000);
+    };
+    update();
+    document.addEventListener("visibilitychange", update);
     return () => {
       active = false;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", update);
     };
-  }, [status]);
+  }, [status, pathname]);
 
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

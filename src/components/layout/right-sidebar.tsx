@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowRight, Check, Pencil, Plus, X } from "lucide-react";
+import { StrengthBars } from "./strength-bars";
 import { MOOD_SYMBOLS } from "@/lib/mood-symbols";
 import { loadSidebarSnapshot } from "@/lib/sidebar-client-cache";
 
@@ -14,16 +15,6 @@ type SidebarData = {
   recentSignal: { id: string; title: string | null; previewImageUrl: string | null; createdAt: string } | null;
   recentTrail: { id: string; title: string; nodeCount: number; nodes: { id: string; title: string | null }[] } | null;
 };
-
-export function StrengthBars({ value = 76 }: { value?: number }) {
-  return (
-    <span className="flex items-end gap-1" aria-label={`Signal strength ${value}`}>
-      {[1, 20, 40, 60, 80, 100].map((level, index) => (
-        <i key={level} className="block w-1 rounded-sm" style={{ height: `${5 + index * 2}px`, background: value >= level ? "#8f7be9" : "#24242e" }} />
-      ))}
-    </span>
-  );
-}
 
 export function RightSidebar() {
   const { data: session, status } = useSession();

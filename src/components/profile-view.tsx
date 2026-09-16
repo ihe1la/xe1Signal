@@ -15,7 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { AppLayout } from "@/components/layout/app-layout";
 import { SignalCard } from "@/components/signals/signal-card";
-import { StrengthBars } from "@/components/layout/right-sidebar";
+import { StrengthBars } from "@/components/layout/strength-bars";
 import { type DemoFrequency, type DemoSignal, type DemoUser } from "@/lib/demo-data";
 export function ProfileView({
   user,

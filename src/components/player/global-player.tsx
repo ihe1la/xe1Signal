@@ -3,9 +3,11 @@ import * as React from "react";
 import Image from "next/image";
 import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ListMusic, Pause, Play, Share2, X } from "lucide-react";
 import { usePlayer } from "./player-provider";
-import { YouTubePlayer } from "./youtube-player";
-import { SpotifyPlayer } from "./spotify-player";
+import dynamic from "next/dynamic";
 import { ShareMenu } from "@/components/share-menu";
+
+const YouTubePlayer = dynamic(() => import("./youtube-player").then((module) => module.YouTubePlayer), { ssr: false });
+const SpotifyPlayer = dynamic(() => import("./spotify-player").then((module) => module.SpotifyPlayer), { ssr: false });
 
 export function GlobalPlayer() {
   const player = usePlayer(); const [expanded, setExpanded] = React.useState(true); const [unavailable, setUnavailable] = React.useState(false); const [sharing, setSharing] = React.useState(false);

@@ -1,7 +1,9 @@
 "use client";
 import * as React from "react";
 import type { PlayerItem, PlayerState } from "./player-types";
-import { GlobalPlayer } from "./global-player";
+import dynamic from "next/dynamic";
+
+const GlobalPlayer = dynamic(() => import("./global-player").then((module) => module.GlobalPlayer), { ssr: false });
 
 type PlayerContextValue = PlayerState & {
   play: (item: PlayerItem) => void; toggle: () => void; close: () => void; next: () => void; previous: () => void;
@@ -22,7 +24,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     return { ...value, current, isPlaying: true, isOpen: true };
   }), []);
   const context = React.useMemo<PlayerContextValue>(() => ({ ...state, play, toggle, close, next: () => move(1), previous: () => move(-1), addToQueue: (item) => setState((value) => value.queue.some((queued) => queued.signalId === item.signalId) ? value : { ...value, queue: [...value.queue, item] }), removeFromQueue: (signalId) => setState((value) => ({ ...value, queue: value.queue.filter((item) => item.signalId !== signalId) })), clearQueue: () => setState((value) => ({ ...value, queue: [] })) }), [state, play, toggle, close, move]);
-  return <PlayerContext.Provider value={context}>{children}<GlobalPlayer /></PlayerContext.Provider>;
+  return <PlayerContext.Provider value={context}>{children}{state.current && state.isOpen && <GlobalPlayer />}</PlayerContext.Provider>;
 }
 
 export function usePlayer() {

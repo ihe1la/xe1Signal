@@ -1,4 +1,5 @@
 "use client";
+import "@xyflow/react/dist/style.css";
 
 import * as React from "react";
 import {
