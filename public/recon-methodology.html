@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recon Methodology Graph // Purple Cyberpunk Edition</title>
+  <style>
+    :root {
+      --bg-void: #090714;
+      --bg-card: rgba(18, 14, 30, 0.95);
+      --bg-card-hover: rgba(26, 20, 44, 0.98);
+      --bg-code: #0b0717;
+      --neon-purple: #a855f7;
+      --neon-purple-bright: #c084fc;
+      --neon-purple-glow: rgba(168, 85, 247, 0.32);
+      --neon-purple-faint: rgba(168, 85, 247, 0.12);
+      --border-purple: rgba(168, 85, 247, 0.36);
+      --border-purple-hover: #c084fc;
+      --cyber-cyan: #38bdf8;
+      --cyber-cyan-glow: rgba(56, 189, 248, 0.25);
+      --cyber-cyan-border: rgba(56, 189, 248, 0.45);
+      --cyber-green: #34d399;
+      --cyber-yellow: #facc15;
+      --cyber-pipe: #e879f9;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --grid-dot: rgba(168, 85, 247, 0.13);
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top HUD Navigation Bar */
+    header.cyber-hud {
+      height: 56px;
+      background: rgba(12, 9, 22, 0.96);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-purple);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+    }
+
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hud-title-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neon-purple-bright);
+      box-shadow: 0 0 10px var(--neon-purple);
+    }
+
+    .hud-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .hud-title span {
+      color: var(--neon-purple-bright);
+    }
+
+    /* Parameter Configurator */
+    .hud-middle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(19, 15, 33, 0.9);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 6px;
+      padding: 4px 12px;
+    }
+
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .param-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .param-input {
+      background: rgba(10, 7, 18, 0.95);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+      width: 135px;
+      transition: all 0.2s ease;
+      user-select: text;
+    }
+
+    .param-input:focus {
+      border-color: var(--neon-purple-bright);
+      box-shadow: 0 0 10px var(--neon-purple-glow);
+    }
+
+    /* Action Buttons in HUD */
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-btn {
+      background: rgba(22, 17, 38, 0.9);
+      border: 1px solid var(--border-purple);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .hud-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: var(--neon-purple-bright);
+      color: #fff;
+      box-shadow: 0 0 10px var(--neon-purple-glow);
+    }
+
+    .hud-btn-primary {
+      background: rgba(168, 85, 247, 0.25);
+      border-color: var(--neon-purple-bright);
+      color: #fff;
+    }
+
+    .hud-btn-primary:hover {
+      background: var(--neon-purple);
+      color: #fff;
+    }
+
+    /* Main Canvas Area */
+    #canvas-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      overflow: hidden;
+      cursor: grab;
+      background-color: var(--bg-void);
+      background-image: radial-gradient(circle, var(--grid-dot) 1.2px, transparent 1.2px);
+      background-size: 26px 26px;
+      background-position: 0 0;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    #graph-viewport {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      width: 4800px;
+      height: 1800px;
+      will-change: transform;
+    }
+
+    /* SVG Layer */
+    #svg-connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Nodes Container */
+    #nodes-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+    }
+
+    /* Cyber Node Styling */
+    .cyber-node {
+      position: absolute;
+      background: var(--bg-card);
+      border: 1px solid var(--border-purple);
+      border-radius: 8px;
+      padding: 12px 18px;
+      color: var(--text-main);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 14px var(--neon-purple-glow);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.2s ease;
+      cursor: default;
+      user-select: text;
+    }
+
+    .cyber-node::before, .cyber-node::after {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border: 1.5px solid transparent;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    .cyber-node::before {
+      top: -1px;
+      left: -1px;
+      border-top-color: var(--neon-purple-bright);
+      border-left-color: var(--neon-purple-bright);
+      border-top-left-radius: 8px;
+    }
+
+    .cyber-node::after {
+      bottom: -1px;
+      right: -1px;
+      border-bottom-color: var(--neon-purple-bright);
+      border-right-color: var(--neon-purple-bright);
+      border-bottom-right-radius: 8px;
+    }
+
+    .cyber-node:hover {
+      border-color: var(--neon-purple-bright);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 22px var(--neon-purple-glow);
+      background: var(--bg-card-hover);
+    }
+
+    /* Cyan-variant Node for Output Files */
+    .cyber-node-cyan {
+      border-color: var(--cyber-cyan-border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 14px var(--cyber-cyan-glow);
+    }
+
+    .cyber-node-cyan::before {
+      border-top-color: var(--cyber-cyan);
+      border-left-color: var(--cyber-cyan);
+    }
+
+    .cyber-node-cyan::after {
+      border-bottom-color: var(--cyber-cyan);
+      border-right-color: var(--cyber-cyan);
+    }
+
+    .cyber-node-cyan:hover {
+      border-color: var(--cyber-cyan);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 22px var(--cyber-cyan-glow);
+    }
+
+    /* Node Headings & Texts */
+    .node-header-pill {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 6px;
+      background: var(--neon-purple-faint);
+      color: var(--neon-purple-bright);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    .node-header-pill-cyan {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cyber-cyan);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .node-title-lg {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .node-text-std {
+      font-size: 13.5px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: #e5e9f5;
+    }
+
+    /* Query Card Styling */
+    .query-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .query-content-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .query-prefix {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .query-val {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* Action Buttons in Cards */
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .action-icon-btn {
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      color: var(--neon-purple-bright);
+      padding: 4px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .action-icon-btn:hover {
+      background: var(--neon-purple);
+      color: #fff;
+      box-shadow: 0 0 10px var(--neon-purple-glow);
+    }
+
+    .action-icon-btn-cyan {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--cyber-cyan);
+    }
+
+    .action-icon-btn-cyan:hover {
+      background: var(--cyber-cyan);
+      color: #000;
+      box-shadow: 0 0 10px var(--cyber-cyan-glow);
+    }
+
+    /* Command Boxes */
+    .command-box {
+      background: var(--bg-code);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 7px;
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      user-select: text;
+    }
+
+    .command-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+      padding-bottom: 6px;
+    }
+
+    .cmd-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .command-box pre {
+      margin: 0;
+      font-family: var(--font-mono);
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* Syntax Highlighting - Normal Clean Code Formatting */
+    .syn-cmd {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .syn-awk {
+      color: var(--cyber-yellow);
+      font-weight: 700;
+    }
+    .syn-flag { color: var(--cyber-cyan); }
+    .syn-str { color: var(--cyber-green); }
+    .syn-val { color: var(--neon-purple-bright); }
+    .syn-slash { color: var(--text-dim); }
+    .syn-pipe { color: var(--cyber-pipe); font-weight: 900; }
+    .syn-redirect { color: var(--neon-purple-bright); font-weight: 900; }
+
+    /* Branch Badges */
+    .branch-badge {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #110c22;
+      border: 1.5px solid var(--neon-purple-bright);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 0 10px var(--neon-purple-glow);
+      z-index: 25;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Track Separator & Phase Header Banners - Bolder & High Visibility */
+    .track-banner {
+      position: absolute;
+      font-size: 13.5px;
+      font-weight: 900;
+      letter-spacing: 2.2px;
+      color: #ffffff;
+      text-transform: uppercase;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      background: rgba(168, 85, 247, 0.16);
+      border-left: 4px solid var(--neon-purple-bright);
+      border-top: 1px solid rgba(168, 85, 247, 0.35);
+      border-right: 1px solid rgba(168, 85, 247, 0.35);
+      border-bottom: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 0 6px 6px 0;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+      text-shadow: 0 0 10px rgba(192, 132, 252, 0.95), 0 0 20px rgba(168, 85, 247, 0.5);
+    }
+
+    .track-banner .phase-num {
+      color: var(--neon-purple-bright);
+      font-weight: 900;
+    }
+
+    .track-divider {
+      position: absolute;
+      left: 40px;
+      width: 4400px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.2) 10%, rgba(168, 85, 247, 0.2) 90%, transparent);
+      pointer-events: none;
+    }
+
+    /* Output Card Minimal */
+    .output-card {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 12px 18px;
+    }
+
+    .output-card-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .output-card-file {
+      font-size: 13.5px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    /* Bottom HUD / Info Overlay */
+    .bottom-hud {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 90;
+      background: rgba(14, 10, 26, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-purple);
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .hud-tag {
+      color: var(--neon-purple-bright);
+      font-weight: 700;
+    }
+
+    /* Zoom Controls */
+    .zoom-toolbar {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 90;
+    }
+
+    .zoom-btn {
+      width: 38px;
+      height: 38px;
+      background: rgba(18, 14, 30, 0.94);
+      border: 1px solid var(--border-purple);
+      color: var(--text-main);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+    }
+
+    .zoom-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: var(--neon-purple-bright);
+      color: #fff;
+      box-shadow: 0 0 12px var(--neon-purple-glow);
+    }
+
+    /* Toast Notification */
+    #toast-msg {
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(18, 14, 32, 0.96);
+      border: 1px solid var(--neon-purple-bright);
+      box-shadow: 0 0 25px var(--neon-purple-glow);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* SVG Connectors: Solid Base Anchored Into Arrowhead (No Breaks/Gaps) */
+    .connector-base {
+      fill: none;
+      stroke: var(--neon-purple);
+      stroke-width: 2.2;
+      filter: drop-shadow(0 0 4px var(--neon-purple-glow));
+    }
+
+    /* Flowing Pulse Overlay: Energy Packets Gliding Along Vector */
+    .connector-pulse {
+      fill: none;
+      stroke: var(--neon-purple-bright);
+      stroke-width: 2.4;
+      stroke-dasharray: 8 16;
+      animation: flowPulse 1.2s linear infinite;
+      filter: drop-shadow(0 0 6px var(--neon-purple-bright));
+      pointer-events: none;
+    }
+
+    @keyframes flowPulse {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+
+    /* Dead Center Node Flexbox Alignment */
+    .center-flex-node {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 10px !important;
+      text-align: center !important;
+    }
+
+    .center-flex-node .node-title-lg,
+    .center-flex-node .node-text-std {
+      margin: 0 !important;
+      line-height: 1.15 !important;
+    }
+
+    .center-flex-node .node-header-pill {
+      margin-bottom: 5px !important;
+    }
+
+    /* Prominent Tool Name Highlights */
+    .tool-highlight-card {
+      border: 1.5px solid var(--neon-purple-bright) !important;
+      background: radial-gradient(circle at center, rgba(168, 85, 247, 0.22) 0%, rgba(18, 14, 30, 0.96) 80%) !important;
+      box-shadow: 0 0 20px var(--neon-purple-glow), inset 0 0 14px rgba(168, 85, 247, 0.25) !important;
+    }
+
+    .tool-highlight-card:hover {
+      border-color: #ffffff !important;
+      box-shadow: 0 0 28px rgba(192, 132, 252, 0.85), inset 0 0 18px rgba(192, 132, 252, 0.4) !important;
+    }
+
+    .tool-name-glow {
+      color: #ffffff !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.8px !important;
+      text-shadow: 0 0 10px rgba(192, 132, 252, 0.95), 0 0 22px rgba(168, 85, 247, 0.55) !important;
+    }
+
+    .tool-tag-pill {
+      background: rgba(168, 85, 247, 0.25);
+      border: 1px solid rgba(192, 132, 252, 0.45);
+      color: #ffffff;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.6);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Cyberpunk HUD Navigation Bar -->
+  <header class="cyber-hud">
+    <div class="hud-left">
+      <div class="hud-title-badge">
+        <div class="hud-indicator"></div>
+        <div class="hud-title">Recon <span>Methodology</span> // Graph</div>
+      </div>
+    </div>
+
+    <!-- Parameter Configurator / Dynamic Mode -->
+    <div class="hud-middle">
+      <div class="param-group">
+        <span class="param-label">Target:</span>
+        <input type="text" id="targetInput" class="param-input" value="target.tld" spellcheck="false" placeholder="target.tld">
+      </div>
+      <div class="param-group" style="margin-left: 6px;">
+        <span class="param-label">Org:</span>
+        <input type="text" id="orgInput" class="param-input" value="indeed" spellcheck="false" placeholder="indeed">
+      </div>
+      <button class="hud-btn" id="resetDefaultsBtn" title="Reset parameters to original defaults">Reset Defaults</button>
+    </div>
+
+    <!-- View & Action Buttons -->
+    <div class="hud-right">
+      <button class="hud-btn hud-btn-primary" id="toggleMotionBtn" title="Toggle connector animation">Motion: ON</button>
+      <button class="hud-btn" id="viewTrackBtn" data-mode="all">View: Both Tracks</button>
+      <button class="hud-btn" id="fitViewBtn">Fit Screen</button>
+      <button class="hud-btn hud-btn-primary" id="copyAllBtn">Copy All Cmds</button>
+    </div>
+  </header>
+
+  <!-- Interactive Pan/Zoom Canvas Viewport -->
+  <div id="canvas-container">
+    <div id="graph-viewport">
+
+      <!-- ================= TRACK 1 BANNER ================= -->
+      <div class="track-banner" style="left: 60px; top: 8px;">
+        <span class="phase-num">TRACK 01</span> // CERTIFICATE TRANSPARENCY RECON (CRT.SH)
+      </div>
+
+      <!-- ================= TRACK 2 BANNER ================= -->
+      <div class="track-banner" style="left: 60px; top: 485px;">
+        <span class="phase-num">TRACK 02</span> // SUBDOMAIN DISCOVERY & CHAINED TOTAL FLOW (SUBFINDER)
+      </div>
+
+      <!-- Subtle Track Divider -->
+      <div class="track-divider" style="top: 465px;"></div>
+
+      <!-- SVG Layer for straight lines, curved branching and arrows -->
+      <svg id="svg-connections">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#c084fc" />
+          </marker>
+          <filter id="purple-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+      </svg>
+
+      <!-- HTML Nodes Layer -->
+      <div id="nodes-container">
+
+        <!-- ============================================================= -->
+        <!-- ====================== TRACK 1 NODES ======================== -->
+        <!-- ============================================================= -->
+
+        <!-- 1.crt.sh Root Node (Center Y = 195: Dead Center & Tool Highlight) -->
+        <div id="node-t1-stage1" class="cyber-node tool-highlight-card center-flex-node" style="left: 60px; top: 165px; width: 140px; height: 60px;">
+          <div class="node-header-pill">STAGE 1</div>
+          <div class="node-title-lg tool-name-glow">1.crt.sh</div>
+        </div>
+
+        <!-- Track 1 Branch 1: ?q=target.tld (Center Y = 78) -->
+        <div id="node-t1-b1" class="cyber-node query-card" style="left: 280px; top: 54px; width: 330px; height: 48px;">
+          <div class="query-content-wrap">
+            <span class="query-val" id="txt-b1">?q=target.tld</span>
+          </div>
+          <div class="card-actions">
+            <a id="link-b1" href="https://crt.sh/?q=target.tld" target="_blank" rel="noopener noreferrer" class="action-icon-btn" title="Open in crt.sh">OPEN ↗</a>
+            <button class="action-icon-btn" onclick="copySnippet('txt-b1')">COPY</button>
+          </div>
+        </div>
+
+        <!-- Track 1 Branch 2: remove expired: ?q=target.tld&exclude=expired&group=none (Center Y = 140) -->
+        <div id="node-t1-b2" class="cyber-node query-card" style="left: 280px; top: 116px; width: 560px; height: 48px;">
+          <div class="query-content-wrap">
+            <span class="query-prefix">remove expired:</span>
+            <span class="query-val" id="txt-b2">?q=target.tld&exclude=expired&group=none</span>
+          </div>
+          <div class="card-actions">
+            <a id="link-b2" href="https://crt.sh/?q=target.tld&exclude=expired&group=none" target="_blank" rel="noopener noreferrer" class="action-icon-btn" title="Open in crt.sh">OPEN ↗</a>
+            <button class="action-icon-btn" onclick="copySnippet('txt-b2-full')">COPY</button>
+          </div>
+          <span id="txt-b2-full" style="display:none;">remove expired: ?q=target.tld&exclude=expired&group=none</span>
+        </div>
+
+        <!-- Track 1 Branch 3: apex search: /?q=%25.target.tld (Center Y = 205) -->
+        <div id="node-t1-b3" class="cyber-node query-card" style="left: 280px; top: 181px; width: 410px; height: 48px;">
+          <div class="query-content-wrap">
+            <span class="query-prefix">apex search:</span>
+            <span class="query-val" id="txt-b3">/?q=%25.target.tld</span>
+          </div>
+          <div class="card-actions">
+            <a id="link-b3" href="https://crt.sh/?q=%25.target.tld" target="_blank" rel="noopener noreferrer" class="action-icon-btn" title="Open in crt.sh">OPEN ↗</a>
+            <button class="action-icon-btn" onclick="copySnippet('txt-b3-full')">COPY</button>
+          </div>
+          <span id="txt-b3-full" style="display:none;">apex search: /?q=%25.target.tld</span>
+        </div>
+
+        <!-- Track 1 Branch 4: org name: ?O=indeed (Center Y = 270) -->
+        <div id="node-t1-b4" class="cyber-node query-card" style="left: 280px; top: 246px; width: 330px; height: 48px;">
+          <div class="query-content-wrap">
+            <span class="query-prefix">org name:</span>
+            <span class="query-val" id="txt-b4">?O=indeed</span>
+          </div>
+          <div class="card-actions">
+            <a id="link-b4" href="https://crt.sh/?O=indeed" target="_blank" rel="noopener noreferrer" class="action-icon-btn" title="Open in crt.sh">OPEN ↗</a>
+            <button class="action-icon-btn" onclick="copySnippet('txt-b4-full')">COPY</button>
+          </div>
+          <span id="txt-b4-full" style="display:none;">org name: ?O=indeed</span>
+        </div>
+
+        <!-- Track 1 Branch 4 Extended: find more org names and run this search again (Center Y = 270: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t1-b4-ext" class="cyber-node query-card" style="left: 670px; top: 246px; width: 470px; height: 48px;">
+          <div class="query-content-wrap">
+            <span class="node-text-std" id="txt-b4-ext">find more org names and run this search again</span>
+          </div>
+          <div class="card-actions">
+            <button class="action-icon-btn" onclick="copySnippet('txt-b4-ext')">COPY</button>
+          </div>
+        </div>
+
+        <!-- Track 1 Stage 2 Node: 2. this will give some wildcards, run the test again with the wildcards (Center Y = 195: Dead Center) -->
+        <div id="node-t1-stage2" class="cyber-node center-flex-node" style="left: 1200px; top: 161px; width: 380px; height: 68px;">
+          <div class="node-header-pill">STAGE 2</div>
+          <div class="node-text-std" style="font-weight: 600;">2. this will give some wildcards, run the test again with the wildcards</div>
+        </div>
+
+        <!-- Track 1 Fork: Badge 1 & dnsx (Center Y = 110) -->
+        <div id="t1-badge-1" class="branch-badge" style="left: 1635px; top: 110px;">1</div>
+        <div id="node-t1-dnsx" class="cyber-node tool-highlight-card center-flex-node" style="left: 1670px; top: 84px; width: 100px; height: 52px;">
+          <div class="node-title-lg tool-name-glow">dnsx</div>
+        </div>
+
+        <!-- Track 1 dnsx Command Box (Center Y = 110: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t1-dnsx-cmd" class="cyber-node command-box" style="left: 1820px; top: 72px; width: 440px; height: 76px;">
+          <div class="command-header-row">
+            <span class="cmd-badge">DNS Active Resolution</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t1-dnsx-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">dnsx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-a</span> <span class="syn-flag">-o</span> <span class="syn-str">dnsx_resolved.txt</span></code></pre>
+          <div id="cmd-t1-dnsx-raw" style="display:none;">dnsx -silent -a -o dnsx_resolved.txt</div>
+        </div>
+
+        <!-- Track 1 Fork: Badge 2 & httpx (Center Y = 275) -->
+        <div id="t1-badge-2" class="branch-badge" style="left: 1635px; top: 275px;">2</div>
+        <div id="node-t1-httpx" class="cyber-node tool-highlight-card center-flex-node" style="left: 1670px; top: 249px; width: 100px; height: 52px;">
+          <div class="node-title-lg tool-name-glow">httpx</div>
+        </div>
+
+        <!-- Track 1 httpx Command Box (Center Y = 275: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t1-httpx-cmd" class="cyber-node command-box" style="left: 1820px; top: 194px; width: 840px; height: 162px;">
+          <div class="command-header-row">
+            <span class="cmd-badge">HTTP Probing & Fingerprinting</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t1-httpx-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">httpx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-follow-host-redirects</span> <span class="syn-flag">-title</span> <span class="syn-flag">-status-code</span> <span class="syn-flag">-cdn</span> <span class="syn-flag">-tech-detect</span> <span class="syn-flag">-no-color</span> <span class="syn-flag">-threads</span> <span class="syn-val">30</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0"</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">"Referer: https://<span id="rendered-t1-httpx-org">indeed.com</span>"</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-o</span> <span class="syn-str">all_hosts_live.txt</span></code></pre>
+          <div id="cmd-t1-httpx-raw" style="display:none;">httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \
+ -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0" \
+ -H "Referer: https://indeed.com" \
+ -o all_hosts_live.txt</div>
+        </div>
+
+        <!-- Track 1 Stage 3 Node: 3. sort the outputs based on the target tier scopes (Center Y = 210: Dead Center) -->
+        <div id="node-t1-stage3" class="cyber-node center-flex-node" style="left: 2720px; top: 177px; width: 440px; height: 66px;">
+          <div class="node-header-pill">STAGE 3</div>
+          <div class="node-text-std" style="font-weight: 600;">3. sort the outputs based on the target tier scopes</div>
+        </div>
+
+        <!-- Track 1 Final Output Box: final output as: all_hosts_live.txt (Center Y = 210: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t1-final" class="cyber-node cyber-node-cyan output-card" style="left: 3220px; top: 177px; width: 280px; height: 66px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="output-card-label">final output as:</span>
+            <button class="action-icon-btn action-icon-btn-cyan" onclick="copySnippet('txt-t1-out-file')">COPY</button>
+          </div>
+          <span class="output-card-file" id="txt-t1-out-file" style="color: var(--cyber-cyan);">all_hosts_live.txt</span>
+        </div>
+
+
+        <!-- ============================================================= -->
+        <!-- ====================== TRACK 2 NODES ======================== -->
+        <!-- ============================================================= -->
+
+        <!-- 1.subfinder + api keys Root Node (Center X = 195, Center Y = 600: Dead Center & Tool Highlight) -->
+        <div id="node-t2-stage1" class="cyber-node tool-highlight-card center-flex-node" style="left: 60px; top: 570px; width: 270px; height: 60px;">
+          <div class="node-header-pill">STAGE 1</div>
+          <div class="node-title-lg tool-name-glow">1.subfinder + api keys</div>
+        </div>
+
+        <!-- Downward child of subfinder: shodan, netlas, github (Center X = 195: Dead Center & Tool Highlight) -->
+        <div id="node-t2-keys" class="cyber-node query-card center-flex-node" style="left: 80px; top: 670px; width: 230px; height: 44px;">
+          <span class="node-text-std" id="txt-t2-keys" style="font-size: 12.5px;"><span class="tool-tag-pill">shodan</span>, <span class="tool-tag-pill">netlas</span>, <span class="tool-tag-pill">github</span></span>
+        </div>
+
+        <!-- subfinder command box (Center Y = 600: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t2-sf-cmd" class="cyber-node command-box" style="left: 380px; top: 547px; width: 510px; height: 106px;">
+          <div class="command-header-row">
+            <span class="cmd-badge">Passive & Recursive Subdomain Recon</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t2-sf-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">subfinder</span> <span class="syn-flag">-d</span> <span class="syn-str"><span id="rendered-t2-sf-org">indeed.com</span></span> <span class="syn-flag">-all</span> <span class="syn-flag">-recursive</span> <span class="syn-flag">-es</span> <span class="syn-str">censys,chaos</span>
+<span class="syn-flag">-t</span> <span class="syn-val">50</span> <span class="syn-flag">-timeout</span> <span class="syn-val">30</span> <span class="syn-flag">-o</span> <span class="syn-str"><span id="rendered-t2-sf-out">indeed_subs_subfinder.txt</span></span></code></pre>
+          <div id="cmd-t2-sf-raw" style="display:none;">subfinder -d indeed.com -all -recursive -es censys,chaos
+-t 50 -timeout 30 -o indeed_subs_subfinder.txt</div>
+        </div>
+
+        <!-- Track 2 Fork: Badge 1 & dnsx (Center Y = 525) -->
+        <div id="t2-badge-1" class="branch-badge" style="left: 945px; top: 525px;">1</div>
+        <div id="node-t2-dnsx" class="cyber-node tool-highlight-card center-flex-node" style="left: 980px; top: 499px; width: 100px; height: 52px;">
+          <div class="node-title-lg tool-name-glow">dnsx</div>
+        </div>
+
+        <!-- Track 2 dnsx Command Box (Center Y = 525: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t2-dnsx-cmd" class="cyber-node command-box" style="left: 1130px; top: 487px; width: 440px; height: 76px;">
+          <div class="command-header-row">
+            <span class="cmd-badge">DNS Active Resolution</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t2-dnsx-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">dnsx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-a</span> <span class="syn-flag">-o</span> <span class="syn-str">dnsx_resolved.txt</span></code></pre>
+          <div id="cmd-t2-dnsx-raw" style="display:none;">dnsx -silent -a -o dnsx_resolved.txt</div>
+        </div>
+
+        <!-- Track 2 Fork: Badge 2 & httpx (Center Y = 680) -->
+        <div id="t2-badge-2" class="branch-badge" style="left: 945px; top: 680px;">2</div>
+        <div id="node-t2-httpx" class="cyber-node tool-highlight-card center-flex-node" style="left: 980px; top: 654px; width: 100px; height: 52px;">
+          <div class="node-title-lg tool-name-glow">httpx</div>
+        </div>
+
+        <!-- Track 2 httpx Command Box (Center Y = 680: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t2-httpx-cmd" class="cyber-node command-box" style="left: 1130px; top: 599px; width: 840px; height: 162px;">
+          <div class="command-header-row">
+            <span class="cmd-badge">HTTP Probing & Fingerprinting</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t2-httpx-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">httpx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-follow-host-redirects</span> <span class="syn-flag">-title</span> <span class="syn-flag">-status-code</span> <span class="syn-flag">-cdn</span> <span class="syn-flag">-tech-detect</span> <span class="syn-flag">-no-color</span> <span class="syn-flag">-threads</span> <span class="syn-val">30</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0"</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">"Referer: https://<span id="rendered-t2-httpx-org">indeed.com</span>"</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-o</span> <span class="syn-str">all_hosts_live.txt</span></code></pre>
+          <div id="cmd-t2-httpx-raw" style="display:none;">httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \
+ -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0" \
+ -H "Referer: https://indeed.com" \
+ -o all_hosts_live.txt</div>
+        </div>
+
+        <!-- Track 2: total flow Node (Center Y = 645: Dead Center) -->
+        <div id="node-t2-total-flow" class="cyber-node center-flex-node" style="left: 2030px; top: 619px; width: 140px; height: 52px;">
+          <div class="node-title-lg" style="color: #fff; font-size: 14px;">total flow</div>
+        </div>
+
+        <!-- Track 2: total flow Chained Pipeline Box (Center Y = 645: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t2-total-cmd" class="cyber-node command-box" style="left: 2230px; top: 554px; width: 900px; height: 182px;">
+          <div class="command-header-row">
+            <span class="cmd-badge" style="color: var(--neon-purple-bright);">All-in-One Chained Pipeline</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-t2-total-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">subfinder</span> <span class="syn-flag">-d</span> <span class="syn-str"><span id="rendered-tf-org1">indeed.com</span></span> <span class="syn-flag">-all</span> <span class="syn-flag">-recursive</span> <span class="syn-flag">-es</span> <span class="syn-str">censys,chaos</span> <span class="syn-flag">-t</span> <span class="syn-val">50</span> <span class="syn-flag">-timeout</span> <span class="syn-val">30</span> <span class="syn-flag">-o</span> <span class="syn-str"><span id="rendered-tf-out1">indeed_subs_subfinder.txt</span></span> <span class="syn-slash">\</span>
+<span class="syn-pipe">|</span> <span class="syn-cmd">dnsx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-a</span> <span class="syn-flag">-o</span> <span class="syn-str">dnsx_resolved_subfiner.txt</span> <span class="syn-slash">\</span>
+<span class="syn-pipe">|</span> <span class="syn-cmd">httpx</span> <span class="syn-flag">-silent</span> <span class="syn-flag">-follow-host-redirects</span> <span class="syn-flag">-title</span> <span class="syn-flag">-status-code</span> <span class="syn-flag">-cdn</span> <span class="syn-flag">-tech-detect</span> <span class="syn-flag">-no-color</span> <span class="syn-flag">-threads</span> <span class="syn-val">30</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0'</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-H</span> <span class="syn-str">'Referer: https://<span id="rendered-tf-org2">indeed.com</span>'</span> <span class="syn-slash">\</span>
+ <span class="syn-flag">-o</span> <span class="syn-str">all_hosts_live_subfinder.txt</span></code></pre>
+          <div id="cmd-t2-total-raw" style="display:none;">subfinder -d indeed.com -all -recursive -es censys,chaos -t 50 -timeout 30 -o indeed_subs_subfinder.txt \
+| dnsx -silent -a -o dnsx_resolved_subfiner.txt \
+| httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \
+ -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0' \
+ -H 'Referer: https://indeed.com' \
+ -o all_hosts_live_subfinder.txt</div>
+        </div>
+
+        <!-- Track 2 Final Output Box: final output as: all_hosts_live_subfinder.txt (Center Y = 645: 100% DEAD STRAIGHT HORIZONTAL) -->
+        <div id="node-t2-final" class="cyber-node cyber-node-cyan output-card" style="left: 3200px; top: 612px; width: 330px; height: 66px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="output-card-label">final output as:</span>
+            <button class="action-icon-btn action-icon-btn-cyan" onclick="copySnippet('txt-t2-out-file')">COPY</button>
+          </div>
+          <span class="output-card-file" id="txt-t2-out-file" style="color: var(--cyber-cyan);">all_hosts_live_subfinder.txt</span>
+        </div>
+
+
+        <!-- ============================================================= -->
+        <!-- ===================== TERMINAL MERGE ======================== -->
+        <!-- ============================================================= -->
+
+        <!-- Merg all: Node & Command Box (Center Y = 428, perfectly centered between Track 1 (210) and Track 2 (645)) -->
+        <div id="node-merge-all" class="cyber-node command-box" style="left: 3660px; top: 374px; width: 660px; height: 108px;">
+          <div class="command-header-row">
+            <span class="node-title-lg" style="font-size: 14.5px; color: #fff;">Merg all:</span>
+            <button class="action-icon-btn" onclick="copySnippet('cmd-merge-raw')">COPY</button>
+          </div>
+          <pre><code><span class="syn-cmd">cat</span> <span class="syn-str">all_hosts_live_subfinder.txt</span> <span class="syn-str">all_hosts_live.txt</span> <span class="syn-pipe">|</span>
+<span class="syn-awk">awk</span> <span class="syn-str">'!seen[$1]++'</span> <span class="syn-redirect">&gt;</span> <span class="syn-str">merged_live.txt</span></code></pre>
+          <div id="cmd-merge-raw" style="display:none;">cat all_hosts_live_subfinder.txt all_hosts_live.txt |
+awk '!seen[$1]++' > merged_live.txt</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom Status Overlay -->
+    <div class="bottom-hud">
+      <span>STATUS: <span class="hud-tag">ONLINE</span></span>
+      <span style="opacity: 0.3;">|</span>
+      <span>THEME: <span style="color:#fff;">PURPLE CYBERPUNK</span></span>
+      <span style="opacity: 0.3;">|</span>
+      <span>CONTROLS: <span style="color:#fff;">DRAG TO PAN</span> &bull; <span style="color:#fff;">SCROLL TO ZOOM</span> &bull; <span style="color:#fff;">CLICK TO COPY</span></span>
+    </div>
+
+    <!-- Zoom Toolbar -->
+    <div class="zoom-toolbar">
+      <button class="zoom-btn" id="zoomInBtn" title="Zoom In">+</button>
+      <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">&minus;</button>
+      <button class="zoom-btn" id="zoomResetBtn" title="Reset (100%)">1:1</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-text">COPIED TO CLIPBOARD</span>
+  </div>
+
+  <script>
+    // --- Canvas Pan and Zoom State ---
+    let scale = 0.44;
+    let translateX = 30;
+    let translateY = 50;
+    let isDragging = false;
+    let startX, startY;
+    let motionActive = true;
+
+    const viewport = document.getElementById('graph-viewport');
+    const container = document.getElementById('canvas-container');
+    const svgLayer = document.getElementById('svg-connections');
+
+    function updateTransform() {
+      viewport.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    // Mouse drag pan
+    container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) return;
+      isDragging = true;
+      startX = e.clientX - translateX;
+      startY = e.clientY - translateY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      translateX = e.clientX - startX;
+      translateY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Zoom on wheel centered on mouse
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = 1.09;
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      let newScale = e.deltaY < 0 ? scale * zoomFactor : scale / zoomFactor;
+      newScale = Math.min(Math.max(0.2, newScale), 2.2);
+
+      translateX = mouseX - (mouseX - translateX) * (newScale / scale);
+      translateY = mouseY - (mouseY - translateY) * (newScale / scale);
+      scale = newScale;
+
+      updateTransform();
+    }, { passive: false });
+
+    // Zoom Toolbar buttons
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+      scale = Math.min(2.2, scale * 1.2);
+      updateTransform();
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+      scale = Math.max(0.2, scale / 1.2);
+      updateTransform();
+    });
+
+    document.getElementById('zoomResetBtn').addEventListener('click', () => {
+      scale = 1.0;
+      translateX = 40;
+      translateY = 40;
+      updateTransform();
+    });
+
+    // Fit View function
+    function fitView() {
+      const containerW = container.clientWidth;
+      const containerH = container.clientHeight;
+      const contentW = 4380;
+      const contentH = 880;
+
+      const scaleX = (containerW - 80) / contentW;
+      const scaleY = (containerH - 120) / contentH;
+      scale = Math.min(scaleX, scaleY, 0.95);
+      scale = Math.max(scale, 0.25);
+
+      translateX = 35;
+      translateY = Math.max(25, (containerH - contentH * scale) / 2);
+      updateTransform();
+    }
+
+    document.getElementById('fitViewBtn').addEventListener('click', fitView);
+
+    // Motion animation toggle
+    const toggleMotionBtn = document.getElementById('toggleMotionBtn');
+    if (toggleMotionBtn) {
+      toggleMotionBtn.addEventListener('click', () => {
+        motionActive = !motionActive;
+        toggleMotionBtn.textContent = motionActive ? 'Motion: ON' : 'Motion: OFF';
+        toggleMotionBtn.classList.toggle('hud-btn-primary', motionActive);
+        renderConnections();
+      });
+    }
+
+    // Track Filter Toggle (Both Tracks / Track 1 Only / Track 2 Only)
+    const viewTrackBtn = document.getElementById('viewTrackBtn');
+    let viewMode = 'all'; // 'all', 'track1', 'track2'
+    viewTrackBtn.addEventListener('click', () => {
+      if (viewMode === 'all') {
+        viewMode = 'track1';
+        viewTrackBtn.textContent = 'View: Track 1 Only';
+        scale = 0.55;
+        translateX = 30;
+        translateY = 60;
+      } else if (viewMode === 'track1') {
+        viewMode = 'track2';
+        viewTrackBtn.textContent = 'View: Track 2 Only';
+        scale = 0.55;
+        translateX = 30;
+        translateY = -230;
+      } else {
+        viewMode = 'all';
+        viewTrackBtn.textContent = 'View: Both Tracks';
+        fitView();
+      }
+      updateTransform();
+    });
+
+    // --- Node Anchor Points ---
+    function getNodeAnchor(id, side) {
+      const el = document.getElementById(id);
+      if (!el) return { x: 0, y: 0 };
+      const left = parseFloat(el.style.left);
+      const top = parseFloat(el.style.top);
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+
+      if (side === 'right') {
+        return { x: left + width, y: top + height / 2 };
+      } else if (side === 'left') {
+        return { x: left, y: top + height / 2 };
+      } else if (side === 'top') {
+        return { x: left + width / 2, y: top };
+      } else if (side === 'bottom') {
+        return { x: left + width / 2, y: top + height };
+      }
+      return { x: left + width / 2, y: top + height / 2 };
+    }
+
+    function renderConnections() {
+      const defs = svgLayer.querySelector('defs');
+      svgLayer.innerHTML = '';
+      svgLayer.appendChild(defs);
+
+      function drawPath(d, withArrow = true) {
+        // Solid base line: seamlessly connects to arrowhead with zero gaps
+        const base = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        base.setAttribute('d', d);
+        base.setAttribute('class', 'connector-base');
+        if (withArrow) base.setAttribute('marker-end', 'url(#arrow)');
+        svgLayer.appendChild(base);
+
+        // Motion pulse overlay: travels along vector without marker
+        if (motionActive) {
+          const pulse = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          pulse.setAttribute('d', d);
+          pulse.setAttribute('class', 'connector-pulse');
+          svgLayer.appendChild(pulse);
+        }
+      }
+
+      // 100% DEAD STRAIGHT HORIZONTAL LINE HELPER
+      function drawStraightH(fromPt, toPt) {
+        // Enforce identical Y
+        const y = fromPt.y;
+        drawPath(`M ${fromPt.x} ${y} L ${toPt.x} ${y}`, true);
+      }
+
+      // 100% DEAD STRAIGHT VERTICAL LINE HELPER
+      function drawStraightV(fromPt, toPt) {
+        // Enforce identical X
+        const x = fromPt.x;
+        drawPath(`M ${x} ${fromPt.y} L ${x} ${toPt.y}`, true);
+      }
+
+      // ================= TRACK 1 CONNECTIONS =================
+      // 1. crt.sh -> 4 branches
+      const t1CrtRight = getNodeAnchor('node-t1-stage1', 'right');
+      const t1B1Left = getNodeAnchor('node-t1-b1', 'left');
+      const t1B2Left = getNodeAnchor('node-t1-b2', 'left');
+      const t1B3Left = getNodeAnchor('node-t1-b3', 'left');
+      const t1B4Left = getNodeAnchor('node-t1-b4', 'left');
+
+      const t1Mid = { x: t1CrtRight.x + 36, y: t1CrtRight.y };
+      drawPath(`M ${t1CrtRight.x} ${t1CrtRight.y} L ${t1Mid.x} ${t1Mid.y}`, false);
+
+      [t1B1Left, t1B2Left, t1B3Left, t1B4Left].forEach(bLeft => {
+        const dx = Math.abs(bLeft.x - t1Mid.x) * 0.55;
+        drawPath(`M ${t1Mid.x} ${t1Mid.y} C ${t1Mid.x + dx} ${t1Mid.y}, ${bLeft.x - dx} ${bLeft.y}, ${bLeft.x} ${bLeft.y}`, true);
+      });
+
+      // Branch 4 -> find more org names and run this search again (STRAIGHT)
+      const t1B4Right = getNodeAnchor('node-t1-b4', 'right');
+      const t1B4ExtLeft = getNodeAnchor('node-t1-b4-ext', 'left');
+      drawStraightH(t1B4Right, t1B4ExtLeft);
+
+      // Track 1: Stage 2 -> dnsx & httpx (fork 1 and 2)
+      const t1St2Right = getNodeAnchor('node-t1-stage2', 'right');
+      const t1St2Mid = { x: t1St2Right.x + 35, y: t1St2Right.y };
+      const t1DnsxLeft = getNodeAnchor('node-t1-dnsx', 'left');
+      const t1HttpxLeft = getNodeAnchor('node-t1-httpx', 'left');
+
+      drawPath(`M ${t1St2Right.x} ${t1St2Right.y} L ${t1St2Mid.x} ${t1St2Mid.y}`, false);
+      drawPath(`M ${t1St2Mid.x} ${t1St2Mid.y} C ${t1St2Mid.x + 25} ${t1St2Mid.y}, ${t1DnsxLeft.x - 35} ${t1DnsxLeft.y}, ${t1DnsxLeft.x} ${t1DnsxLeft.y}`, true);
+      drawPath(`M ${t1St2Mid.x} ${t1St2Mid.y} C ${t1St2Mid.x + 25} ${t1St2Mid.y}, ${t1HttpxLeft.x - 35} ${t1HttpxLeft.y}, ${t1HttpxLeft.x} ${t1HttpxLeft.y}`, true);
+
+      // Track 1: dnsx -> dnsx cmd (STRAIGHT)
+      const t1DnsxRight = getNodeAnchor('node-t1-dnsx', 'right');
+      const t1DnsxCmdLeft = getNodeAnchor('node-t1-dnsx-cmd', 'left');
+      drawStraightH(t1DnsxRight, t1DnsxCmdLeft);
+
+      // Track 1: httpx -> httpx cmd (STRAIGHT)
+      const t1HttpxRight = getNodeAnchor('node-t1-httpx', 'right');
+      const t1HttpxCmdLeft = getNodeAnchor('node-t1-httpx-cmd', 'left');
+      drawStraightH(t1HttpxRight, t1HttpxCmdLeft);
+
+      // Track 1: Stage 3 -> final output as: all_hosts_live.txt (STRAIGHT)
+      const t1St3Right = getNodeAnchor('node-t1-stage3', 'right');
+      const t1FinalLeft = getNodeAnchor('node-t1-final', 'left');
+      drawStraightH(t1St3Right, t1FinalLeft);
+
+
+      // ================= TRACK 2 CONNECTIONS =================
+      // 1. subfinder + api keys -> downward to shodan, netlas, github (STRAIGHT VERTICAL)
+      const t2St1Bottom = getNodeAnchor('node-t2-stage1', 'bottom');
+      const t2KeysTop = getNodeAnchor('node-t2-keys', 'top');
+      drawStraightV(t2St1Bottom, t2KeysTop);
+
+      // 2. subfinder + api keys -> right to subfinder command box (STRAIGHT)
+      const t2St1Right = getNodeAnchor('node-t2-stage1', 'right');
+      const t2SfCmdLeft = getNodeAnchor('node-t2-sf-cmd', 'left');
+      drawStraightH(t2St1Right, t2SfCmdLeft);
+
+      // 3. subfinder command box -> fork 1 and 2 to dnsx and httpx
+      const t2SfCmdRight = getNodeAnchor('node-t2-sf-cmd', 'right');
+      const t2ForkMid = { x: t2SfCmdRight.x + 35, y: t2SfCmdRight.y };
+      const t2DnsxLeft = getNodeAnchor('node-t2-dnsx', 'left');
+      const t2HttpxLeft = getNodeAnchor('node-t2-httpx', 'left');
+
+      drawPath(`M ${t2SfCmdRight.x} ${t2SfCmdRight.y} L ${t2ForkMid.x} ${t2ForkMid.y}`, false);
+      drawPath(`M ${t2ForkMid.x} ${t2ForkMid.y} C ${t2ForkMid.x + 25} ${t2ForkMid.y}, ${t2DnsxLeft.x - 35} ${t2DnsxLeft.y}, ${t2DnsxLeft.x} ${t2DnsxLeft.y}`, true);
+      drawPath(`M ${t2ForkMid.x} ${t2ForkMid.y} C ${t2ForkMid.x + 25} ${t2ForkMid.y}, ${t2HttpxLeft.x - 35} ${t2HttpxLeft.y}, ${t2HttpxLeft.x} ${t2HttpxLeft.y}`, true);
+
+      // 4. Track 2: dnsx -> dnsx cmd (STRAIGHT)
+      const t2DnsxRight = getNodeAnchor('node-t2-dnsx', 'right');
+      const t2DnsxCmdLeft = getNodeAnchor('node-t2-dnsx-cmd', 'left');
+      drawStraightH(t2DnsxRight, t2DnsxCmdLeft);
+
+      // 5. Track 2: httpx -> httpx cmd (STRAIGHT)
+      const t2HttpxRight = getNodeAnchor('node-t2-httpx', 'right');
+      const t2HttpxCmdLeft = getNodeAnchor('node-t2-httpx-cmd', 'left');
+      drawStraightH(t2HttpxRight, t2HttpxCmdLeft);
+
+      // 6. Track 2: total flow -> total flow command box (STRAIGHT)
+      const t2TotalRight = getNodeAnchor('node-t2-total-flow', 'right');
+      const t2TotalCmdLeft = getNodeAnchor('node-t2-total-cmd', 'left');
+      drawStraightH(t2TotalRight, t2TotalCmdLeft);
+
+      // 7. Track 2: total flow command box -> final output as: all_hosts_live_subfinder.txt (STRAIGHT)
+      const t2TotalCmdRight = getNodeAnchor('node-t2-total-cmd', 'right');
+      const t2FinalLeft = getNodeAnchor('node-t2-final', 'left');
+      drawStraightH(t2TotalCmdRight, t2FinalLeft);
+
+
+      // ================= MERGE ALL CONVERGENCE =================
+      const mergeLeft = getNodeAnchor('node-merge-all', 'left');
+      const t1FinalRight = getNodeAnchor('node-t1-final', 'right');
+      const t2FinalRight = getNodeAnchor('node-t2-final', 'right');
+
+      // Converge both outputs into a shared horizontal junction into Merg all:
+      const junctionX = mergeLeft.x - 24;
+      const junctionY = mergeLeft.y;
+
+      const dx1 = Math.abs(junctionX - t1FinalRight.x) * 0.55;
+      drawPath(`M ${t1FinalRight.x} ${t1FinalRight.y} C ${t1FinalRight.x + dx1} ${t1FinalRight.y}, ${junctionX - 35} ${junctionY}, ${junctionX} ${junctionY}`, false);
+
+      const dx2 = Math.abs(junctionX - t2FinalRight.x) * 0.55;
+      drawPath(`M ${t2FinalRight.x} ${t2FinalRight.y} C ${t2FinalRight.x + dx2} ${t2FinalRight.y}, ${junctionX - 35} ${junctionY}, ${junctionX} ${junctionY}`, false);
+
+      // Dead straight horizontal arrow into Merg all:
+      drawPath(`M ${junctionX} ${junctionY} L ${mergeLeft.x} ${junctionY}`, true);
+    }
+
+    // --- Dynamic Target Customizer (Non-destructive) ---
+    const targetInput = document.getElementById('targetInput');
+    const orgInput = document.getElementById('orgInput');
+
+    function updateTemplateValues() {
+      const target = targetInput.value.trim() || 'target.tld';
+      const org = orgInput.value.trim() || 'indeed';
+      const domain = (org === 'indeed') ? 'indeed.com' : `${org}.com`;
+
+      // Track 1
+      document.getElementById('txt-b1').textContent = `?q=${target}`;
+      document.getElementById('txt-b2').textContent = `?q=${target}&exclude=expired&group=none`;
+      document.getElementById('txt-b2-full').textContent = `remove expired: ?q=${target}&exclude=expired&group=none`;
+      document.getElementById('txt-b3').textContent = `/?q=%25.${target}`;
+      document.getElementById('txt-b3-full').textContent = `apex search: /?q=%25.${target}`;
+      document.getElementById('txt-b4').textContent = `?O=${org}`;
+      document.getElementById('txt-b4-full').textContent = `org name: ?O=${org}`;
+
+      document.getElementById('link-b1').href = `https://crt.sh/?q=${encodeURIComponent(target)}`;
+      document.getElementById('link-b2').href = `https://crt.sh/?q=${encodeURIComponent(target)}&exclude=expired&group=none`;
+      document.getElementById('link-b3').href = `https://crt.sh/?q=%25.${encodeURIComponent(target)}`;
+      document.getElementById('link-b4').href = `https://crt.sh/?O=${encodeURIComponent(org)}`;
+
+      document.getElementById('rendered-t1-httpx-org').textContent = domain;
+      document.getElementById('cmd-t1-httpx-raw').textContent = `httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \\
+ -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0" \\
+ -H "Referer: https://${domain}" \\
+ -o all_hosts_live.txt`;
+
+      // Track 2
+      document.getElementById('rendered-t2-sf-org').textContent = domain;
+      document.getElementById('rendered-t2-sf-out').textContent = `${org}_subs_subfinder.txt`;
+      document.getElementById('cmd-t2-sf-raw').textContent = `subfinder -d ${domain} -all -recursive -es censys,chaos
+-t 50 -timeout 30 -o ${org}_subs_subfinder.txt`;
+
+      document.getElementById('rendered-t2-httpx-org').textContent = domain;
+      document.getElementById('cmd-t2-httpx-raw').textContent = `httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \\
+ -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0" \\
+ -H "Referer: https://${domain}" \\
+ -o all_hosts_live.txt`;
+
+      document.getElementById('rendered-tf-org1').textContent = domain;
+      document.getElementById('rendered-tf-out1').textContent = `${org}_subs_subfinder.txt`;
+      document.getElementById('rendered-tf-org2').textContent = domain;
+      document.getElementById('cmd-t2-total-raw').textContent = `subfinder -d ${domain} -all -recursive -es censys,chaos -t 50 -timeout 30 -o ${org}_subs_subfinder.txt \\
+| dnsx -silent -a -o dnsx_resolved_subfiner.txt \\
+| httpx -silent -follow-host-redirects -title -status-code -cdn -tech-detect -no-color -threads 30 \\
+ -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/109.0' \\
+ -H 'Referer: https://${domain}' \\
+ -o all_hosts_live_subfinder.txt`;
+    }
+
+    targetInput.addEventListener('input', updateTemplateValues);
+    orgInput.addEventListener('input', updateTemplateValues);
+
+    document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+      targetInput.value = 'target.tld';
+      orgInput.value = 'indeed';
+      updateTemplateValues();
+      showToast('RESET TO ORIGINAL METHODOLOGY VALUES');
+    });
+
+    // --- Copy Functionality & Toast Notification ---
+    function showToast(msg) {
+      const toast = document.getElementById('toast-msg');
+      const toastText = document.getElementById('toast-text');
+      toastText.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+
+    function copySnippet(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const text = el.textContent || el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('COPIED: ' + (text.length > 35 ? text.substring(0, 35) + '...' : text));
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('COPIED TO CLIPBOARD');
+      });
+    }
+
+    // Copy all commands
+    document.getElementById('copyAllBtn').addEventListener('click', () => {
+      const t1Dnsx = document.getElementById('cmd-t1-dnsx-raw').textContent;
+      const t1Httpx = document.getElementById('cmd-t1-httpx-raw').textContent;
+      const t2Sf = document.getElementById('cmd-t2-sf-raw').textContent;
+      const t2Total = document.getElementById('cmd-t2-total-raw').textContent;
+      const mergeCmd = document.getElementById('cmd-merge-raw').textContent;
+      const allText = `# Track 01 CRT.SH Methodology\n${t1Dnsx}\n\n${t1Httpx}\n\n# Track 02 Subfinder Recon\n${t2Sf}\n\n# Track 02 Total Flow\n${t2Total}\n\n# Terminal Convergence Merge\n${mergeCmd}`;
+      navigator.clipboard.writeText(allText).then(() => {
+        showToast('COPIED ALL PIPELINE COMMANDS');
+      });
+    });
+
+    // Window resize
+    window.addEventListener('resize', () => {
+      renderConnections();
+    });
+
+    // Initial render
+    window.addEventListener('DOMContentLoaded', () => {
+      renderConnections();
+      fitView();
+    });
+    setTimeout(() => {
+      renderConnections();
+      fitView();
+    }, 80);
+
+  </script>
+</body>
+</html>

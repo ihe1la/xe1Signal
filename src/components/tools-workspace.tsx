@@ -20,13 +20,21 @@ const PinquedWorkspace = dynamic(
   () => import("@/components/pinqued-workspace").then((module) => module.PinquedWorkspace),
   { loading: WorkspaceLoading },
 );
+const ReconMethodologyWorkspace = dynamic(
+  () =>
+    import("@/components/recon-methodology-workspace").then(
+      (module) => module.ReconMethodologyWorkspace,
+    ),
+  { loading: WorkspaceLoading },
+);
 
-type ToolsTab = "findings" | "dump-notes" | "pinqued";
+type ToolsTab = "findings" | "dump-notes" | "pinqued" | "methodology";
 
 const tabs = [
   ["findings", "Findings"],
   ["dump-notes", "Dump Notes"],
   ["pinqued", "Pinqued"],
+  ["methodology", "Methodology"],
 ] as const;
 
 export function ToolsWorkspace() {
@@ -37,7 +45,7 @@ export function ToolsWorkspace() {
       <header className="mb-6">
         <h1 className="font-mono text-3xl font-medium tracking-tight text-zinc-100 sm:text-[34px]">Tools</h1>
         <p className="mt-2 font-mono text-sm text-zinc-500">
-          Findings, dump notes, and connected tools.
+          Findings, dump notes, recon methodology, and connected tools.
         </p>
       </header>
 
@@ -66,6 +74,7 @@ export function ToolsWorkspace() {
       {tab === "findings" ? <FindingsWorkspace /> : null}
       {tab === "dump-notes" ? <DumpNotesWorkspace /> : null}
       {tab === "pinqued" ? <PinquedWorkspace /> : null}
+      {tab === "methodology" ? <ReconMethodologyWorkspace /> : null}
     </div>
   );
 }

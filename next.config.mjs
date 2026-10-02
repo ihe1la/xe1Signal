@@ -65,6 +65,17 @@ const nextConfig = {
           },
         ],
       },
+      // Same-origin embed inside the Tools > Methodology tab. Last match wins,
+      // so this relaxes the DENY above for this file only.
+      {
+        source: '/recon-methodology.html',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
     ];
   },
 };
