@@ -81,6 +81,7 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
   const [editTaskId, setEditTaskId] = React.useState("");
   const [editDescription, setEditDescription] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [resumeEntryId, setResumeEntryId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (!workspace.timer.running) return;
@@ -120,8 +121,62 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
   }
 
   async function control(action: "start" | "pause" | "stop") {
+    const snapshot = workspace;
+    const snapshotLoadedAt = loadedAt;
+    const snapshotNow = now;
+    const snapshotResumeEntryId = resumeEntryId;
+    const stopResumeEntryId = action === "stop" ? resumeEntryId : null;
     setLoading(true);
     setError(null);
+
+    // Fresh Start focus is a new log; resume play keeps resumeEntryId for merge-on-stop.
+    if (action === "start") setResumeEntryId(null);
+
+    // Optimistic UI so Start / Pause / Stop update immediately when clicked.
+    if (action === "start") {
+      setWorkspace((current) => ({
+        ...current,
+        timer: {
+          ...current.timer,
+          running: true,
+          labelId: labelId ? Number(labelId) : null,
+          taskId: taskId ? Number(taskId) : null,
+          description: description.trim(),
+        },
+      }));
+      setLoadedAt(Date.now());
+      setNow(Date.now());
+    } else if (action === "pause") {
+      setWorkspace((current) => ({
+        ...current,
+        timer: { ...current.timer, running: false, elapsedMs },
+      }));
+    } else {
+      const addedSeconds = Math.max(1, Math.round(elapsedMs / 1000));
+      setWorkspace((current) => ({
+        ...current,
+        timer: {
+          ...current.timer,
+          running: false,
+          startedAt: null,
+          accumulatedMs: 0,
+          elapsedMs: 0,
+          description: description.trim(),
+          todayTotalSeconds: current.timer.todayTotalSeconds + (elapsedMs > 0 ? addedSeconds : 0),
+        },
+        entries: stopResumeEntryId
+          ? current.entries.map((entry) => (
+            entry.id === stopResumeEntryId && elapsedMs > 0
+              ? { ...entry, durationSeconds: entry.durationSeconds + addedSeconds }
+              : entry
+          ))
+          : current.entries,
+      }));
+      setResumeEntryId(null);
+      setLoadedAt(Date.now());
+      setNow(Date.now());
+    }
+
     try {
       const response = await fetch("/api/study/timer", {
         method: "POST",
@@ -131,15 +186,26 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
           labelId: labelId ? Number(labelId) : null,
           taskId: taskId ? Number(taskId) : null,
           description: description.trim() || null,
+          resumeEntryId: stopResumeEntryId,
         }),
       });
       const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
       if (!response.ok || !next || !("timer" in next)) {
+        setWorkspace(snapshot);
+        setLoadedAt(snapshotLoadedAt);
+        setNow(snapshotNow);
+        setResumeEntryId(snapshotResumeEntryId);
         setError((next && "error" in next && next.error) || "The timer could not be updated.");
         return;
       }
       syncWorkspace(next);
+      if (action === "stop") setResumeEntryId(null);
+      router.refresh();
     } catch {
+      setWorkspace(snapshot);
+      setLoadedAt(snapshotLoadedAt);
+      setNow(snapshotNow);
+      setResumeEntryId(snapshotResumeEntryId);
       setError("The timer could not be updated.");
     } finally {
       setLoading(false);
@@ -163,8 +229,30 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
       setError("Pause the current session before resuming another log.");
       return;
     }
+    const snapshot = workspace;
+    const snapshotLoadedAt = loadedAt;
+    const snapshotNow = now;
+    const snapshotResumeEntryId = resumeEntryId;
     setEntryActionId(entry.id);
     setError(null);
+    setResumeEntryId(entry.id);
+    setLabelId(entry.labelId ? String(entry.labelId) : "");
+    setTaskId(entry.taskId ? String(entry.taskId) : "");
+    setDescription(entry.description);
+    setWorkspace((current) => ({
+      ...current,
+      timer: {
+        ...current.timer,
+        running: true,
+        labelId: entry.labelId,
+        taskId: entry.taskId,
+        description: entry.description,
+        elapsedMs: 0,
+        accumulatedMs: 0,
+      },
+    }));
+    setLoadedAt(Date.now());
+    setNow(Date.now());
     try {
       const response = await fetch("/api/study/timer", {
         method: "POST",
@@ -173,12 +261,27 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
       });
       const next = await response.json().catch(() => null) as TrackerStudyWorkspace | { error?: string } | null;
       if (!response.ok || !next || !("timer" in next)) {
+        setWorkspace(snapshot);
+        setLoadedAt(snapshotLoadedAt);
+        setNow(snapshotNow);
+        setResumeEntryId(snapshotResumeEntryId);
+        setLabelId(snapshot.timer.labelId ? String(snapshot.timer.labelId) : "");
+        setTaskId(snapshot.timer.taskId ? String(snapshot.timer.taskId) : "");
+        setDescription(snapshot.timer.description);
         setError((next && "error" in next && next.error) || "The session could not be resumed.");
         return;
       }
       syncWorkspace(next);
+      setResumeEntryId(entry.id);
       router.refresh();
     } catch {
+      setWorkspace(snapshot);
+      setLoadedAt(snapshotLoadedAt);
+      setNow(snapshotNow);
+      setResumeEntryId(snapshotResumeEntryId);
+      setLabelId(snapshot.timer.labelId ? String(snapshot.timer.labelId) : "");
+      setTaskId(snapshot.timer.taskId ? String(snapshot.timer.taskId) : "");
+      setDescription(snapshot.timer.description);
       setError("The session could not be resumed.");
     } finally {
       setEntryActionId(null);
@@ -269,11 +372,31 @@ export function StudyWorkspace({ initialWorkspace }: { initialWorkspace: Tracker
             <p className="mt-3 font-sans text-xs text-zinc-500">{workspace.timer.running ? "Stay with the signal. Your session is running." : elapsedMs > 0 ? "Session paused. Resume when you are ready." : "Start a focused session when you are ready."}</p>
 
             <div className="mt-7 grid max-w-xl grid-cols-2 gap-2">
-              <button type="button" onClick={() => void control(workspace.timer.running ? "pause" : "start")} disabled={loading} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-violet-300/25 bg-violet-400/[.14] px-4 font-mono text-[10px] text-violet-100 transition hover:bg-violet-400/[.2] disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => void control(workspace.timer.running ? "pause" : "start")}
+                disabled={loading}
+                aria-pressed={!workspace.timer.running}
+                className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 font-mono text-[10px] transition disabled:opacity-50 ${
+                  workspace.timer.running
+                    ? "border-white/[.09] bg-white/[.02] text-zinc-300 hover:border-white/[.15] hover:bg-white/[.04] hover:text-zinc-100"
+                    : "border-violet-300/25 bg-violet-400/[.14] text-violet-100 hover:bg-violet-400/[.2]"
+                }`}
+              >
                 {workspace.timer.running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                 {workspace.timer.running ? "Pause" : "Start focus"}
               </button>
-              <button type="button" onClick={() => void control("stop")} disabled={loading || (!workspace.timer.running && elapsedMs <= 0)} className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-white/[.09] bg-white/[.02] px-4 font-mono text-[10px] text-zinc-300 transition hover:border-white/[.15] hover:bg-white/[.04] hover:text-zinc-100 disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => void control("stop")}
+                disabled={loading || (!workspace.timer.running && elapsedMs <= 0)}
+                aria-pressed={workspace.timer.running || elapsedMs > 0}
+                className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-4 font-mono text-[10px] transition disabled:opacity-50 ${
+                  workspace.timer.running || elapsedMs > 0
+                    ? "border-violet-300/25 bg-violet-400/[.14] text-violet-100 hover:bg-violet-400/[.2]"
+                    : "border-white/[.09] bg-white/[.02] text-zinc-300 hover:border-white/[.15] hover:bg-white/[.04] hover:text-zinc-100"
+                }`}
+              >
                 <Square className="h-3.5 w-3.5" /> Stop & save
               </button>
             </div>

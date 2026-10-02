@@ -172,6 +172,8 @@ export type TrackerTimerActionInput = {
   labelId?: number | null;
   taskId?: number | null;
   description?: string | null;
+  /** When stopping after resuming a log, merge elapsed time into this entry instead of creating a new one. */
+  resumeEntryId?: number | null;
 };
 
 export type TrackerEntryInput = {
@@ -253,6 +255,10 @@ export async function getTrackerConnectionStatus(): Promise<TrackerConnectionSta
   }
 }
 
+function isRunningFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === "1" || value === "true";
+}
+
 function normalizeTimer(value: TrackerTimerStatus): StudyTimer {
   const session = objectValue(value.session);
   return {
@@ -260,7 +266,7 @@ function normalizeTimer(value: TrackerTimerStatus): StudyTimer {
     maxSessionMs: nullableNumberValue(value.max_session_ms),
     todayEntriesSeconds: numberValue(value.today_entries_seconds),
     todayTotalSeconds: numberValue(value.today_total_seconds),
-    running: session.running === true || session.running === "true",
+    running: isRunningFlag(session.running),
     startedAt: stringValue(session.started_at) || null,
     accumulatedMs: numberValue(session.accumulated_ms),
     elapsedMs: numberValue(session.elapsed_ms),
@@ -437,7 +443,12 @@ function trackerMetadata(input: { labelId?: number | null; taskId?: number | nul
   };
 }
 
-async function trackerMutation(path: string, method: "POST" | "PATCH" | "DELETE", cookies: string, body?: unknown): Promise<{ ok: boolean; error?: string }> {
+async function trackerMutation(
+  path: string,
+  method: "POST" | "PATCH" | "DELETE",
+  cookies: string,
+  body?: unknown,
+): Promise<{ ok: boolean; error?: string; payload?: Record<string, unknown> | null }> {
   try {
     const response = await fetch(`${TRACKER_ORIGIN}${path}`, {
       method,
@@ -450,11 +461,11 @@ async function trackerMutation(path: string, method: "POST" | "PATCH" | "DELETE"
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
-    if (response.ok) return { ok: true };
+    const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+    if (response.ok) return { ok: true, payload };
     if (response.status === 401 || response.status === 403) {
       return { ok: false, error: "Tracker session expired. Refresh TRACKER_SESSION_COOKIE and TRACKER_L30_SESSION_COOKIE on the server." };
     }
-    const payload = await response.json().catch(() => null) as { error?: unknown } | null;
     return { ok: false, error: stringValue(payload?.error) || "The tracker rejected the update." };
   } catch {
     return { ok: false, error: "The tracker could not be reached." };
@@ -466,12 +477,68 @@ export async function updateTrackerTimer(input: TrackerTimerActionInput): Promis
   if (!cookies) return { workspace: null, error: "Study tracking is not configured." };
 
   const metadata = trackerMetadata(input);
+  const resumeEntryId = input.action === "stop" && input.resumeEntryId && input.resumeEntryId > 0
+    ? input.resumeEntryId
+    : null;
+
+  const [priorStatus, priorWorkspace] = input.action === "stop"
+    ? await Promise.all([
+      getTrackerJson<TrackerTimerStatus>("/api/timer/status", cookies),
+      resumeEntryId ? getTrackerStudyWorkspace() : Promise.resolve(null),
+    ])
+    : [null, null];
+
   const metadataResult = await trackerMutation("/api/timer/meta", "PATCH", cookies, metadata);
   if (!metadataResult.ok && input.action !== "pause") return { workspace: null, error: metadataResult.error };
 
   const path = input.action === "start" ? "/api/timer/start" : input.action === "pause" ? "/api/timer/pause" : "/api/timer/stop";
   const result = await trackerMutation(path, "POST", cookies, input.action === "pause" ? undefined : metadata);
   if (!result.ok) return { workspace: null, error: result.error };
+
+  if (input.action === "stop" && resumeEntryId) {
+    const priorSession = objectValue(priorStatus?.session);
+    const elapsedMs = Math.max(numberValue(priorSession.elapsed_ms), numberValue(priorSession.accumulated_ms));
+    const addedSeconds = Math.max(1, Math.round(elapsedMs / 1000));
+    const existing = priorWorkspace?.entries.find((entry) => entry.id === resumeEntryId);
+
+    // Drop the brand-new stop entry so we can fold this focus into the resumed log.
+    const createdEntry = objectValue(result.payload?.entry);
+    const createdId = numberValue(createdEntry.id);
+    if (createdId > 0 && createdId !== resumeEntryId) {
+      const deleted = await trackerMutation(`/api/entries/${createdId}`, "DELETE", cookies);
+      if (!deleted.ok) return { workspace: null, error: deleted.error || "Could not merge into the selected study log." };
+    }
+
+    if (existing && elapsedMs > 0) {
+      const merged = await trackerMutation(`/api/entries/${resumeEntryId}`, "PATCH", cookies, {
+        date: existing.date,
+        duration_seconds: Math.min(24 * 60 * 60, existing.durationSeconds + addedSeconds),
+        label_id: input.labelId ?? existing.labelId,
+        task_id: input.taskId ?? existing.taskId,
+        description: (input.description?.trim() || existing.description || null),
+      });
+      if (!merged.ok) return { workspace: null, error: merged.error || "The selected study log could not be updated." };
+    }
+
+    return { workspace: await getTrackerStudyWorkspace() };
+  }
+
+  // Tracker discards very short stops (`entry: null, discarded: true`). Persist a manual log so Stop & save always adds a session.
+  if (input.action === "stop" && result.payload?.discarded === true && !result.payload.entry) {
+    const priorSession = objectValue(priorStatus?.session);
+    const elapsedMs = Math.max(numberValue(priorSession.elapsed_ms), numberValue(priorSession.accumulated_ms));
+    const durationSeconds = Math.max(1, Math.round(elapsedMs / 1000));
+    if (elapsedMs > 0) {
+      const date = stringValue(priorStatus?.today) || new Date().toISOString().slice(0, 10);
+      const created = await trackerMutation("/api/entries", "POST", cookies, {
+        date,
+        duration_seconds: durationSeconds,
+        ...metadata,
+      });
+      if (!created.ok) return { workspace: null, error: created.error || "The session was stopped but could not be saved." };
+    }
+  }
+
   return { workspace: await getTrackerStudyWorkspace() };
 }
 

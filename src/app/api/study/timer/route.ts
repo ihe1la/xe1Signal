@@ -10,6 +10,7 @@ const schema = z.object({
   labelId: z.number().int().positive().nullable().optional(),
   taskId: z.number().int().positive().nullable().optional(),
   description: z.string().max(1000).nullable().optional(),
+  resumeEntryId: z.number().int().positive().nullable().optional(),
 });
 
 export async function POST(request: Request) {
