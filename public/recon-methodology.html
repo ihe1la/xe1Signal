@@ -49,26 +49,30 @@
 
     /* Top HUD Navigation Bar */
     header.cyber-hud {
-      height: 56px;
+      min-height: 56px;
       background: rgba(12, 9, 22, 0.96);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-purple);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      gap: 8px 16px;
+      padding: 8px 24px;
       z-index: 100;
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
     }
 
     .hud-left {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 16px;
     }
 
     .hud-title-badge {
       display: flex;
+      flex-shrink: 0;
       align-items: center;
       gap: 10px;
     }
@@ -82,11 +86,13 @@
     }
 
     .hud-title {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       color: #fff;
       text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .hud-title span {
@@ -96,8 +102,9 @@
     /* Parameter Configurator */
     .hud-middle {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
+      gap: 8px 10px;
       background: rgba(19, 15, 33, 0.9);
       border: 1px solid rgba(168, 85, 247, 0.3);
       border-radius: 6px;
@@ -112,9 +119,10 @@
 
     .param-label {
       color: var(--text-muted);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.6px;
+      white-space: nowrap;
     }
 
     .param-input {
@@ -124,9 +132,9 @@
       padding: 4px 10px;
       border-radius: 4px;
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11px;
       outline: none;
-      width: 135px;
+      width: 130px;
       transition: all 0.2s ease;
       user-select: text;
     }
@@ -139,6 +147,7 @@
     /* Action Buttons in HUD */
     .hud-right {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 8px;
     }
@@ -150,7 +159,7 @@
       padding: 6px 12px;
       border-radius: 5px;
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.5px;
       cursor: pointer;
@@ -158,6 +167,8 @@
       align-items: center;
       gap: 6px;
       transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .hud-btn:hover {
@@ -1121,6 +1132,16 @@ awk '!seen[$1]++' > merged_live.txt</div>
 
     document.getElementById('fitViewBtn').addEventListener('click', fitView);
 
+    // Opening view. Fitting the whole 4380px board into the panel drops the zoom
+    // to ~0.25, which is what makes the cards read as one another. Start readable
+    // and anchored on Track 01 instead; "Fit Screen" still gives the overview.
+    function initialView() {
+      scale = 0.6;
+      translateX = 16;
+      translateY = 20;
+      updateTransform();
+    }
+
     // Motion animation toggle
     const toggleMotionBtn = document.getElementById('toggleMotionBtn');
     if (toggleMotionBtn) {
@@ -1432,11 +1453,11 @@ awk '!seen[$1]++' > merged_live.txt</div>
     // Initial render
     window.addEventListener('DOMContentLoaded', () => {
       renderConnections();
-      fitView();
+      initialView();
     });
     setTimeout(() => {
       renderConnections();
-      fitView();
+      initialView();
     }, 80);
 
   </script>

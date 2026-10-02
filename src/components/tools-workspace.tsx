@@ -34,7 +34,7 @@ const tabs = [
   ["findings", "Findings"],
   ["dump-notes", "Dump Notes"],
   ["pinqued", "Pinqued"],
-  ["methodology", "Methodology"],
+  ["methodology", "th3l30"],
 ] as const;
 
 export function ToolsWorkspace() {
