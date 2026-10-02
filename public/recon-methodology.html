@@ -54,20 +54,21 @@
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-purple);
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: space-between;
-      gap: 8px 16px;
-      padding: 8px 24px;
+      gap: 12px;
+      padding: 6px 16px;
       z-index: 100;
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
     }
 
     .hud-left {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .hud-title-badge {
@@ -102,13 +103,14 @@
     /* Parameter Configurator */
     .hud-middle {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
-      gap: 8px 10px;
+      gap: 8px;
       background: rgba(19, 15, 33, 0.9);
       border: 1px solid rgba(168, 85, 247, 0.3);
       border-radius: 6px;
-      padding: 4px 12px;
+      padding: 4px 10px;
+      min-width: 0;
     }
 
     .param-group {
@@ -129,12 +131,12 @@
       background: rgba(10, 7, 18, 0.95);
       border: 1px solid rgba(168, 85, 247, 0.35);
       color: #fff;
-      padding: 4px 10px;
+      padding: 4px 8px;
       border-radius: 4px;
       font-family: var(--font-mono);
       font-size: 11px;
       outline: none;
-      width: 130px;
+      width: 104px;
       transition: all 0.2s ease;
       user-select: text;
     }
@@ -147,16 +149,17 @@
     /* Action Buttons in HUD */
     .hud-right {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .hud-btn {
       background: rgba(22, 17, 38, 0.9);
       border: 1px solid var(--border-purple);
       color: var(--text-main);
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 5px;
       font-family: var(--font-mono);
       font-size: 10px;
