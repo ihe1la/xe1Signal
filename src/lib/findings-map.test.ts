@@ -11,9 +11,9 @@ import {
 
 describe("findings-map", () => {
   it("groups findings by host target", () => {
-    const finding = createFinding("CORS on https://l30on.top/k/cors #destination")!;
-    expect(extractFindingHost(finding)).toBe("l30on.top");
-    expect(findingTargetKey(finding)).toBe("l30on.top");
+    const finding = createFinding("CORS on https://tracker.zerophase.cards/k/cors #destination")!;
+    expect(extractFindingHost(finding)).toBe("tracker.zerophase.cards");
+    expect(findingTargetKey(finding)).toBe("tracker.zerophase.cards");
   });
 
   it("detects bare hostnames without https", () => {
@@ -25,13 +25,13 @@ describe("findings-map", () => {
   it("builds a rooted target tree from notes", () => {
     const notes = [
       createFinding("Profile hub https://linktr.ee/ihe1la #profile")!,
-      createFinding("Destination https://l30on.top/k/cors #cors")!,
+      createFinding("Destination https://tracker.zerophase.cards/k/cors #cors")!,
       createFinding("orphan note without url #recon")!,
     ];
     const { nodes, edges } = buildFindingsMapGraph(notes);
     expect(nodes.some((node) => node.id === "root")).toBe(true);
     expect(nodes.some((node) => node.id === "target:linktr.ee")).toBe(true);
-    expect(nodes.some((node) => node.id === "target:l30on.top")).toBe(true);
+    expect(nodes.some((node) => node.id === "target:tracker.zerophase.cards")).toBe(true);
     expect(nodes.some((node) => node.id.startsWith("note:"))).toBe(true);
     expect(edges.every((edge) => edge.type === "findingsEdge")).toBe(true);
     expect(edges.length).toBeGreaterThan(notes.length);

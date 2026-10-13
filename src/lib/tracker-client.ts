@@ -205,9 +205,10 @@ function objectValue(value: unknown): Record<string, unknown> {
 
 function cookieHeader(): string | null {
   const trackerSession = process.env.TRACKER_SESSION_COOKIE?.trim();
+  if (!trackerSession) return null;
+  // tracker.zerophase.cards only honors tracker_session; l30_session is legacy.
   const l30Session = process.env.TRACKER_L30_SESSION_COOKIE?.trim();
-  if (!trackerSession || !l30Session) return null;
-  return `tracker_session=${trackerSession}; l30_session=${l30Session}`;
+  return l30Session ? `tracker_session=${trackerSession}; l30_session=${l30Session}` : `tracker_session=${trackerSession}`;
 }
 
 const TRACKER_FETCH_HEADERS = {
@@ -464,7 +465,7 @@ async function trackerMutation(
     const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
     if (response.ok) return { ok: true, payload };
     if (response.status === 401 || response.status === 403) {
-      return { ok: false, error: "Tracker session expired. Refresh TRACKER_SESSION_COOKIE and TRACKER_L30_SESSION_COOKIE on the server." };
+      return { ok: false, error: "Tracker session expired. Refresh TRACKER_SESSION_COOKIE on the server." };
     }
     return { ok: false, error: stringValue(payload?.error) || "The tracker rejected the update." };
   } catch {
