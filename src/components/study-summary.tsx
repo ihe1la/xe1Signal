@@ -77,7 +77,7 @@ export function StudySummary({ summary }: { summary: TrackerStudySummary }) {
             <p className="font-sans text-sm font-medium text-zinc-200">Insights</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[.14em] text-zinc-600">your tracker data, here in Study</p>
           </div>
-          <a href="https://tracker.l30on.top/insights" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-500 transition hover:text-violet-200">Open full insights ↗</a>
+          <a href="https://tracker.zerophase.cards/insights" target="_blank" rel="noreferrer" className="font-sans text-xs text-zinc-500 transition hover:text-violet-200">Open full insights ↗</a>
         </div>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-2">

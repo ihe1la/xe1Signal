@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-const TRACKER_ORIGIN = "https://tracker.l30on.top";
+const TRACKER_ORIGIN = "https://tracker.zerophase.cards";
 export const TRACKER_REVALIDATE_SECONDS = 3 * 60 * 60;
 
 type TrackerAuthMe = {
