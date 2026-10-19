@@ -9,6 +9,12 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      { source: '/hihi', destination: '/hihi/index.html' },
+      { source: '/hihi/', destination: '/hihi/index.html' },
+    ];
+  },
   async headers() {
     return [
       {
