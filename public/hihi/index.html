@@ -43,7 +43,7 @@
     }
     .tag {
       position: fixed; top: 1rem; left: 1rem; z-index: 5;
-      font-size: .7rem; letter-spacing: .18em; color: var(--ink);
+      font-size: .78rem; letter-spacing: .18em; color: var(--ink);
       background: var(--card); padding: .35rem .75rem; border-radius: 999px;
       border: 1px solid var(--border);
       transition: color .8s, background .8s, border-color .8s;
@@ -81,8 +81,8 @@
     }
     .card {
       position: relative; z-index: 4;
-      width: min(92vw, 360px);
-      padding: 2.4rem 1.6rem 2rem;
+      width: min(92vw, 380px);
+      padding: 2.6rem 1.8rem 2.2rem;
       background: var(--card);
       border-radius: var(--radius);
       text-align: center;
@@ -91,46 +91,63 @@
       backdrop-filter: blur(14px);
       transition: background .9s, border-color .9s, box-shadow .9s, border-radius .9s;
     }
+    @keyframes modeSnap {
+      0% { transform: scale(.82) rotate(-4deg); }
+      40% { transform: scale(1.14) rotate(3deg); }
+      65% { transform: scale(.95) rotate(-2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    body.snap .card { animation: modeSnap .72s cubic-bezier(.25, 1.6, .4, 1); }
+    .modeflash {
+      position: fixed; inset: 0; z-index: 9; pointer-events: none;
+      background: #fff0f7; opacity: 0;
+    }
+    .modeflash.on { animation: modeFlashA .5s ease-out; }
+    @keyframes modeFlashA {
+      0% { opacity: .92; }
+      55% { opacity: .22; }
+      100% { opacity: 0; }
+    }
+    .stamp {
+      position: fixed; top: 2vh; left: 50%; z-index: 10; pointer-events: none;
+      width: auto; height: 150px;
+      filter: drop-shadow(0 0 18px rgba(244,114,182,.75)) drop-shadow(0 8px 20px rgba(0,0,0,.6));
+      transform: translate(-50%, 0) scale(0); opacity: 0;
+    }
+    .stamp.on { animation: stampPop 1.1s cubic-bezier(.2, 1.8, .3, 1) forwards; }
+    @keyframes stampPop {
+      0% { transform: translate(-50%, 60px) rotate(-10deg) scale(0); opacity: 0; }
+      35% { transform: translate(-50%, -8px) rotate(5deg) scale(1.15); opacity: 1; }
+      60% { transform: translate(-50%, 0) rotate(-3deg) scale(.96); opacity: 1; }
+      100% { transform: translate(-50%, 0) rotate(0deg) scale(1); opacity: 1; }
+    }
     h1 {
       font-family: var(--title-font, "Cormorant Garamond"), serif;
-      font-size: 1.55rem; font-weight: var(--title-weight);
+      font-size: clamp(1.9rem, 6vw, 2.3rem); font-weight: var(--title-weight);
       color: var(--ink); margin-bottom: .3rem;
       letter-spacing: var(--title-track, 0.02em);
       text-shadow: 0 0 18px var(--glow);
       transition: color .9s, text-shadow .9s, letter-spacing .9s;
     }
     .sub {
-      font-size: .85rem; color: var(--mute); margin-bottom: 1.5rem;
-      transition: color .9s; min-height: 1.2em;
+      font-size: 1rem; color: var(--mute); margin-bottom: 1.5rem;
+      transition: color .9s; min-height: 1.3em;
     }
-    .orb {
-      width: 200px; height: 200px; margin: 0 auto 1.2rem;
-      border-radius: 50%; display: grid; place-items: center;
-      background: radial-gradient(circle at 35% 30%, var(--orb1) 0%, var(--orb2) 32%, var(--orb3) 62%, var(--orb4) 100%);
-      box-shadow: 0 0 0 8px color-mix(in srgb, var(--orb3) 45%, transparent), 0 0 36px var(--glow);
-      position: relative;
-      transition: box-shadow .9s;
-    }
-    .orb::after {
-      content: ""; position: absolute; inset: -10px; border-radius: 50%;
-      border: 2px dashed color-mix(in srgb, var(--accent) 40%, transparent);
-      animation: spin var(--spin, 40s) linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .time {
       font-family: "Cormorant Garamond", serif;
-      font-size: 3.2rem; font-weight: 600; color: var(--time);
+      font-size: clamp(3.6rem, 14vw, 4.4rem); font-weight: 600; color: var(--time);
       letter-spacing: .04em; position: relative; z-index: 1;
+      margin: 0 auto 1.2rem;
       text-shadow: 0 1px 2px rgba(0,0,0,.15), 0 0 14px var(--glow);
       transform: translate(var(--shake-amt), 0);
       transition: color .8s, text-shadow .8s;
     }
     .status {
-      color: var(--accent); margin-bottom: 1.2rem; font-size: .95rem;
-      min-height: 1.4em; transition: color .8s;
+      color: var(--accent); margin-bottom: 1.2rem; font-size: 1.1rem;
+      min-height: 1.5em; transition: color .8s;
     }
     button {
-      font: inherit; cursor: pointer; border: none;
+      font: inherit; font-size: 1rem; cursor: pointer; border: none;
       border-radius: calc(var(--radius) * 0.8);
       padding: .65rem 1.3rem; margin: 0 .25rem;
       background: linear-gradient(135deg, var(--petal-a), var(--petal-b));
@@ -181,27 +198,29 @@
     body.rest .card { transition: opacity 1.2s ease, transform 1.2s ease; }
     body.rest .time { opacity: .9; transition: opacity 1.5s ease; }
     .dm {
-      position: fixed; right: 4vw; bottom: 6vh; z-index: 8; pointer-events: none;
-      width: min(80vw, 300px);
+      position: fixed; left: 50%; bottom: 6vh; z-index: 8; pointer-events: none;
+      width: max-content; max-width: 86vw;
       font-family: "Zen Maru Gothic", sans-serif;
-      opacity: 0; transform: translateY(40px) scale(.96);
+      opacity: 0; transform: translate(-50%, 40px) scale(.96);
       transition: opacity .45s ease, transform .55s cubic-bezier(.2, 1.4, .4, 1);
     }
-    .dm.on { opacity: 1; transform: translateY(0) scale(1); }
+    .dm.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    .msg { white-space: pre-line; }
     .dm-head {
-      display: flex; align-items: center; gap: .45rem;
-      font-size: .72rem; color: #fbcfe8; margin: 0 0 .35rem .3rem;
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .85rem; color: #fbcfe8; margin: 0 0 .4rem .3rem;
     }
     .dm-head .avatar {
-      width: 22px; height: 22px; border-radius: 50%;
-      display: grid; place-items: center; font-size: .7rem; color: #fff;
+      width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center; font-size: .8rem; color: #fff;
       background: #f472b6;
     }
     .dm-head small { color: #c084fc; margin-left: auto; margin-right: .3rem; }
     .bubble {
       position: relative; display: inline-block; max-width: 100%;
-      padding: .7rem .95rem; border-radius: 18px 18px 18px 4px;
-      background: #fff; color: #831843; font-size: .92rem; line-height: 1.4;
+      padding: .65rem .85rem; border-radius: 18px 18px 18px 4px;
+      background: #fff; color: #831843; font-size: .82rem; line-height: 1.35;
+      font-weight: 500;
       border: 1px solid #fbcfe8;
     }
     .typing { display: inline-flex; gap: 4px; padding: .2rem 0; }
@@ -232,6 +251,8 @@
   </div>
   <div class="whisper" id="whisper"></div>
   <div class="flash" id="flash"></div>
+  <div class="modeflash" id="modeFlash"></div>
+  <img class="stamp" id="stamp" src="/hihi/cat.png" alt="" />
   <div class="dm" id="sticker">
     <div class="dm-head"><span class="avatar">桜</span><b>sakura</b><small>now</small></div>
     <div class="bubble"><span class="typing" id="dmTyping"><i></i><i></i><i></i></span><span class="msg" id="dmMsg"></span></div>
@@ -239,10 +260,10 @@
   </div>
   <div class="drips" id="drips"></div>
   <div class="petals" id="petals"></div>
-  <main class="card">
+  <main class="card" id="card">
     <h1 id="title">Sakura Dream</h1>
     <p class="sub" id="sub">soft petals · quiet heart</p>
-    <div class="orb"><div class="time" id="time">01:00</div></div>
+    <div class="time" id="time">01:00</div>
     <p class="status" id="status">Drifting gently…</p>
     <button type="button" id="toggle">Pause</button>
     <button type="button" class="ghost" id="reset">Reset</button>
@@ -275,6 +296,58 @@
       const bl = Math.round(a[2] + (b[2] - a[2]) * t);
       const al = a[3] + (b[3] - a[3]) * t;
       return `rgba(${r},${g},${bl},${al.toFixed(3)})`;
+    }
+
+    const cardEl = document.getElementById("card");
+
+    function modeFlash() {
+      const el = document.getElementById("modeFlash");
+      el.classList.remove("on");
+      void el.offsetWidth;
+      el.classList.add("on");
+    }
+    function stampPop() {
+      const el = document.getElementById("stamp");
+      placeDM();
+      el.classList.remove("on");
+      void el.offsetWidth;
+      el.classList.add("on");
+    }
+    // comedic "record scratch" sting — plays right as the mode flips
+    function modeSnapSound() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const c = new AC();
+        const out = c.createGain();
+        out.gain.value = 0.3;
+        out.connect(c.destination);
+        const now = c.currentTime;
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.type = "sawtooth";
+        o.frequency.setValueAtTime(900, now);
+        o.frequency.exponentialRampToValueAtTime(60, now + 0.22);
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.5, now + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+        o.connect(g); g.connect(out);
+        o.start(now); o.stop(now + 0.26);
+        const n = Math.floor(c.sampleRate * 0.2);
+        const buf = c.createBuffer(1, n, c.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+        const src = c.createBufferSource();
+        src.buffer = buf;
+        const f = c.createBiquadFilter();
+        f.type = "highpass";
+        f.frequency.value = 1200;
+        const ng = c.createGain();
+        ng.gain.value = 0.22;
+        src.connect(f); f.connect(ng); ng.connect(out);
+        src.start(now);
+        setTimeout(() => { try { c.close(); } catch (_) {} }, 700);
+      } catch (_) {}
     }
 
     /* Sweet ambient — fades with setSweetness */
@@ -626,7 +699,7 @@
     let ironic = false;
     const stickerEl = document.getElementById("sticker");
 
-    const DM_TEXT = "awww, ur actually scared of a timer? this is so cute, i might cry 💋";
+    const DM_TEXT = "awww, ur actually scared of a timer?\nthis is so cute, i might cry 💋";
     const dmTyping = document.getElementById("dmTyping");
     const dmMsg = document.getElementById("dmMsg");
     const dmSeen = document.getElementById("dmSeen");
@@ -657,12 +730,29 @@
       } catch (_) {}
     }
 
+    // Cat above the card, DM below it, each with the same gap on both sides.
+    const DM_FULL_H = 110;
+    function placeDM() {
+      const cardTop = cardEl.offsetTop;
+      const cardBottom = cardTop + cardEl.offsetHeight;
+      const gapBelow = Math.max(12, (window.innerHeight - cardBottom - DM_FULL_H) / 2);
+      stickerEl.style.top = cardBottom + gapBelow + "px";
+      stickerEl.style.bottom = "auto";
+
+      const cat = document.getElementById("stamp");
+      const catH = Math.max(60, Math.min(170, cardTop - 24));
+      cat.style.height = catH + "px";
+      cat.style.top = Math.max(8, (cardTop - catH) / 2) + "px";
+    }
+    window.addEventListener("resize", placeDM);
+
     function showDM() {
       if (dmShown) return;
       dmShown = true;
       dmMsg.textContent = "";
       dmTyping.style.display = "inline-flex";
       dmSeen.classList.remove("on");
+      placeDM();
       stickerEl.classList.add("on");
       dmPing();
       dmTimers.push(setTimeout(() => {
@@ -794,7 +884,15 @@
           ironic = true;
           document.body.classList.remove("ending");
           document.body.classList.add("ironic");
-          jokeJingle();
+          // the mode switch: screen flashes, a cat pops out saying the same roast,
+          // a record-scratch sting plays — then the cheerful jingle lands.
+          document.body.classList.add("snap");
+          setTimeout(() => document.body.classList.remove("snap"), 760);
+          modeFlash();
+          stampPop();
+          modeSnapSound();
+          showDM();
+          setTimeout(jokeJingle, 170);
         }
 
         if (u >= 0.14) {
@@ -821,7 +919,6 @@
             say(statusEl, "no refunds on adrenaline, bestie");
             say(tag, "UWU");
           }
-          if (u >= 0.38) showDM();
         }
 
         // audio: horror out, sweet theme returns, then gently fades
@@ -870,9 +967,11 @@
       ending = false;
       ironic = false;
       didShutdown = false;
+      document.getElementById("stamp").classList.remove("on");
+      document.getElementById("modeFlash").classList.remove("on");
       clearFx();
       hideDM();
-      document.body.classList.remove("ending", "rest", "ironic");
+      document.body.classList.remove("ending", "rest", "ironic", "snap");
       unlockAudio();
       HorrorAudio.resetPhases();
       HorrorAudio.setMix(0);
