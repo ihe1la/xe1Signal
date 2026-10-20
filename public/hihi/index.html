@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sakura Dream</title>
+  <title>Hela Dream</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Creepster&family=Zen+Maru+Gothic:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -239,7 +239,7 @@
   </style>
 </head>
 <body>
-  <div class="tag" id="tag">SAKURA DREAM</div>
+  <div class="tag" id="tag">HELA DREAM</div>
   <div class="vignette"></div>
   <div class="pulse" id="pulse"></div>
   <div class="eyes" id="eyes">
@@ -254,14 +254,14 @@
   <div class="modeflash" id="modeFlash"></div>
   <img class="stamp" id="stamp" src="/hihi/cat.png" alt="" />
   <div class="dm" id="sticker">
-    <div class="dm-head"><span class="avatar">桜</span><b>sakura</b><small>now</small></div>
+    <div class="dm-head"><span class="avatar">H</span><b>hela</b><small>now</small></div>
     <div class="bubble"><span class="typing" id="dmTyping"><i></i><i></i><i></i></span><span class="msg" id="dmMsg"></span></div>
     <div class="dm-seen" id="dmSeen">Delivered</div>
   </div>
   <div class="drips" id="drips"></div>
   <div class="petals" id="petals"></div>
   <main class="card" id="card">
-    <h1 id="title">Sakura Dream</h1>
+    <h1 id="title">Hela Dream</h1>
     <p class="sub" id="sub">soft petals · quiet heart</p>
     <div class="time" id="time">01:00</div>
     <p class="status" id="status">Drifting gently…</p>
@@ -540,19 +540,19 @@
       if (visualsOnly) return;
 
       if (raw < 0.22) {
-        say(title, "Sakura Dream");
+        say(title, "Hela Dream");
         say(sub, "soft petals · quiet heart");
-        say(tag, "SAKURA DREAM");
+        say(tag, "HELA DREAM");
       } else if (raw < 0.42) {
-        say(title, "Sakura Dream");
+        say(title, "Hela Dream");
         say(sub, "the breeze feels colder…");
-        say(tag, "SAKURA DREAM");
+        say(tag, "HELA DREAM");
       } else if (raw < 0.62) {
-        say(title, "Wilted Sakura");
+        say(title, "Wilted Hela");
         say(sub, "pink fading to rust");
         say(tag, "WILTING");
       } else if (raw < 0.82) {
-        say(title, "Blood Sakura");
+        say(title, "Blood Hela");
         say(sub, "something bloomed wrong");
         say(tag, "BLOOD BLOOM");
       } else {
@@ -861,11 +861,11 @@
       clearFx();
       document.body.classList.add("ending");
       time.textContent = "00:00";
-      document.title = "00:00 — Sakura";
+      document.title = "00:00 — Hela";
       toggle.disabled = true;
       toggle.textContent = "…";
       setNow(statusEl, "the bloom exhales…");
-      setNow(title, "Blood Sakura");
+      setNow(title, "Blood Hela");
       setNow(sub, "even nightmares fade");
       setNow(tag, "FADING");
 
@@ -899,22 +899,22 @@
           title.style.fontFamily = '"Cormorant Garamond", serif';
           title.style.letterSpacing = "0.02em";
           if (u < 0.3) {
-            say(title, "Sakura Dream");
+            say(title, "Hela Dream");
             say(sub, "oh hi. we're cute again. new me.");
             say(statusEl, "...yeah, we're not talking about that.");
-            say(tag, "SAKURA DREAM");
+            say(tag, "HELA DREAM");
           } else if (u < 0.46) {
-            say(title, "Sakura Dream (TM)");
+            say(title, "Hela Dream (TM)");
             say(sub, "those eyes? cats. obviously.");
             say(statusEl, "you screamed at a petal. a PETAL.");
             say(tag, "NOTHING HAPPENED");
           } else if (u < 0.64) {
-            say(title, "Sakura Dream");
+            say(title, "Hela Dream");
             say(sub, "your heart rate called. it wants an apology.");
             say(statusEl, "a whole minute and you looked like that. wow.");
             say(tag, "SASS MODE");
           } else {
-            say(title, "Sakura Dream");
+            say(title, "Hela Dream");
             say(sub, "petals sponsored by Big Pink");
             say(statusEl, "no refunds on adrenaline, bestie");
             say(tag, "UWU");
@@ -1003,7 +1003,7 @@
         }
 
         time.textContent = fmt(remaining);
-        document.title = fmt(remaining) + " — Sakura";
+        document.title = fmt(remaining) + " — Hela";
         const progress = 1 - remaining / total;
         paintTheme(progress);
         stressFx(progress, remaining, running);
